@@ -25,14 +25,29 @@ export function PersistentBar({ audioSrc, isUnlocked }: PersistentBarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isPastHero, setIsPastHero] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
 
-  // Scroll Progress listener
+  // Native window scroll listener for Hero threshold detection
+  useEffect(() => {
+    const checkScroll = () => {
+      const heroThreshold = window.innerHeight * 0.4;
+      setIsPastHero(window.scrollY > heroThreshold);
+    };
+
+    checkScroll();
+    window.addEventListener('scroll', checkScroll, { passive: true });
+    return () => window.removeEventListener('scroll', checkScroll);
+  }, []);
+
+  // Lenis Scroll Progress & Hero threshold sync
   useEffect(() => {
     if (!lenis) return;
-    const onScroll = (e: { progress: number }) => {
+    const onScroll = (e: { progress: number; scroll: number }) => {
       setScrollProgress(e.progress);
+      const heroThreshold = window.innerHeight * 0.4;
+      setIsPastHero(e.scroll > heroThreshold);
     };
     lenis.on('scroll', onScroll);
     return () => {
@@ -103,16 +118,24 @@ export function PersistentBar({ audioSrc, isUnlocked }: PersistentBarProps) {
 
   return (
     <>
-      {/* 1px Scroll Progress Line at top */}
-      <div className="fixed top-0 left-0 right-0 h-[2px] bg-[var(--hairline)] z-50 pointer-events-none">
+      {/* 1px Scroll Progress Line at top - Only after Hero */}
+      <div
+        className={`fixed top-0 left-0 right-0 h-[2px] bg-[var(--hairline)] z-50 pointer-events-none transition-opacity duration-500 ${
+          isPastHero ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
         <div
           className="h-full bg-[var(--baby-blue)] transition-all duration-75 origin-left"
           style={{ width: `${Math.min(100, Math.max(0, scrollProgress * 100))}%` }}
         />
       </div>
 
-      {/* Top Bar: RSVP button (left) & MENU button (right) with frosted luxury styling */}
-      <header className="fixed top-0 left-0 right-0 z-40 px-[var(--gutter)] py-5 flex items-center justify-between pointer-events-none">
+      {/* Top Bar: RSVP button (left) & MENU button (right) - Only appears after scrolling past Hero */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-40 px-[var(--gutter)] py-5 flex items-center justify-between pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isPastHero ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-6 pointer-events-none'
+        }`}
+      >
         {/* Left: RSVP Quick Link */}
         <button
           type="button"
@@ -134,9 +157,13 @@ export function PersistentBar({ audioSrc, isUnlocked }: PersistentBarProps) {
         </button>
       </header>
 
-      {/* Bottom-left: Audio Toggle */}
+      {/* Bottom-left: Audio Toggle - Only appears after scrolling past Hero */}
       {audioSrc && (
-        <aside className="fixed bottom-6 left-[var(--gutter)] z-40">
+        <aside
+          className={`fixed bottom-6 left-[var(--gutter)] z-40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            isPastHero ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-6 pointer-events-none'
+          }`}
+        >
           <audio ref={audioRef} src={audioSrc} loop preload="auto" />
           <button
             type="button"
@@ -200,7 +227,7 @@ export function PersistentBar({ audioSrc, isUnlocked }: PersistentBarProps) {
         </nav>
 
         <div className="flex items-center justify-between text-[11px] label-eyebrow text-[var(--ink)] opacity-50">
-          <span>ADITYA &amp; CLARISSA</span>
+          <span>DHARMA &amp; LUTFHY</span>
           <span>SABTU, 12 DESEMBER 2026</span>
         </div>
       </div>

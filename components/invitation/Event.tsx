@@ -32,9 +32,9 @@ export function Event({
   monthYearFormatted = 'DESEMBER 2026',
   dateFormatted = 'Sabtu, 12 Desember 2026',
   timeFormatted = '11.00 – 14.00 WITA',
-  venueName = 'The Glasshouse Ballroom',
-  venueAddress = 'Jl. Metro Tanjung Bunga No. 88, Makassar',
-  mapsUrl = 'https://maps.google.com/?q=The+Glasshouse+Makassar',
+  venueName = 'The Royal Santrian & Glasshouse Bali',
+  venueAddress = 'Jl. Pratama, Benoa, Nusa Dua, Badung, Bali',
+  mapsUrl = 'https://maps.google.com/?q=The+Royal+Santrian+Bali',
   guestArrivalTime,
   inviteLine,
   startsAt,
@@ -125,10 +125,10 @@ export function Event({
 
   const handleDownloadICS = () => {
     downloadCalendarEvent({
-      title: 'Pernikahan Aditya & Clarissa (Resepsi)',
+      title: 'Pernikahan Dharma & Lutfhy (Resepsi)',
       description: guestArrivalTime
         ? `Waktu kehadiran Anda: ${guestArrivalTime}. ${inviteLine || ''}`
-        : 'Resepsi Pernikahan Aditya Pratama & Clarissa Maharani',
+        : 'Resepsi Pernikahan I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo',
       location: `${venueName}, ${venueAddress}`,
       startDate: startsAt,
       endDate: endsAt,
@@ -142,16 +142,6 @@ export function Event({
       className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] transition-colors select-none overflow-hidden"
     >
       <div className="max-w-5xl mx-auto w-full">
-        {/* Section Tag */}
-        <div className="flex items-center justify-between border-b border-[var(--ink)]/20 pb-4 mb-16">
-          <span className="label-eyebrow tracking-[0.25em] text-[var(--ink)]">
-            RESEPSI PERNIKAHAN
-          </span>
-          <span className="label-eyebrow tracking-[0.2em] text-[var(--ink)] opacity-60">
-            WAKTU &amp; LOKASI
-          </span>
-        </div>
-
         {/* Date Display with 3D Card Treatment */}
         <div
           ref={dateCardRef}

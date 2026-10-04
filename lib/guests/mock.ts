@@ -28,9 +28,9 @@ export function getMockGuestView(overrides?: {
     panggilan: nickname,
     tanggal: '12 Desember 2026',
     jam_hadir: guestArrivalTimeFormatted || '11.00 WITA',
-    lokasi: 'The Glasshouse Ballroom, Makassar',
-    link: 'https://adityaclarissa.wedding',
-    mempelai: 'Aditya & Clarissa',
+    lokasi: 'The Royal Santrian & Glasshouse Bali',
+    link: 'https://dharmalutfhy.wedding',
+    mempelai: 'Dharma & Lutfhy',
   };
 
   return {
@@ -48,8 +48,8 @@ export function getMockGuestView(overrides?: {
     hasOpened: false,
     rsvp: null,
     event: {
-      groomName: 'Aditya',
-      brideName: 'Clarissa',
+      groomName: 'Dharma',
+      brideName: 'Lutfhy',
       dateFormatted,
       dayFormatted: 'SABTU',
       dateNumeral: '12',
@@ -58,19 +58,19 @@ export function getMockGuestView(overrides?: {
       guestArrivalTimeFormatted,
       startsAt,
       endsAt,
-      venueName: 'The Glasshouse Ballroom',
-      venueAddress: 'Jl. Metro Tanjung Bunga No. 88, Makassar, Sulawesi Selatan',
-      mapsUrl: 'https://maps.google.com/?q=The+Glasshouse+Makassar',
+      venueName: 'The Royal Santrian & Glasshouse Bali',
+      venueAddress: 'Jl. Pratama, Benoa, Nusa Dua, Badung, Bali',
+      mapsUrl: 'https://maps.google.com/?q=The+Royal+Santrian+Bali',
       rsvpDeadline: '2026-11-28T23:59:59+08:00',
       bankAccounts: [
         {
           bank: 'BCA',
-          accountName: 'Aditya Pratama',
+          accountName: 'I Wayan Dharma Wirahadi',
           accountNumber: '7820192831',
         },
         {
           bank: 'Bank Mandiri',
-          accountName: 'Clarissa Maharani',
+          accountName: 'Luthfi Quasimah Widoyo',
           accountNumber: '1420019283741',
         },
       ],

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { registerGSAP, gsap, ScrollTrigger } from '@/lib/motion/gsap';
 import { MediaFrame } from './MediaFrame';
 
@@ -22,7 +22,6 @@ export function Gallery({ items }: GalleryProps) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
-  const [activeNumber, setActiveNumber] = useState('01');
 
   useEffect(() => {
     registerGSAP();
@@ -58,12 +57,6 @@ export function Gallery({ items }: GalleryProps) {
               if (progressBarRef.current) {
                 progressBarRef.current.style.transform = `scaleX(${self.progress})`;
               }
-              // Active photo index calculation
-              const currentIndex = Math.min(
-                items.length,
-                Math.max(1, Math.round(self.progress * (items.length - 1)) + 1)
-              );
-              setActiveNumber(String(currentIndex).padStart(2, '0'));
             },
           },
         });
@@ -111,33 +104,13 @@ export function Gallery({ items }: GalleryProps) {
     <section
       ref={sectionRef}
       id="gallery"
-      className="relative w-full h-[100svh] bg-[var(--paper)] select-none overflow-hidden flex flex-col justify-between py-8 sm:py-10 md:py-12 border-t border-[var(--hairline)]"
+      className="relative w-full h-[100svh] bg-[var(--paper)] select-none overflow-hidden flex flex-col justify-between py-6 sm:py-8"
     >
-      {/* 1. Gallery Section Header (Pinned at Top) */}
-      <div className="w-full px-[var(--gutter)] max-w-7xl mx-auto flex items-baseline justify-between border-b border-[var(--hairline)] pb-4 z-20">
-        <div className="flex items-center gap-3">
-          <span className="label-eyebrow text-[var(--deep)] tracking-[0.28em]">
-            GALERI MOMEN
-          </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-        </div>
-
-        <div className="flex items-center gap-4">
-          <span className="label-eyebrow text-[var(--ink)] opacity-50 tracking-[0.2em] hidden sm:inline">
-            GULIR KE BAWAH UNTUK MENJELAJAH
-          </span>
-          <div className="font-mono text-sm tracking-widest text-[var(--ink)] bg-[var(--mist)] px-3 py-1 rounded-[var(--radius-sm)] border border-[var(--hairline)]">
-            <span className="font-semibold text-[var(--deep)]">{activeNumber}</span>
-            <span className="opacity-40"> / {String(items.length).padStart(2, '0')}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Pinned Horizontal Gallery Track */}
+      {/* Pinned Horizontal Gallery Track (Full Screen Immersion) */}
       <div className="relative w-full my-auto overflow-visible z-10 flex items-center">
         <div
           ref={trackRef}
-          className="flex gap-8 sm:gap-12 md:gap-16 items-center pl-[var(--gutter)] will-change-transform"
+          className="flex gap-8 sm:gap-14 md:gap-20 items-center pl-[var(--gutter)] will-change-transform"
         >
           {items.map((item, index) => {
             const isOffset = index % 2 === 1;
@@ -178,17 +151,13 @@ export function Gallery({ items }: GalleryProps) {
         </div>
       </div>
 
-      {/* 3. Bottom Progress Bar & Navigation Indicator */}
-      <div className="w-full px-[var(--gutter)] max-w-7xl mx-auto flex flex-col gap-2 z-20">
-        <div className="w-full h-[2px] bg-[var(--hairline)] relative rounded-full overflow-hidden">
+      {/* Discreet Centered Progress Bar (Zero Collision with Fixed Badges) */}
+      <div className="w-full max-w-xs sm:max-w-sm mx-auto px-6 z-20 pointer-events-none pb-2">
+        <div className="w-full h-[2px] bg-[var(--hairline)]/80 relative rounded-full overflow-hidden">
           <div
             ref={progressBarRef}
             className="absolute top-0 bottom-0 left-0 w-full bg-[var(--deep)] origin-left scale-x-0 transition-transform duration-75"
           />
-        </div>
-        <div className="flex justify-between items-center text-[10px] label-eyebrow text-[var(--ink)] opacity-40 tracking-[0.2em] pt-1">
-          <span>01 · SENJA DI PESISIR</span>
-          <span>08 · TATAPAN PENUH SYUKUR</span>
         </div>
       </div>
     </section>

@@ -55,14 +55,6 @@ export function Quote({ text }: QuoteProps) {
       className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] flex flex-col justify-center select-none overflow-hidden"
     >
       <div className="max-w-6xl mx-auto w-full">
-        {/* Subtle section marker */}
-        <div className="flex items-center gap-4 mb-10">
-          <span className="label-eyebrow text-[var(--deep)] tracking-[0.25em]">
-            PEMBUKA
-          </span>
-          <div className="w-12 h-[1px] bg-[var(--hairline)]" />
-        </div>
-
         {/* 8/12 width indented paragraph with 3D word-by-word illuminating motion */}
         <div className="w-full md:w-11/12 lg:w-10/12 md:pl-8 lg:pl-16">
           <p className="display-m text-[var(--ink)] font-serif leading-[1.25] flex flex-wrap gap-x-[0.35em] gap-y-[0.15em] transform-gpu">

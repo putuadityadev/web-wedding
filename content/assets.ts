@@ -9,14 +9,16 @@ export interface MediaAsset {
 }
 
 export const ASSETS = {
-  // Hero Section: Cinematic Video Background & Poster
+  // Hero Section: Ultra-crisp Pre-wedding Photography (AVIF)
   hero: {
-    videoSrc: 'https://assets.mixkit.co/videos/preview/mixkit-young-couple-walking-in-a-field-at-sunset-41485-large.mp4',
-    posterSrc: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1920&q=85',
+    avifSrc: '/KLK07943.avif',
+    webpSrc: '/KLK07943.webp',
+    fallbackSrc: '/KLK07943.jpg',
+    posterSrc: '/KLK07943.avif',
     portrait: {
-      src: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
-      alt: 'Potret Aditya & Clarissa',
-      aspectRatio: '4/5',
+      src: '/KLK07943.avif',
+      alt: 'Potret I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo',
+      aspectRatio: '2/3',
       label: 'POTRET MEMPELAI',
     },
   },
@@ -24,28 +26,28 @@ export const ASSETS = {
   // Couple Section (Editorial Portraits)
   couple: {
     groom: {
-      name: 'Aditya Pratama, S.T.',
-      childOf: 'Putra pertama dari Bapak Bambang H. & Ibu Sri Rahayu',
-      bio: 'Seorang arsitek teknologi yang mencintai kopi hangat, fotografi lanskap, dan percakapan sunyi di sore hari.',
+      name: 'I Wayan Dharma Wirahadi',
+      childOf: 'Putra pertama dari Bapak I Wayan Suweta & Ibu Ni Wayan Murni',
+      bio: 'Praktisi tata suara dan profesional penyiaran di TVRI Stasiun Bali. Menemukan keindahan dalam harmoni nada, deburan ombak Bali, dan perjalanan yang penuh makna.',
       photo: {
         src: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1200&q=80',
-        alt: 'Aditya Pratama',
+        alt: 'I Wayan Dharma Wirahadi',
         aspectRatio: '4/5',
-        label: 'POTRET ADITYA',
+        label: 'POTRET DHARMA',
       },
-      instagram: 'adityapratama',
+      instagram: 'dharmawirahadi',
     },
     bride: {
-      name: 'Clarissa Maharani, B.A.',
-      childOf: 'Putri kedua dari Bapak Dr. Hendra K. & Ibu Ratna Dewi',
-      bio: 'Desainer interior dan kurator seni yang menemukan ketenangan di antara halaman buku lama dan aroma laut.',
+      name: 'Luthfi Quasimah Widoyo',
+      childOf: 'Putri tercinta dari Bapak Widoyo & Ibu Sri Mulyani',
+      bio: 'Produser program televisi di TVRI Bali (Eksplorasi Nusantara). Merajut visual, narasi keindahan budaya nusantara, dan kehangatan cerita dalam setiap bingkai karya.',
       photo: {
         src: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80',
-        alt: 'Clarissa Maharani',
+        alt: 'Luthfi Quasimah Widoyo',
         aspectRatio: '4/5',
-        label: 'POTRET CLARISSA',
+        label: 'POTRET LUTFHY',
       },
-      instagram: 'clarissamaharani',
+      instagram: 'lutfhyquasimah',
     },
   },
 
@@ -55,7 +57,7 @@ export const ASSETS = {
       numeral: '01',
       title: 'Awal Pertemuan',
       date: 'Oktober 2021',
-      desc: 'Sebuah perpustakaan kecil di sudut kota mempertemukan dua pandang yang tak sengaja mencari buku yang sama.',
+      desc: 'Di antara dinamika studio produksi visual dan penyiaran TVRI Bali, dua langkah dipertemukan oleh kecintaan yang sama pada cerita, nada, dan dedikasi karya.',
       photo: {
         src: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=1200&q=80',
         alt: 'Pertemuan Pertama',
@@ -67,7 +69,7 @@ export const ASSETS = {
       numeral: '02',
       title: 'Dua Garis Menemukan Irama',
       date: 'Mei 2023',
-      desc: 'Berbagi ratusan cangkir teh, menempuh ribuan kilometer perjalanan, belajar bahwa cinta adalah kesabaran yang disengaja.',
+      desc: 'Merajut program eksplorasi nusantara bersama, belajar bahwa harmoni bukan sekadar keselarasan frekuensi di balik layar, melainkan kesediaan hati untuk saling mendengar dan berjalan beriringan.',
       photo: {
         src: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=80',
         alt: 'Perjalanan Bersama',
@@ -79,7 +81,7 @@ export const ASSETS = {
       numeral: '03',
       title: 'Menuju Hari Ini',
       date: 'Juli 2026',
-      desc: 'Di bawah langit senja Selat Makassar, sebuah janji terucap untuk mengikat dua benang kehidupan menjadi satu simpul abadi.',
+      desc: 'Di bawah bentangan langit Bali dan deburan ombak yang tenang, terucap janji suci untuk menyatukan dua benang kehidupan menjadi ikatan yang abadi.',
       photo: {
         src: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80',
         alt: 'Janji Suci',

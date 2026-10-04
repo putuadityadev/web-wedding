@@ -109,19 +109,6 @@ export function Couple({ groom, bride }: CoupleProps) {
       className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none overflow-hidden"
     >
       <div className="max-w-7xl mx-auto w-full">
-        {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between border-b border-[var(--hairline)] pb-6 mb-16 md:mb-24">
-          <div className="flex items-center gap-3">
-            <span className="label-eyebrow text-[var(--deep)] tracking-[0.25em]">
-              MEMPELAI
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-          </div>
-          <span className="label-eyebrow text-[var(--ink)] opacity-50 tracking-[0.2em] mt-2 sm:mt-0">
-            DUA INSAN YANG MENYATU
-          </span>
-        </div>
-
         {/* Profiles Layout */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-16 md:gap-8 items-start">
           {/* PROFILE I: GROOM (Left-top) */}
@@ -147,7 +134,7 @@ export function Couple({ groom, bride }: CoupleProps) {
                 alt={groom.photo?.alt || groom.name}
                 aspectRatio="4/5"
                 arch={true}
-                label={groom.photo?.label || 'POTRET ADITYA'}
+                label={groom.photo?.label || 'POTRET DHARMA'}
               />
             </div>
 
@@ -190,7 +177,7 @@ export function Couple({ groom, bride }: CoupleProps) {
                 alt={bride.photo?.alt || bride.name}
                 aspectRatio="4/5"
                 arch={true}
-                label={bride.photo?.label || 'POTRET CLARISSA'}
+                label={bride.photo?.label || 'POTRET LUTFHY'}
               />
             </div>
 

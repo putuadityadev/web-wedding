@@ -94,19 +94,9 @@ export function Rsvp({ guest, onRsvpSubmitted }: RsvpProps) {
   return (
     <section
       id="rsvp"
-      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none border-t border-[var(--hairline)]"
+      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none"
     >
       <div className="max-w-3xl mx-auto w-full">
-        {/* Section Tag */}
-        <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-4 mb-12">
-          <span className="label-eyebrow tracking-[0.25em] text-[var(--deep)]">
-            KONFIRMASI KEHADIRAN
-          </span>
-          <span className="label-eyebrow tracking-[0.2em] text-[var(--ink)] opacity-50">
-            RSVP
-          </span>
-        </div>
-
         {/* Success State */}
         {isSuccess ? (
           <div className="p-8 md:p-12 bg-[var(--mist)]/60 border border-[var(--hairline)] rounded-[var(--radius-sm)] text-center my-6">
@@ -141,7 +131,7 @@ export function Rsvp({ guest, onRsvpSubmitted }: RsvpProps) {
                   type="button"
                   onClick={() =>
                     downloadCalendarEvent({
-                      title: 'Pernikahan Aditya & Clarissa',
+                      title: 'Pernikahan Dharma & Lutfhy',
                       description: 'Konfirmasi Hadir Resepsi Pernikahan',
                       location: `${guest.event.venueName}, ${guest.event.venueAddress}`,
                       startDate: guest.arrivalAt || guest.event.startsAt,

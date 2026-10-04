@@ -51,10 +51,6 @@ export function Footer({ closingLine, groomName, brideName }: FooterProps) {
       className="relative w-full pt-[var(--section-y)] pb-0 bg-[var(--baby-blue)] text-[var(--ink)] select-none overflow-hidden"
     >
       <div className="px-[var(--gutter)] max-w-4xl mx-auto text-center pb-20">
-        <span className="label-eyebrow tracking-[0.25em] text-[var(--ink)] opacity-60 block mb-6">
-          UNGKAPAN HATI
-        </span>
-
         <p className="display-m text-3xl sm:text-4xl md:text-5xl font-serif text-[var(--ink)] leading-[1.2] mb-12">
           {closingLine}
         </p>

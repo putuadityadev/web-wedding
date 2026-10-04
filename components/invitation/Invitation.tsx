@@ -6,7 +6,6 @@ import { LenisProvider } from '@/lib/motion/lenis';
 import { ASSETS } from '@/content/assets';
 import { Cover } from './Cover';
 import { PersistentBar } from './PersistentBar';
-import { ThreadSvg } from './ThreadSvg';
 import { Hero } from './Hero';
 import { Quote } from './Quote';
 import { Couple } from './Couple';
@@ -17,6 +16,7 @@ import { Gift } from './Gift';
 import { Rsvp } from './Rsvp';
 import { Wishes } from './Wishes';
 import { Footer } from './Footer';
+import { SplashCursor } from '@/components/ui/SplashCursor';
 
 interface InvitationProps {
   guest: GuestView;
@@ -66,23 +66,28 @@ export function Invitation({ guest, isPreview = false }: InvitationProps) {
           onOpenInvitation={handleOpenInvitation}
         />
 
+        {/* Adaptive Luxury Fluid Cursor (Blue on White background, Pearl White on Blue/Dark backgrounds) */}
+        <SplashCursor
+          DENSITY_DISSIPATION={4.2}
+          VELOCITY_DISSIPATION={2.2}
+          SPLAT_RADIUS={0.16}
+          SPLAT_FORCE={4200}
+        />
+
         {/* Persistent Floating Controls (Menu, Audio, Scroll line, RSVP quick link) */}
         <PersistentBar
           audioSrc={guest.event.musicUrl || ASSETS.audio.src}
           isUnlocked={isCoverOpened}
         />
 
-        {/* Signature Motif: Converging Thread Lines */}
-        <ThreadSvg />
-
-        {/* 1. Hero with Cinematic Background Video & 3D Typography */}
+        {/* 1. Hero with Real Editorial Portrait & 3D Typography */}
         <Hero
           groomName={guest.event.groomName}
           brideName={guest.event.brideName}
           dateShort="12 · 12 · 2026"
-          city="MAKASSAR, SULAWESI SELATAN"
-          videoSrc={ASSETS.hero.videoSrc}
-          posterSrc={ASSETS.hero.posterSrc}
+          imageAvif={ASSETS.hero.avifSrc}
+          imageWebp={ASSETS.hero.webpSrc}
+          imageSrc={ASSETS.hero.fallbackSrc}
         />
 
         {/* 2. Quote */}

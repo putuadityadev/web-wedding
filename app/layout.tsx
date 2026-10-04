@@ -18,8 +18,8 @@ const hankenGrotesk = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'Aditya & Clarissa — Pernikahan Suci',
-  description: 'Undangan pernikahan digital Aditya Pratama & Clarissa Maharani.',
+  title: 'Dharma & Lutfhy — Pernikahan Suci',
+  description: 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.',
   robots: {
     index: false,
     follow: false,

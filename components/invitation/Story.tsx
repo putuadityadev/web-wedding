@@ -62,22 +62,9 @@ export function Story({ moments }: StoryProps) {
     <section
       ref={containerRef}
       id="story"
-      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none border-t border-[var(--hairline)] overflow-hidden"
+      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none overflow-hidden"
     >
       <div className="max-w-6xl mx-auto w-full">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between border-b border-[var(--hairline)] pb-6 mb-16 md:mb-24">
-          <div className="flex items-center gap-3">
-            <span className="label-eyebrow text-[var(--deep)] tracking-[0.25em]">
-              CERITA KITA
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-          </div>
-          <span className="label-eyebrow text-[var(--ink)] opacity-50 tracking-[0.2em] mt-2 sm:mt-0">
-            TIGA BABAK PERJALANAN
-          </span>
-        </div>
-
         {/* 3 Moments List with 3D Perspective */}
         <div className="flex flex-col gap-24 md:gap-36" style={{ perspective: '1200px' }}>
           {moments.map((moment, index) => {

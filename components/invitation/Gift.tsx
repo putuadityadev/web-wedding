@@ -22,19 +22,9 @@ export function Gift({ accounts }: GiftProps) {
   return (
     <section
       id="gift"
-      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none border-t border-[var(--hairline)]"
+      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none"
     >
       <div className="max-w-4xl mx-auto w-full">
-        {/* Section Header */}
-        <div className="flex items-center justify-between border-b border-[var(--hairline)] pb-4 mb-12">
-          <span className="label-eyebrow tracking-[0.25em] text-[var(--deep)]">
-            TANDA KASIH
-          </span>
-          <span className="label-eyebrow tracking-[0.2em] text-[var(--ink)] opacity-50">
-            AMPLOP DIGITAL
-          </span>
-        </div>
-
         {/* Intro Text */}
         <div className="text-center max-w-xl mx-auto mb-10">
           <h3 className="display-m text-3xl sm:text-4xl text-[var(--ink)] font-serif mb-4">

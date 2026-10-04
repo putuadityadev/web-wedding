@@ -21,11 +21,11 @@ export function downloadCalendarEvent(eventData: {
   const icsContent = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Aditya & Clarissa//Wedding Invitation//ID',
+    'PRODID:-//Dharma & Lutfhy//Wedding Invitation//ID',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:wedding-${Date.now()}@adityaclarissa.wedding`,
+    `UID:wedding-${Date.now()}@dharmalutfhy.wedding`,
     `DTSTAMP:${formatICSDate(new Date().toISOString())}`,
     `DTSTART:${startStr}`,
     `DTEND:${endStr}`,
@@ -41,7 +41,7 @@ export function downloadCalendarEvent(eventData: {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'Pernikahan-Aditya-Clarissa.ics';
+  a.download = 'Pernikahan-Dharma-Lutfhy.ics';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

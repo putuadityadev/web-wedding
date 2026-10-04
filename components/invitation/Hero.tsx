@@ -7,7 +7,9 @@ interface HeroProps {
   groomName: string;
   brideName: string;
   dateShort?: string;
-  city?: string;
+  imageAvif?: string;
+  imageWebp?: string;
+  imageSrc?: string;
   videoSrc?: string;
   posterSrc?: string;
 }
@@ -16,9 +18,11 @@ export function Hero({
   groomName,
   brideName,
   dateShort = '12 · 12 · 2026',
-  city = 'MAKASSAR, SULAWESI SELATAN',
-  videoSrc = 'https://assets.mixkit.co/videos/preview/mixkit-young-couple-walking-in-a-field-at-sunset-41485-large.mp4',
-  posterSrc = 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1920&q=85',
+  imageAvif = '/KLK07943.avif',
+  imageWebp = '/KLK07943.webp',
+  imageSrc = '/KLK07943.jpg',
+  videoSrc,
+  posterSrc,
 }: HeroProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoWrapRef = useRef<HTMLDivElement | null>(null);
@@ -168,47 +172,59 @@ export function Hero({
       id="hero"
       className="relative min-h-[100svh] w-full flex flex-col justify-between overflow-hidden select-none bg-[var(--ink)] text-white"
     >
-      {/* 1. Cinematic Background Video Layer */}
+      {/* 1. Cinematic Background Media Layer: Ultra-Crisp Editorial AVIF */}
       <div
         ref={videoWrapRef}
-        className="absolute inset-0 w-full h-full pointer-events-none origin-center"
+        className="absolute inset-0 w-full h-full pointer-events-none origin-center transform-gpu"
       >
-        <video
-          ref={videoRef}
-          src={videoSrc}
-          poster={posterSrc}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="w-full h-full object-cover object-center filter brightness-[0.78] contrast-[1.08] saturate-[0.9]"
-        />
+        {videoSrc ? (
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            poster={posterSrc || imageAvif}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover object-center filter brightness-[0.78] contrast-[1.08] saturate-[0.9]"
+          />
+        ) : (
+          <picture className="block w-full h-full">
+            {imageAvif && <source srcSet={imageAvif} type="image/avif" />}
+            {imageWebp && <source srcSet={imageWebp} type="image/webp" />}
+            <img
+              src={imageSrc}
+              alt={`${groomName} & ${brideName}`}
+              className="w-full h-full object-cover object-[center_28%] sm:object-[center_32%] filter brightness-[0.84] contrast-[1.05] select-none"
+            />
+          </picture>
+        )}
 
-        {/* Quiet Luxury Overlays: Soft vignette & gradient for unmatched text contrast */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-black/75" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(15,27,45,0.6)_100%)]" />
+        {/* Quiet Luxury Overlays: Soft vignette & subtle gradient for unmatched typography contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/75" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(15,27,45,0.5)_100%)]" />
       </div>
 
-      {/* 2. Top Eyebrow Bar (Clear of fixed RSVP/MENU buttons) */}
+      {/* 2. Top Eyebrow Bar (Elevated high with no fixed buttons obstructing) */}
       <div
         ref={topBarRef}
-        className="relative z-10 w-full pt-24 sm:pt-28 px-[var(--gutter)] max-w-7xl mx-auto flex items-center justify-between pointer-events-none"
+        className="relative z-10 w-full pt-8 sm:pt-10 md:pt-12 px-[var(--gutter)] max-w-7xl mx-auto flex items-center justify-between pointer-events-none"
       >
         <div className="flex items-center gap-3">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-          <span className="label-eyebrow tracking-[0.28em] text-white/80 text-[11px] sm:text-xs">
+          <span className="label-eyebrow tracking-[0.28em] text-white/85 text-[11px] sm:text-xs">
             THE WEDDING OF
           </span>
         </div>
 
-        <div className="label-eyebrow tracking-[0.25em] text-white/70 text-[11px] sm:text-xs font-mono">
+        <div className="label-eyebrow tracking-[0.25em] text-white/75 text-[11px] sm:text-xs font-mono">
           {dateShort}
         </div>
       </div>
 
       {/* 3. Center Pure Editorial Titles (No container image box - clean, grand, poezabride aesthetic) */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-[var(--gutter)] my-auto py-12 flex flex-col justify-center">
-        {/* Aditya */}
+        {/* Dharma */}
         <div className="overflow-visible">
           <h1
             ref={title1Ref}
@@ -229,7 +245,7 @@ export function Hero({
           </span>
         </div>
 
-        {/* & Clarissa */}
+        {/* & Lutfhy */}
         <div className="overflow-visible flex items-baseline justify-end sm:justify-start sm:pl-24 md:pl-48">
           <h2
             ref={title2Ref}
@@ -246,23 +262,12 @@ export function Hero({
         </div>
       </div>
 
-      {/* 4. Bottom Metadata Bar (Clear of fixed bottom-left audio toggle) */}
+      {/* 4. Bottom Scroll Prompt Only (Ultra Clean & Minimalist) */}
       <div
         ref={bottomBarRef}
-        className="relative z-10 w-full pb-8 sm:pb-10 px-[var(--gutter)] max-w-7xl mx-auto flex items-end justify-between pointer-events-none"
+        className="relative z-10 w-full pb-8 sm:pb-10 px-[var(--gutter)] max-w-7xl mx-auto flex items-center justify-center pointer-events-none"
       >
-        {/* Left location: offset by 32 to guarantee ZERO collision with the fixed MUSIK toggle */}
-        <div className="pl-28 sm:pl-36">
-          <p className="label-eyebrow tracking-[0.22em] text-white/70 text-[10px] sm:text-xs">
-            {city}
-          </p>
-          <p className="label-eyebrow tracking-[0.16em] text-white/45 text-[9px] mt-0.5 font-serif italic">
-            Resepsi Pernikahan
-          </p>
-        </div>
-
-        {/* Right scroll prompt */}
-        <div className="flex items-center gap-3 label-eyebrow tracking-[0.25em] text-white/70 text-[10px] sm:text-xs">
+        <div className="flex items-center gap-3 label-eyebrow tracking-[0.28em] text-white/75 text-[10px] sm:text-xs">
           <span>GULIR</span>
           <div className="w-8 sm:w-12 h-[1px] bg-white/30 relative overflow-hidden">
             <div className="w-full h-full bg-[var(--baby-blue)] animate-pulse" />
