@@ -1,26 +1,237 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colors */
+  --paper: #FBFCFE;
+  --mist: #E8F1F9;
+  --baby-blue: #A9CBEA;
+  --deep: #3F6A94;
+  --ink: #0F1B2D;
+  --hairline: color-mix(in srgb, var(--ink) 12%, transparent);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+  --gutter: clamp(20px, 5vw, 72px);
+  --section-y: clamp(96px, 16vh, 220px);
+
+  /* Shapes */
+  --radius-arch: 999px 999px 0 0;
+  --radius-sm: 2px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.87, 0, 0.13, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --font-serif: var(--font-serif), Georgia, serif;
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --color-paper: var(--paper);
+  --color-mist: var(--mist);
+  --color-baby-blue: var(--baby-blue);
+  --color-deep: var(--deep);
+  --color-ink: var(--ink);
+  --color-hairline: var(--hairline);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base resets & typography */
+html {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--deep);
+  outline-offset: 3px;
+}
+
+/* Typography tokens */
+.display-xl {
+  font-family: var(--font-serif);
+  font-size: clamp(72px, 17vw, 280px);
+  line-height: 0.88;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.display-l {
+  font-family: var(--font-serif);
+  font-size: clamp(48px, 9vw, 140px);
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.display-m {
+  font-family: var(--font-serif);
+  font-size: clamp(32px, 5vw, 72px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.body-l {
+  font-size: clamp(18px, 1.6vw, 22px);
+  line-height: 1.55;
+  letter-spacing: 0;
+  text-wrap: pretty;
+}
+
+.body-base {
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: 0;
+  text-wrap: pretty;
+}
+
+.label-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Hairlines */
+.hairline-b {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.hairline-t {
+  border-top: 1px solid var(--hairline);
+}
+
+.hairline-y {
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.hairline-box {
+  border: 1px solid var(--hairline);
+}
+
+/* Architectural arch shape */
+.arch-frame {
+  border-radius: var(--radius-arch);
+  overflow: hidden;
+}
+
+/* Button signature */
+.btn-signature {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 32px;
+  min-height: 48px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 500;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.3s ease, color 0.3s ease;
+  user-select: none;
+}
+
+.btn-signature::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--baby-blue);
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.45s var(--ease-out);
+  z-index: 0;
+}
+
+.btn-signature:hover::before {
+  clip-path: inset(0 0 0 0);
+}
+
+.btn-signature > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Text link with animated underline */
+.link-hairline {
+  position: relative;
+  display: inline-block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.link-hairline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(1);
+  transform-origin: left;
+  transition: transform 0.3s var(--ease-out);
+}
+
+.link-hairline:hover::after {
+  transform: scaleX(0);
+  transform-origin: right;
+}
+
+/* Music waveform bars */
+@keyframes soundwave {
+  0%, 100% {
+    height: 4px;
+  }
+  50% {
+    height: 16px;
+  }
+}
+
+.wave-bar {
+  width: 2px;
+  background-color: var(--ink);
+  border-radius: 1px;
+  animation: soundwave 1.2s ease-in-out infinite;
+}
+
+.wave-bar:nth-child(1) {
+  animation-delay: 0s;
+}
+.wave-bar:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.wave-bar:nth-child(3) {
+  animation-delay: 0.4s;
 }
