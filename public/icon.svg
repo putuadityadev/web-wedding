@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F7E7C4"/>
+      <stop offset="50%" stop-color="#E2BE75"/>
+      <stop offset="100%" stop-color="#B8934C"/>
+    </linearGradient>
+    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#DDE6ED"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="0.8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Squircle with Primary #0F1B2D -->
+  <rect width="64" height="64" rx="14" fill="#0F1B2D"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="none" stroke="rgba(255, 255, 255, 0.18)" stroke-width="1"/>
+
+  <!-- Left Ring: Groom Ring (Warm Gold) -->
+  <circle cx="26" cy="32" r="13.5" fill="none" stroke="url(#goldGrad)" stroke-width="3.5"/>
+
+  <!-- Right Ring: Bride Ring (White Gold) -->
+  <circle cx="38" cy="32" r="13.5" fill="none" stroke="url(#whiteGrad)" stroke-width="3.5"/>
+
+  <!-- Interlocking Front Arc -->
+  <path d="M 33 22 A 13.5 13.5 0 0 1 33 42" fill="none" stroke="url(#goldGrad)" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- Brilliant Diamond Sparkle on Top-Right -->
+  <g transform="translate(46.5, 20.5)" filter="url(#glow)">
+    <path d="M 0 -6 Q 0 0 6 0 Q 0 0 0 6 Q 0 0 -6 0 Q 0 0 0 -6 Z" fill="#FFFFFF"/>
+    <circle cx="0" cy="0" r="1.4" fill="#F7E7C4"/>
+  </g>
+</svg>

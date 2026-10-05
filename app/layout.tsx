@@ -20,6 +20,15 @@ const hankenGrotesk = Hanken_Grotesk({
 export const metadata: Metadata = {
   title: 'Dharma & Lutfhy — Pernikahan Suci',
   description: 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.',
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   robots: {
     index: false,
     follow: false,
