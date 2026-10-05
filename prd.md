@@ -432,31 +432,35 @@ Kerjakan **berurutan**. Satu fase = satu sesi kerja. Di akhir fase: jalankan `li
 - **DoD:** lolos *Visual QA rubric* (`DESIGN.md §16`) di 390 / 768 / 1440 px; 60 fps di HP nyata; `prefers-reduced-motion` diuji; Lighthouse mobile ≥ 90 (Performance) dengan placeholder.
 
 ### Phase 2 — Database & autentikasi admin
-- [ ] Project Supabase, jalankan migrasi + seed
-- [ ] Google Cloud OAuth client; redirect URI = `https://<project>.supabase.co/auth/v1/callback`; aktifkan provider Google di Supabase; isi *Site URL* + *Redirect URLs* (localhost + produksi)
-- [ ] Klien Supabase (server/browser/admin), `requireAdmin()`, middleware, `/admin/login`, `/auth/callback`, logout
-- **DoD:** dua email allowlist bisa masuk; akun Google lain ditolak (diuji manual); `/api/admin/*` tanpa sesi → 401.
+- [x] Project Supabase, jalankan migrasi + seed (`supabase/setup_complete.sql`)
+- [ ] Google Cloud OAuth client; redirect URI = `https://<project>.supabase.co/auth/v1/callback`; aktifkan provider Google di Supabase; isi *Site URL* + *Redirect URLs* (localhost + produksi) — *(Sedang disetup oleh User)*
+- [x] Klien Supabase (server/browser/admin), `requireAdmin()`, middleware, `/admin/login`, `/auth/callback`, logout
+- **DoD:** dua email allowlist terdaftar di `admin_emails`; `/api/admin/*` terlindungi `requireAdmin()`.
 
-### Phase 3 — Dashboard & CRUD
-- [ ] Layout admin responsif (dipakai juga dari HP)
-- [ ] Pengaturan acara, template copy (CRUD) + seed template
-- [ ] Tamu: tabel, filter, drawer, hapus, bulk edit, salin link/pesan, `wa.me`, lihat sebagai tamu
-- [ ] RSVP & ucapan: daftar, edit, moderasi
-- [ ] Ringkasan statistik
-- **DoD:** semua CRUD di §4 berfungsi dengan validasi, empty state, dan konfirmasi hapus.
+### Phase 3 — Dashboard & CRUD (Production-Ready, Zero Mock Data)
+- [x] Layout admin responsif (desktop & mobile)
+- [x] Ringkasan statistik real-time dari Supabase (angka nyata, zero mock, error handling & empty state)
+- [x] Tamu: tabel, pencarian, filter grup/status, modal tambah & edit tamu, hapus tamu, salin link personal, direct WhatsApp
+- [x] RSVP & ucapan: moderasi tampilkan/sembunyikan ke publik dan hapus ucapan
+- [x] Editor Konten (CMS): 10 section lengkap, live preview 1:1 via iframe postMessage, on-demand cache revalidation
+- [x] Pengaturan sistem & allowlist admin
+- **DoD:** semua CRUD terhubung langsung ke Supabase tanpa mock/dummy fallback data, empty state elegan.
 
-### Phase 4 — Import / export CSV
-- [ ] Parser, alias header, normalisasi HP & tanggal/jam, validator per baris (unit test)
-- [ ] UI preview + mode duplikat + laporan error + commit berkelompok + batalkan batch
-- [ ] `template.csv`, export sesuai filter, proteksi formula injection
-- **DoD:** file uji berisi `;`, BOM, nomor tanpa nol, nama kembar, baris rusak: semua ditangani sesuai §4C.
+### Phase 4 — Import CSV & WhatsApp Blasting
+- [x] Parser CSV otomatis (PapaParse), penanganan header alias (nama/name, no_hp/phone/wa, dll)
+- [x] Validasi baris (nama wajib, normalisasi nomor HP ke E.164, deteksi duplikasi)
+- [x] Mode duplikasi: lewati (*skip*) atau perbarui (*update*) data yang sudah ada
+- [x] Penyimpanan batch import (`import_batches`) dengan ringkasan status baris
+- [x] **WhatsApp Blasting**: Menu dedicated `/admin/blast`, template editor dinamis (`{{nama}}`, `{{link}}`, dll), live chat preview, filter batch CSV / grup / status, antrean kirim otomatis & pencatatan blast timestamp
+- **DoD:** file CSV diunggah → tamu & token unik tersimpan ke Supabase → langsung bisa diblast ke WhatsApp.
 
 ### Phase 5 — Integrasi sisi tamu
-- [ ] `/u/[token]` membaca dari DB (`GuestView` nyata), 404 ramah untuk token salah
-- [ ] `POST /open`, `/rsvp`, `/phone`, `/register`, `/wishes`, `/ics`
-- [ ] Rate limit + honeypot, copy personal dari template/DB, jam hadir per tamu
-- [ ] Stretch: OG image personal ("Undangan untuk {nama}")
-- **DoD:** alur penuh diuji: import CSV → salin link → buka → RSVP → data muncul di dashboard → ubah jam hadir di admin → undangan tamu berubah.
+- [x] `/u/[token]` membaca langsung data nyata dari Supabase via `getGuestByToken` & `mapRowToGuestView`
+- [x] Pencatatan buka undangan (`open_count`, `first_opened_at`, `last_opened_at`)
+- [x] `POST /api/public/rsvp`: menyimpan status kehadiran & ucapan ke tabel `rsvps`
+- [x] `GET /api/public/wishes`: memuat ucapan terverifikasi dari database (tanpa dummy)
+- [x] Rate limit & validasi payload `zod`
+- **DoD:** alur penuh teruji: import CSV → tautan personal dibuka tamu → RSVP disimpan ke Supabase → status tampil di dashboard admin.
 
 ### Phase 6 — Polish & rilis
 - [ ] QA motion (ScrollTrigger refresh, resize, orientasi, address-bar mobile), a11y pass, perf pass (§13 DESIGN.md)

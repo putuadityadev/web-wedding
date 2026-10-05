@@ -3,11 +3,19 @@
 import React, { useState } from 'react';
 import { BankAccount } from '@/lib/guests/view';
 
-interface GiftProps {
+export interface GiftProps {
+  sectionLabel?: string;
+  sectionTitle?: string;
+  sectionDesc?: string;
   accounts: BankAccount[];
 }
 
-export function Gift({ accounts }: GiftProps) {
+export function Gift({
+  sectionLabel = 'TANDA KASIH',
+  sectionTitle = 'Doa Restu & Amplop Digital',
+  sectionDesc = 'Kehadiran dan doa restu Anda adalah hadiah terindah bagi kami. Namun jika Anda bermaksud memberikan tanda kasih secara digital, Anda dapat menggunakan informasi rekening berikut.',
+  accounts,
+}: GiftProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
@@ -27,12 +35,22 @@ export function Gift({ accounts }: GiftProps) {
       <div className="max-w-4xl mx-auto w-full">
         {/* Intro Text */}
         <div className="text-center max-w-xl mx-auto mb-10">
+          {sectionLabel && (
+            <div className="inline-flex items-center gap-2 mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
+              <span className="label-eyebrow tracking-[0.25em] text-[11px] text-[var(--ink)] opacity-60 uppercase">
+                {sectionLabel}
+              </span>
+            </div>
+          )}
           <h3 className="display-m text-3xl sm:text-4xl text-[var(--ink)] font-serif mb-4">
-            Doa &amp; Restu Anda
+            {sectionTitle}
           </h3>
-          <p className="body-base text-[var(--ink)] opacity-80 leading-relaxed">
-            Kehadiran dan doa restu Anda adalah hadiah terindah bagi kami. Namun jika Anda bermaksud memberikan tanda kasih secara digital, Anda dapat menggunakan informasi rekening berikut.
-          </p>
+          {sectionDesc && (
+            <p className="body-base text-[var(--ink)] opacity-80 leading-relaxed">
+              {sectionDesc}
+            </p>
+          )}
         </div>
 
         {/* Accordion Container */}

@@ -11,7 +11,9 @@ const InteractiveMap = dynamic(
   { ssr: false }
 );
 
-interface EventProps {
+export interface EventProps {
+  sectionLabel?: string;
+  sectionTitle?: string;
   dayFormatted: string; // e.g. "SABTU"
   dateNumeral: string; // e.g. "12"
   monthYearFormatted: string; // e.g. "DESEMBER 2026"
@@ -20,6 +22,9 @@ interface EventProps {
   venueName: string;
   venueAddress: string;
   mapsUrl: string;
+  lat?: number;
+  lng?: number;
+  countdownLabel?: string;
   guestArrivalTime?: string | null; // e.g. "11.00 – 12.00 WITA"
   inviteLine?: string | null;
   startsAt: string; // ISO
@@ -34,6 +39,8 @@ interface TimeRemaining {
 }
 
 export function Event({
+  sectionLabel = 'Waktu & Lokasi Acara',
+  sectionTitle,
   dayFormatted = 'SABTU',
   dateNumeral = '12',
   monthYearFormatted = 'DESEMBER 2026',
@@ -42,6 +49,9 @@ export function Event({
   venueName = 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
   venueAddress = 'Banjar Kawan, Desa Kayubihi, Kec. Bangli, Kabupaten Bangli, Bali 80614',
   mapsUrl = 'https://www.google.com/maps/search/?api=1&query=-8.3981403,115.3643337',
+  lat = -8.3981403,
+  lng = 115.3643337,
+  countdownLabel = 'MENGHITUNG HARI',
   guestArrivalTime,
   inviteLine,
   startsAt,
@@ -155,8 +165,13 @@ export function Event({
         {/* Section Eyebrow */}
         <div className="text-center mb-6">
           <span className="label-eyebrow tracking-[0.32em] text-[var(--deep)] text-[10px] sm:text-xs font-semibold uppercase">
-            Waktu &amp; Lokasi Acara
+            {sectionLabel}
           </span>
+          {sectionTitle && (
+            <h2 className="display-l font-serif text-3xl sm:text-4xl text-[var(--ink)] mt-2">
+              {sectionTitle}
+            </h2>
+          )}
         </div>
 
         {/* Date Display */}
@@ -270,8 +285,8 @@ export function Event({
         {/* Clean Interactive Map */}
         <div className="my-10">
           <InteractiveMap
-            lat={-8.3981403}
-            lng={115.3643337}
+            lat={lat}
+            lng={lng}
             zoom={16}
             mapsUrl={mapsUrl}
             venueName={venueName}
@@ -282,7 +297,7 @@ export function Event({
         {/* Countdown Timer Block */}
         <div className="mt-16 pt-10 border-t border-[var(--ink)]/15 text-center">
           <span className="label-eyebrow tracking-[0.25em] text-[var(--ink)] opacity-60 block mb-6 text-[10px] uppercase">
-            MENGHITUNG HARI
+            {countdownLabel}
           </span>
 
           <div className="grid grid-cols-4 gap-2 sm:gap-4 max-w-xl mx-auto">

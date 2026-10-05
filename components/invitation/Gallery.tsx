@@ -4,8 +4,8 @@ import React, { useRef, useEffect } from 'react';
 import { registerGSAP, gsap, ScrollTrigger } from '@/lib/motion/gsap';
 import { MediaFrame } from './MediaFrame';
 
-interface GalleryItem {
-  id: number;
+export interface GalleryItem {
+  id: number | string;
   label: string;
   type: string;
   title: string;
@@ -13,11 +13,19 @@ interface GalleryItem {
   src?: string;
 }
 
-interface GalleryProps {
+export interface GalleryProps {
+  sectionLabel?: string;
+  sectionTitle?: string;
+  sectionDesc?: string;
   items: GalleryItem[];
 }
 
-export function Gallery({ items }: GalleryProps) {
+export function Gallery({
+  sectionLabel = 'GALERI KENANGAN',
+  sectionTitle,
+  sectionDesc,
+  items,
+}: GalleryProps) {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -106,6 +114,21 @@ export function Gallery({ items }: GalleryProps) {
       id="gallery"
       className="relative w-full h-[100svh] bg-[var(--paper)] select-none overflow-hidden flex flex-col justify-between py-6 sm:py-8"
     >
+      {/* Top Header Bar */}
+      <div className="w-full max-w-7xl mx-auto px-[var(--gutter)] pt-4 z-20 flex items-center justify-between pointer-events-none">
+        <div className="flex items-center gap-3">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
+          <span className="label-eyebrow tracking-[0.25em] text-[11px] text-[var(--ink)] opacity-70 uppercase">
+            {sectionLabel}
+          </span>
+        </div>
+        {sectionTitle && (
+          <span className="font-serif italic text-sm sm:text-base text-[var(--ink)] opacity-70 hidden sm:inline-block">
+            {sectionTitle}
+          </span>
+        )}
+      </div>
+
       {/* Pinned Horizontal Gallery Track (Full Screen Immersion) */}
       <div className="relative w-full my-auto overflow-visible z-10 flex items-center">
         <div

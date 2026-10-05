@@ -5,107 +5,105 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
+interface RecentRsvpItem {
+  id: string;
+  guestName: string;
+  status: 'attending' | 'not_attending';
+  pax: number;
+  wish: string | null;
+  createdAt: string;
+}
+
 export default async function AdminOverviewPage() {
   await requireAdmin();
 
   let stats = {
-    totalGuests: 142,
-    totalSeats: 284,
-    openedCount: 98,
-    openedPercentage: 69,
-    attendingCount: 84,
-    notAttendingCount: 12,
-    unrespondedCount: 46,
-    withoutPhoneCount: 8,
-    needsReviewCount: 2,
-    recentRsvps: [
-      {
-        id: '1',
-        guestName: 'Bapak Budi & Keluarga',
-        status: 'attending',
-        pax: 2,
-        wish: 'Selamat menempuh hidup baru Dharma & Lutfhy! Bahagia selalu selamanya.',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        guestName: 'Kadek Mahendra',
-        status: 'attending',
-        pax: 1,
-        wish: 'Rahajeng ngemargiang pawiwahan bli Dharma!',
-        createdAt: new Date(Date.now() - 3600000).toISOString(),
-      },
-      {
-        id: '3',
-        guestName: 'Siti Rahmawati & Rekan',
-        status: 'not_attending',
-        pax: 0,
-        wish: 'Mohon maaf belum bisa hadir langsung, doa terbaik untuk kalian berdua.',
-        createdAt: new Date(Date.now() - 7200000).toISOString(),
-      },
-    ],
+    totalGuests: 0,
+    totalSeats: 0,
+    openedCount: 0,
+    openedPercentage: 0,
+    attendingCount: 0,
+    notAttendingCount: 0,
+    unrespondedCount: 0,
+    withoutPhoneCount: 0,
+    needsReviewCount: 0,
+    recentRsvps: [] as RecentRsvpItem[],
   };
 
-  const isSupabaseConfigured =
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
+  let dbError: string | null = null;
 
-  if (isSupabaseConfigured) {
-    try {
-      const admin = createAdminClient();
-      const { data: guests } = await admin
-        .from('guests')
-        .select('id, phone, max_pax, open_count, needs_review');
+  try {
+    const admin = createAdminClient();
+    const { data: guests, error: guestsErr } = await admin
+      .from('guests')
+      .select('id, phone, max_pax, open_count, needs_review');
 
-      const { data: rsvps } = await admin
-        .from('rsvps')
-        .select('id, guest_id, status, pax, wish, created_at, guests(name)')
-        .order('created_at', { ascending: false });
+    const { data: rsvps, error: rsvpsErr } = await admin
+      .from('rsvps')
+      .select('id, guest_id, status, pax, wish, created_at, guests(name)')
+      .order('created_at', { ascending: false });
 
-      if (guests && guests.length > 0) {
-        const totalGuests = guests.length;
-        const totalSeats = guests.reduce((sum, g) => sum + (g.max_pax || 2), 0);
-        const openedCount = guests.filter((g) => g.open_count > 0).length;
-        const openedPercentage = Math.round((openedCount / totalGuests) * 100);
-        const withoutPhoneCount = guests.filter((g) => !g.phone).length;
-        const needsReviewCount = guests.filter((g) => g.needs_review).length;
+    if (guestsErr || rsvpsErr) {
+      dbError = guestsErr?.message || rsvpsErr?.message || 'Gagal terhubung ke database';
+    } else {
+      const guestList = guests || [];
+      const rsvpList = rsvps || [];
 
-        const rsvpList = rsvps || [];
-        const attendingCount = rsvpList.filter((r) => r.status === 'attending').length;
-        const notAttendingCount = rsvpList.filter((r) => r.status === 'not_attending').length;
-        const unrespondedCount = Math.max(0, totalGuests - (attendingCount + notAttendingCount));
+      const totalGuests = guestList.length;
+      const totalSeats = guestList.reduce((sum, g) => sum + (g.max_pax || 2), 0);
+      const openedCount = guestList.filter((g) => g.open_count > 0).length;
+      const openedPercentage = totalGuests > 0 ? Math.round((openedCount / totalGuests) * 100) : 0;
+      const withoutPhoneCount = guestList.filter((g) => !g.phone).length;
+      const needsReviewCount = guestList.filter((g) => g.needs_review).length;
 
-        // Format recent rsvps
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const recentRsvps = rsvpList.slice(0, 8).map((r: any) => ({
-          id: r.id,
-          guestName: r.guests?.name || 'Tamu Undangan',
-          status: r.status,
-          pax: r.pax,
-          wish: r.wish,
-          createdAt: r.created_at,
-        }));
+      const attendingCount = rsvpList.filter((r) => r.status === 'attending').length;
+      const notAttendingCount = rsvpList.filter((r) => r.status === 'not_attending').length;
+      const unrespondedCount = Math.max(0, totalGuests - (attendingCount + notAttendingCount));
 
-        stats = {
-          totalGuests,
-          totalSeats,
-          openedCount,
-          openedPercentage,
-          attendingCount,
-          notAttendingCount,
-          unrespondedCount,
-          withoutPhoneCount,
-          needsReviewCount,
-          recentRsvps,
-        };
-      }
-    } catch (e) {
-      console.warn('Fallback to mock overview stats:', e);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recentRsvps: RecentRsvpItem[] = rsvpList.slice(0, 8).map((r: any) => ({
+        id: r.id,
+        guestName: r.guests?.name || 'Tamu Undangan',
+        status: r.status,
+        pax: r.pax,
+        wish: r.wish,
+        createdAt: r.created_at,
+      }));
+
+      stats = {
+        totalGuests,
+        totalSeats,
+        openedCount,
+        openedPercentage,
+        attendingCount,
+        notAttendingCount,
+        unrespondedCount,
+        withoutPhoneCount,
+        needsReviewCount,
+        recentRsvps,
+      };
     }
+  } catch (e: unknown) {
+    dbError = e instanceof Error ? e.message : 'Terjadi kendala koneksi ke Supabase';
   }
 
   return (
     <div className="space-y-8">
+      {/* DB Error Notification if connection failed */}
+      {dbError && (
+        <div className="bg-red-50 border border-red-200 rounded-[var(--radius-sm)] p-4 text-xs text-red-800 flex items-start gap-3">
+          <span className="text-base leading-none">⚠️</span>
+          <div className="space-y-1">
+            <strong className="font-semibold">Koneksi Database Supabase Terkendala:</strong>
+            <p className="font-mono text-[11px] text-red-700">{dbError}</p>
+            <p className="text-[11px] text-red-600 mt-1">
+              Pastikan environment variable Supabase sudah benar dan file script{' '}
+              <code className="bg-red-100 px-1 py-0.5 rounded font-mono">supabase/setup_complete.sql</code> sudah dijalankan di Supabase SQL Editor.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Top Welcome Banner */}
       <div className="bg-white border border-[#0F1B2D]/10 rounded-[var(--radius-sm)] p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs">
         <div>
@@ -121,10 +119,16 @@ export default async function AdminOverviewPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link
+            href="/admin/blast"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-sm)] bg-[#25D366] text-white hover:bg-[#20ba5a] text-xs font-medium tracking-wide transition-all shadow-xs"
+          >
+            <span>🚀 Buka WA Blasting</span>
+          </Link>
+          <Link
             href="/admin/content"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-sm)] bg-[#0F1B2D] text-white hover:bg-[#1E293B] text-xs font-medium tracking-wide transition-all shadow-xs"
           >
-            <span>Buka Editor Konten</span>
+            <span>Buka Editor CMS</span>
             <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none">
               <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -164,7 +168,9 @@ export default async function AdminOverviewPage() {
             {stats.openedCount}
           </div>
           <div className="mt-2 text-[11px] text-[#0F1B2D]/60">
-            Dari {stats.totalGuests} total link yang dibagikan
+            {stats.totalGuests > 0
+              ? `Dari ${stats.totalGuests} link yang dibagikan`
+              : 'Belum ada link dibagikan'}
           </div>
         </div>
 
@@ -215,7 +221,7 @@ export default async function AdminOverviewPage() {
                 Konfirmasi RSVP Terbaru
               </h3>
               <p className="text-xs text-[#0F1B2D]/50 mt-0.5">
-                Daftar respons dan doa restu yang baru saja dikirim oleh tamu.
+                Daftar respons dan doa restu yang baru saja dikirim oleh para tamu.
               </p>
             </div>
             <Link
@@ -226,44 +232,72 @@ export default async function AdminOverviewPage() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-[#0F1B2D]/10 text-[#0F1B2D]/50 font-mono text-[10px] uppercase">
-                  <th className="pb-3 font-normal">Nama Tamu</th>
-                  <th className="pb-3 font-normal">Status</th>
-                  <th className="pb-3 font-normal">Pax</th>
-                  <th className="pb-3 font-normal">Ucapan / Doa</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#0F1B2D]/5">
-                {stats.recentRsvps.map((rsvp) => (
-                  <tr key={rsvp.id} className="hover:bg-[#F9FAFB]">
-                    <td className="py-3.5 font-medium text-[#0F1B2D] whitespace-nowrap">
-                      {rsvp.guestName}
-                    </td>
-                    <td className="py-3.5 whitespace-nowrap">
-                      {rsvp.status === 'attending' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Hadir
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-stone-100 text-stone-600 border border-stone-200">
-                          Berhalangan
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3.5 font-mono text-[#0F1B2D]/70">
-                      {rsvp.pax || 0}
-                    </td>
-                    <td className="py-3.5 text-[#0F1B2D]/70 max-w-xs truncate" title={rsvp.wish || ''}>
-                      {rsvp.wish || <span className="opacity-40 italic">Tanpa ucapan</span>}
-                    </td>
+          {stats.recentRsvps.length === 0 ? (
+            <div className="py-12 px-4 text-center border border-dashed border-[#0F1B2D]/15 rounded-[var(--radius-sm)] bg-[#FBFBFC]">
+              <div className="w-12 h-12 rounded-full bg-[#0F1B2D]/5 text-[#0F1B2D]/60 flex items-center justify-center text-xl mx-auto mb-3">
+                ✉️
+              </div>
+              <h4 className="font-serif text-base font-medium text-[#0F1B2D]">
+                Belum Ada Konfirmasi RSVP
+              </h4>
+              <p className="text-xs text-[#0F1B2D]/60 mt-1 max-w-sm mx-auto leading-relaxed">
+                Saat tamu membuka tautan undangan mereka dan mengisi kehadiran, respons serta ucapan doa akan otomatis muncul di sini.
+              </p>
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <Link
+                  href="/admin/guests"
+                  className="px-3.5 py-2 rounded bg-[#0F1B2D] text-white hover:bg-[#1E293B] text-xs font-medium transition-all"
+                >
+                  + Tambah Tamu
+                </Link>
+                <Link
+                  href="/admin/import"
+                  className="px-3.5 py-2 rounded bg-white hover:bg-stone-50 border border-[#0F1B2D]/15 text-[#0F1B2D] text-xs font-medium transition-all"
+                >
+                  Import dari CSV
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-[#0F1B2D]/10 text-[#0F1B2D]/50 font-mono text-[10px] uppercase">
+                    <th className="pb-3 font-normal">Nama Tamu</th>
+                    <th className="pb-3 font-normal">Status</th>
+                    <th className="pb-3 font-normal">Pax</th>
+                    <th className="pb-3 font-normal">Ucapan / Doa</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-[#0F1B2D]/5">
+                  {stats.recentRsvps.map((rsvp) => (
+                    <tr key={rsvp.id} className="hover:bg-[#F9FAFB]">
+                      <td className="py-3.5 font-medium text-[#0F1B2D] whitespace-nowrap">
+                        {rsvp.guestName}
+                      </td>
+                      <td className="py-3.5 whitespace-nowrap">
+                        {rsvp.status === 'attending' ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Hadir
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-stone-100 text-stone-600 border border-stone-200">
+                            Berhalangan
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 font-mono text-[#0F1B2D]/70">
+                        {rsvp.pax || 0}
+                      </td>
+                      <td className="py-3.5 text-[#0F1B2D]/70 max-w-xs truncate" title={rsvp.wish || ''}>
+                        {rsvp.wish || <span className="opacity-40 italic">Tanpa ucapan</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Quick Shortcuts & Guidance (1 Col) */}
@@ -273,10 +307,21 @@ export default async function AdminOverviewPage() {
               Aksi Cepat
             </h3>
             <p className="text-xs text-[#0F1B2D]/60 mb-5 leading-relaxed">
-              Pintasan untuk mengedit konten undangan, menambah tamu, atau mengimpor daftar dari CSV.
+              Pintasan untuk mengedit konten undangan, menambah tamu, atau mengirim broadcast WA.
             </p>
 
             <div className="space-y-2.5">
+              <Link
+                href="/admin/blast"
+                className="flex items-center justify-between p-3 rounded bg-emerald-50/60 hover:bg-emerald-100/60 border border-emerald-200 transition-all text-xs font-medium text-emerald-900"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="text-base">🚀</span>
+                  <span>WhatsApp Blasting</span>
+                </div>
+                <span className="text-[10px] font-mono text-emerald-700 font-semibold">Blast WA →</span>
+              </Link>
+
               <Link
                 href="/admin/content"
                 className="flex items-center justify-between p-3 rounded bg-[#F8F9FA] hover:bg-[#F1F3F5] border border-[#0F1B2D]/5 transition-all text-xs font-medium text-[#0F1B2D]"

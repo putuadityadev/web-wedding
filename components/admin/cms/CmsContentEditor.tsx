@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { SiteContent, DEFAULT_SITE_CONTENT } from '@/lib/content/types';
 import { CmsSectionPreview } from './CmsSectionPreview';
 import { ImageUploadField } from './ImageUploadField';
@@ -13,6 +14,7 @@ const TABS: { id: keyof SiteContent; label: string; icon: string }[] = [
   { id: 'cover', label: 'Cover & Amplop', icon: '✉️' },
   { id: 'hero', label: 'Hero Utama', icon: '✨' },
   { id: 'quote', label: 'Kutipan Pembuka', icon: '📜' },
+  { id: 'prayer', label: 'Doa Pernikahan', icon: '🤲' },
   { id: 'couple', label: 'Profil Mempelai', icon: '💍' },
   { id: 'story', label: 'Kisah Perjalanan', icon: '📖' },
   { id: 'event', label: 'Waktu & Lokasi', icon: '📍' },
@@ -23,6 +25,7 @@ const TABS: { id: keyof SiteContent; label: string; icon: string }[] = [
 ];
 
 export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
+  const router = useRouter();
   const [content, setContent] = useState<SiteContent>(initialContent);
   const [activeTab, setActiveTab] = useState<keyof SiteContent>('cover');
   const [mobileMode, setMobileMode] = useState<'editor' | 'preview'>('editor');
@@ -51,6 +54,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
         throw new Error(result.error || 'Gagal menyimpan perubahan');
       }
 
+      router.refresh();
       showToast('success', `Perubahan pada section "${activeTab.toUpperCase()}" berhasil disimpan!`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat menyimpan';
@@ -290,8 +294,117 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
             {/* 2. HERO FORM */}
             {activeTab === 'hero' && (
               <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Nama Panggilan Pria di Hero
+                    </label>
+                    <input
+                      type="text"
+                      value={content.hero.groomName}
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          hero: { ...content.hero, groomName: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Nama Panggilan Wanita di Hero
+                    </label>
+                    <input
+                      type="text"
+                      value={content.hero.brideName}
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          hero: { ...content.hero, brideName: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                    Eyebrow Badge Atas
+                  </label>
+                  <input
+                    type="text"
+                    value={content.hero.badge}
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        hero: { ...content.hero, badge: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                    Garis Puitis / Subtitle Tengah
+                  </label>
+                  <input
+                    type="text"
+                    value={content.hero.subtitle}
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        hero: { ...content.hero, subtitle: e.target.value },
+                      })
+                    }
+                    placeholder="DUA GARIS · SATU BENANG PERJALANAN"
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                  />
+                  <p className="text-[10px] text-[#0F1B2D]/50 mt-1">
+                    Teks puitis di antara nama mempelai pria dan wanita di tengah layar Hero.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Format Tanggal Singkat
+                    </label>
+                    <input
+                      type="text"
+                      value={content.hero.dateShort}
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          hero: { ...content.hero, dateShort: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Teks Petunjuk Gulir Bawah
+                    </label>
+                    <input
+                      type="text"
+                      value={content.hero.scrollHint}
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          hero: { ...content.hero, scrollHint: e.target.value },
+                        })
+                      }
+                      placeholder="GULIR PERLAHAN"
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                    />
+                  </div>
+                </div>
+
                 <ImageUploadField
-                  label="Foto Potret Utama (Hero Portrait)"
+                  label="Foto Potret Utama (Hero Portrait Background)"
                   value={content.hero.portraitSrc}
                   folder="hero"
                   onChange={(url) =>
@@ -306,15 +419,15 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Eyebrow Badge
+                      Label Badge Pada Foto
                     </label>
                     <input
                       type="text"
-                      value={content.hero.badge}
+                      value={content.hero.portraitLabel}
                       onChange={(e) =>
                         setContent({
                           ...content,
-                          hero: { ...content.hero, badge: e.target.value },
+                          hero: { ...content.hero, portraitLabel: e.target.value },
                         })
                       }
                       className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
@@ -322,37 +435,20 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                   </div>
                   <div>
                     <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Tanggal Singkat
+                      Deskripsi Alt Foto
                     </label>
                     <input
                       type="text"
-                      value={content.hero.dateShort}
+                      value={content.hero.portraitAlt}
                       onChange={(e) =>
                         setContent({
                           ...content,
-                          hero: { ...content.hero, dateShort: e.target.value },
+                          hero: { ...content.hero, portraitAlt: e.target.value },
                         })
                       }
                       className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Label Badge Pada Foto
-                  </label>
-                  <input
-                    type="text"
-                    value={content.hero.portraitLabel}
-                    onChange={(e) =>
-                      setContent({
-                        ...content,
-                        hero: { ...content.hero, portraitLabel: e.target.value },
-                      })
-                    }
-                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
-                  />
                 </div>
               </>
             )}
@@ -405,6 +501,120 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                         quote: { ...content.quote, citation: e.target.value },
                       })
                     }
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* 3.5 PRAYER FORM (DOA PERNIKAHAN) */}
+            {activeTab === 'prayer' && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Label Eyebrow / Kategori
+                    </label>
+                    <input
+                      type="text"
+                      value={content.prayer?.sectionLabel || ''}
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          prayer: { ...content.prayer, sectionLabel: e.target.value },
+                        })
+                      }
+                      placeholder="DOA & RESTU WIWAHA"
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Judul Section Doa
+                    </label>
+                    <input
+                      type="text"
+                      value={content.prayer?.title || ''}
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          prayer: { ...content.prayer, title: e.target.value },
+                        })
+                      }
+                      placeholder="Asung Kertha Wara Nugraha"
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                    Teks Sloka / Doa Suci (Sanskerta / Bali / Latin)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={content.prayer?.arabicOrSanskrit || ''}
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        prayer: { ...content.prayer, arabicOrSanskrit: e.target.value },
+                      })
+                    }
+                    placeholder="Om Ihaiva stam ma vi yaustam, visvam ayur vyasnutam, kridantau putrair naptrbhih modamanau sve grhe."
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] leading-relaxed font-serif"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                    Terjemahan / Makna Sloka
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={content.prayer?.translation || ''}
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        prayer: { ...content.prayer, translation: e.target.value },
+                      })
+                    }
+                    placeholder="Wahai pasangan pengantin, semoga engkau senantiasa tetap bersatu, tidak pernah terpisahkan, mencapai usia hidup yang panjang..."
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] leading-relaxed"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                    Kalimat Doa Restu & Harapan (Doa Bali Hindu)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={content.prayer?.blessingText || ''}
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        prayer: { ...content.prayer, blessingText: e.target.value },
+                      })
+                    }
+                    placeholder="Om Swastyastu. Atas asung kertha wara nugraha Ida Sang Hyang Widhi Wasa, kami memohon doa restu..."
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] leading-relaxed"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                    Kitab Suci / Sumber Sloka
+                  </label>
+                  <input
+                    type="text"
+                    value={content.prayer?.citation || ''}
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        prayer: { ...content.prayer, citation: e.target.value },
+                      })
+                    }
+                    placeholder="Rg Veda X.85.42"
                     className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
                   />
                 </div>
@@ -544,6 +754,92 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                       className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
                     />
                   </div>
+
+                  {/* Groom Parents Details */}
+                  <div className="pt-3 border-t border-[#0F1B2D]/10 space-y-3">
+                    <span className="text-[11px] font-mono uppercase text-[#0F1B2D]/60 block font-semibold">
+                      Detail Orang Tua Mempelai Pria
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-mono text-[#0F1B2D]/60 block mb-1">
+                          Nama Ayah
+                        </label>
+                        <input
+                          type="text"
+                          value={content.couple.groom.fatherName || ''}
+                          onChange={(e) =>
+                            setContent({
+                              ...content,
+                              couple: {
+                                ...content.couple,
+                                groom: { ...content.couple.groom, fatherName: e.target.value },
+                              },
+                            })
+                          }
+                          placeholder="I Wayan Suweta"
+                          className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-mono text-[#0F1B2D]/60 block mb-1">
+                          Nama Ibu
+                        </label>
+                        <input
+                          type="text"
+                          value={content.couple.groom.motherName || ''}
+                          onChange={(e) =>
+                            setContent({
+                              ...content,
+                              couple: {
+                                ...content.couple,
+                                groom: { ...content.couple.groom, motherName: e.target.value },
+                              },
+                            })
+                          }
+                          placeholder="Ni Wayan Murni"
+                          className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-mono text-[#0F1B2D]/60 block mb-1">
+                        Keterangan Silsilah / Urutan Anak
+                      </label>
+                      <input
+                        type="text"
+                        value={content.couple.groom.parentsTitle || ''}
+                        onChange={(e) =>
+                          setContent({
+                            ...content,
+                            couple: {
+                              ...content.couple,
+                              groom: { ...content.couple.groom, parentsTitle: e.target.value },
+                            },
+                          })
+                        }
+                        placeholder="Putra Pertama Dari Pasangan:"
+                        className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                      />
+                    </div>
+
+                    <ImageUploadField
+                      label="Foto / Avatar Kecil Orang Tua Pria (Opsional)"
+                      value={content.couple.groom.parentsAvatarSrc || ''}
+                      folder="couple"
+                      onChange={(url) =>
+                        setContent({
+                          ...content,
+                          couple: {
+                            ...content.couple,
+                            groom: { ...content.couple.groom, parentsAvatarSrc: url },
+                          },
+                        })
+                      }
+                      hint="Foto avatar kecil orang tua di bawah profil mempelai pria."
+                    />
+                  </div>
                 </div>
 
                 {/* Bride Fields */}
@@ -639,6 +935,92 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                         })
                       }
                       className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                    />
+                  </div>
+
+                  {/* Bride Parents Details */}
+                  <div className="pt-3 border-t border-[#0F1B2D]/10 space-y-3">
+                    <span className="text-[11px] font-mono uppercase text-[#0F1B2D]/60 block font-semibold">
+                      Detail Orang Tua Mempelai Wanita
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-mono text-[#0F1B2D]/60 block mb-1">
+                          Nama Ayah
+                        </label>
+                        <input
+                          type="text"
+                          value={content.couple.bride.fatherName || ''}
+                          onChange={(e) =>
+                            setContent({
+                              ...content,
+                              couple: {
+                                ...content.couple,
+                                bride: { ...content.couple.bride, fatherName: e.target.value },
+                              },
+                            })
+                          }
+                          placeholder="Widoyo"
+                          className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-mono text-[#0F1B2D]/60 block mb-1">
+                          Nama Ibu
+                        </label>
+                        <input
+                          type="text"
+                          value={content.couple.bride.motherName || ''}
+                          onChange={(e) =>
+                            setContent({
+                              ...content,
+                              couple: {
+                                ...content.couple,
+                                bride: { ...content.couple.bride, motherName: e.target.value },
+                              },
+                            })
+                          }
+                          placeholder="Sri Mulyani"
+                          className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-mono text-[#0F1B2D]/60 block mb-1">
+                        Keterangan Silsilah / Urutan Anak
+                      </label>
+                      <input
+                        type="text"
+                        value={content.couple.bride.parentsTitle || ''}
+                        onChange={(e) =>
+                          setContent({
+                            ...content,
+                            couple: {
+                              ...content.couple,
+                              bride: { ...content.couple.bride, parentsTitle: e.target.value },
+                            },
+                          })
+                        }
+                        placeholder="Putri Tercinta Dari Pasangan:"
+                        className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                      />
+                    </div>
+
+                    <ImageUploadField
+                      label="Foto / Avatar Kecil Orang Tua Wanita (Opsional)"
+                      value={content.couple.bride.parentsAvatarSrc || ''}
+                      folder="couple"
+                      onChange={(url) =>
+                        setContent({
+                          ...content,
+                          couple: {
+                            ...content.couple,
+                            bride: { ...content.couple.bride, parentsAvatarSrc: url },
+                          },
+                        })
+                      }
+                      hint="Foto avatar kecil orang tua di bawah profil mempelai wanita."
                     />
                   </div>
                 </div>

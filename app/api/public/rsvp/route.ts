@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { normalizePhoneNumber } from '@/lib/guests/phone';
+
+export const dynamic = 'force-dynamic';
 
 const rsvpSchema = z.object({
   token: z.string().min(1).max(64),
@@ -27,26 +31,80 @@ export async function POST(request: Request) {
       );
     }
 
-    const { token, status, pax, wish } = parsed.data;
+    const { token, status, pax, wish, phone } = parsed.data;
+    const admin = createAdminClient();
 
-    // Phase 1: Return mock success (Phase 2/5 connects to Supabase database)
+    // 1. Find guest by token
+    const { data: guest, error: guestErr } = await admin
+      .from('guests')
+      .select('id, phone, max_pax')
+      .eq('token', token)
+      .maybeSingle();
+
+    if (guestErr || !guest) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: 'GUEST_NOT_FOUND',
+            message: 'Tamu dengan link undangan ini tidak ditemukan.',
+          },
+        },
+        { status: 404 }
+      );
+    }
+
+    // Enforce maxPax limit
+    const actualPax = status === 'attending' ? Math.min(pax, guest.max_pax || 20) : 0;
+    const trimmedWish = wish?.trim() || null;
+    const now = new Date().toISOString();
+
+    // 2. Upsert RSVP
+    const { error: rsvpErr } = await admin.from('rsvps').upsert(
+      {
+        guest_id: guest.id,
+        status,
+        pax: actualPax,
+        wish: trimmedWish,
+        wish_visible: true,
+        updated_at: now,
+      },
+      { onConflict: 'guest_id' }
+    );
+
+    if (rsvpErr) {
+      throw new Error(rsvpErr.message);
+    }
+
+    // 3. Update guest phone if missing
+    if (phone && !guest.phone) {
+      const cleanPhone = normalizePhoneNumber(phone);
+      if (cleanPhone) {
+        await admin
+          .from('guests')
+          .update({ phone: cleanPhone, updated_at: now })
+          .eq('id', guest.id);
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       data: {
         token,
         status,
-        pax: status === 'attending' ? pax : 0,
-        wish: wish || null,
-        updatedAt: new Date().toISOString(),
+        pax: actualPax,
+        wish: trimmedWish,
+        updatedAt: now,
       },
     });
-  } catch {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Terjadi kesalahan pada server.';
     return NextResponse.json(
       {
         ok: false,
         error: {
           code: 'SERVER_ERROR',
-          message: 'Terjadi kesalahan pada server.',
+          message,
         },
       },
       { status: 500 }

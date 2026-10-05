@@ -18,6 +18,8 @@ import { Wishes } from './Wishes';
 import { Footer } from './Footer';
 import { SplashCursor } from '@/components/ui/SplashCursor';
 import { SiteContent, DEFAULT_SITE_CONTENT } from '@/lib/content/types';
+import { Prayer } from './Prayer';
+import { useLenisContext } from '@/lib/motion/lenis';
 
 interface InvitationProps {
   guest: GuestView;
@@ -26,24 +28,40 @@ interface InvitationProps {
   isCoverForceOpened?: boolean;
 }
 
-export function Invitation({
+function InvitationContent({
   guest,
-  siteContent,
-  isPreview = false,
+  content,
+  isPreview,
   isCoverForceOpened,
-}: InvitationProps) {
-  const content = siteContent || DEFAULT_SITE_CONTENT;
-  const [isCoverOpened, setIsCoverOpened] = useState(isCoverForceOpened ?? false);
+}: {
+  guest: GuestView;
+  content: SiteContent;
+  isPreview: boolean;
+  isCoverForceOpened?: boolean;
+}) {
+  const { unlockScroll } = useLenisContext();
+  const [isCoverOpened, setIsCoverOpened] = useState(Boolean(isCoverForceOpened || isPreview));
 
   React.useEffect(() => {
     if (isCoverForceOpened !== undefined) {
       setIsCoverOpened(isCoverForceOpened);
+      if (isCoverForceOpened) {
+        unlockScroll();
+      }
     }
-  }, [isCoverForceOpened]);
+  }, [isCoverForceOpened, unlockScroll]);
+
+  React.useEffect(() => {
+    if (isPreview) {
+      unlockScroll();
+    }
+  }, [isPreview, unlockScroll]);
+
   const [newWish, setNewWish] = useState<{ name: string; wish: string } | null>(null);
 
   const handleOpenInvitation = async () => {
     setIsCoverOpened(true);
+    unlockScroll();
 
     // Call POST /api/public/open only once per guest session, ignore preview
     if (!isPreview && guest.token && guest.token !== 'mock-sample-token') {
@@ -69,74 +87,115 @@ export function Invitation({
   };
 
   return (
-    <LenisProvider initiallyLocked={true}>
-      <div className="relative min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--baby-blue)] selection:text-[var(--ink)]">
-        {/* Cover Screen */}
-        <Cover
-          guestName={guest.name}
-          salutation={guest.salutation}
-          groomName={content.cover.groomName || guest.event.groomName}
-          brideName={content.cover.brideName || guest.event.brideName}
-          dateFormatted={content.cover.dateDisplay || guest.event.dateFormatted}
-          onOpenInvitation={handleOpenInvitation}
-          isForceOpened={isCoverForceOpened}
-        />
+    <div className="relative min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--baby-blue)] selection:text-[var(--ink)]">
+      {/* Cover Screen */}
+      <Cover
+        badge={content.cover.badge}
+        groomName={content.cover.groomName || guest.event.groomName}
+        brideName={content.cover.brideName || guest.event.brideName}
+        dateFormatted={content.cover.dateDisplay || guest.event.dateFormatted}
+        guestGreetingLabel={content.cover.guestGreetingLabel}
+        openButtonLabel={content.cover.openButtonLabel}
+        tapHintLabel={content.cover.tapHintLabel}
+        guestName={guest.name}
+        salutation={guest.salutation}
+        onOpenInvitation={handleOpenInvitation}
+        isForceOpened={isCoverForceOpened}
+      />
 
-        {/* Adaptive Luxury Fluid Cursor (Blue on White background, Pearl White on Blue/Dark backgrounds) */}
-        <SplashCursor
-          DENSITY_DISSIPATION={4.2}
-          VELOCITY_DISSIPATION={2.2}
-          SPLAT_RADIUS={0.16}
-          SPLAT_FORCE={4200}
-        />
+      {/* Adaptive Luxury Fluid Cursor (Blue on White background, Pearl White on Blue/Dark backgrounds) */}
+      <SplashCursor
+        DENSITY_DISSIPATION={4.2}
+        VELOCITY_DISSIPATION={2.2}
+        SPLAT_RADIUS={0.16}
+        SPLAT_FORCE={4200}
+      />
 
-        {/* Persistent Floating Controls (Menu, Audio, Scroll line, RSVP quick link) */}
-        <PersistentBar
-          audioSrc={content.audio.musicUrl || guest.event.musicUrl || ASSETS.audio.src}
-          isUnlocked={isCoverOpened}
-        />
+      {/* Persistent Floating Controls (Menu, Audio, Scroll line, RSVP quick link) */}
+      <PersistentBar
+        audioSrc={content.audio.musicUrl || guest.event.musicUrl || ASSETS.audio.src}
+        isUnlocked={isCoverOpened}
+      />
 
-        {/* 1. Hero with Real Editorial Portrait & 3D Typography */}
-        <Hero
-          groomName={content.hero.groomName || guest.event.groomName}
-          brideName={content.hero.brideName || guest.event.brideName}
-          dateShort={content.hero.dateShort}
-          imageAvif={content.hero.portraitSrc || ASSETS.hero.avifSrc}
-          imageWebp={content.hero.portraitSrc || ASSETS.hero.webpSrc}
-          imageSrc={content.hero.portraitSrc || ASSETS.hero.fallbackSrc}
-        />
+      {/* 1. Hero with Real Editorial Portrait & 3D Typography */}
+      <Hero
+        badge={content.hero.badge}
+        groomName={content.hero.groomName || guest.event.groomName}
+        brideName={content.hero.brideName || guest.event.brideName}
+        subtitle={content.hero.subtitle}
+        dateShort={content.hero.dateShort}
+        portraitSrc={content.hero.portraitSrc}
+        portraitAlt={content.hero.portraitAlt}
+        scrollHint={content.hero.scrollHint}
+        imageAvif={content.hero.portraitSrc || ASSETS.hero.avifSrc}
+        imageWebp={content.hero.portraitSrc || ASSETS.hero.webpSrc}
+        imageSrc={content.hero.portraitSrc || ASSETS.hero.fallbackSrc}
+      />
 
-        {/* 2. Quote */}
-        <Quote text={content.quote.text || guest.copy.openingLine} />
+      {/* 2. Quote */}
+      <Quote
+        label={content.quote.label}
+        text={content.quote.text || guest.copy.openingLine}
+        citation={content.quote.citation}
+      />
 
-        {/* 3. Couple */}
-        <Couple
-          groom={{
-            ...ASSETS.couple.groom,
-            name: content.couple.groom.name,
-            childOf: content.couple.groom.childOf,
-            bio: content.couple.groom.bio,
-            photo: {
-              ...ASSETS.couple.groom.photo,
-              src: content.couple.groom.photoSrc || ASSETS.couple.groom.photo.src,
-            },
-            instagram: content.couple.groom.instagram,
-          }}
-          bride={{
-            ...ASSETS.couple.bride,
-            name: content.couple.bride.name,
-            childOf: content.couple.bride.childOf,
-            bio: content.couple.bride.bio,
-            photo: {
-              ...ASSETS.couple.bride.photo,
-              src: content.couple.bride.photoSrc || ASSETS.couple.bride.photo.src,
-            },
-            instagram: content.couple.bride.instagram,
-          }}
+      {/* 2.5 Doa Pernikahan & Berkah */}
+      {content.prayer && (
+        <Prayer
+          sectionLabel={content.prayer.sectionLabel}
+          title={content.prayer.title}
+          arabicOrSanskrit={content.prayer.arabicOrSanskrit}
+          translation={content.prayer.translation}
+          blessingText={content.prayer.blessingText}
+          citation={content.prayer.citation}
         />
+      )}
+
+      {/* 3. Couple */}
+      <Couple
+        sectionLabel={content.couple.sectionLabel}
+        sectionTitle={content.couple.sectionTitle}
+        sectionDesc={content.couple.sectionDesc}
+        groom={{
+          ...ASSETS.couple.groom,
+          name: content.couple.groom.name,
+          childOf: content.couple.groom.childOf,
+          bio: content.couple.groom.bio,
+          fatherName: content.couple.groom.fatherName,
+          motherName: content.couple.groom.motherName,
+          parentsTitle: content.couple.groom.parentsTitle,
+          parentsAvatarSrc: content.couple.groom.parentsAvatarSrc,
+          photo: {
+            ...ASSETS.couple.groom.photo,
+            src: content.couple.groom.photoSrc || ASSETS.couple.groom.photo.src,
+            alt: content.couple.groom.photoAlt || content.couple.groom.name,
+            label: content.couple.groom.photoLabel,
+          },
+          instagram: content.couple.groom.instagram,
+        }}
+        bride={{
+          ...ASSETS.couple.bride,
+          name: content.couple.bride.name,
+          childOf: content.couple.bride.childOf,
+          bio: content.couple.bride.bio,
+          fatherName: content.couple.bride.fatherName,
+          motherName: content.couple.bride.motherName,
+          parentsTitle: content.couple.bride.parentsTitle,
+          parentsAvatarSrc: content.couple.bride.parentsAvatarSrc,
+          photo: {
+            ...ASSETS.couple.bride.photo,
+            src: content.couple.bride.photoSrc || ASSETS.couple.bride.photo.src,
+            alt: content.couple.bride.photoAlt || content.couple.bride.name,
+            label: content.couple.bride.photoLabel,
+          },
+          instagram: content.couple.bride.instagram,
+        }}
+      />
 
         {/* 4. Story */}
         <Story
+          sectionLabel={content.story.sectionLabel}
+          sectionTitle={content.story.sectionTitle}
           moments={
             content.story.moments && content.story.moments.length > 0
               ? content.story.moments.map((m) => ({
@@ -157,6 +216,8 @@ export function Invitation({
 
         {/* 5. Event */}
         <Event
+          sectionLabel={content.event.sectionLabel}
+          sectionTitle={content.event.sectionTitle}
           dayFormatted={content.event.dayFormatted || guest.event.dayFormatted}
           dateNumeral={content.event.dateNumeral || guest.event.dateNumeral}
           monthYearFormatted={content.event.monthYearFormatted || guest.event.monthYearFormatted}
@@ -165,6 +226,9 @@ export function Invitation({
           venueName={content.event.venueName || guest.event.venueName}
           venueAddress={content.event.venueAddress || guest.event.venueAddress}
           mapsUrl={content.event.mapsUrl || guest.event.mapsUrl}
+          lat={content.event.lat}
+          lng={content.event.lng}
+          countdownLabel={content.event.countdownLabel}
           guestArrivalTime={guest.event.guestArrivalTimeFormatted}
           inviteLine={guest.copy.inviteLine}
           startsAt={content.event.startsAt || guest.event.startsAt}
@@ -173,6 +237,9 @@ export function Invitation({
 
         {/* 6. Gallery */}
         <Gallery
+          sectionLabel={content.gallery.sectionLabel}
+          sectionTitle={content.gallery.sectionTitle}
+          sectionDesc={content.gallery.sectionDesc}
           items={
             content.gallery.items && content.gallery.items.length > 0
               ? content.gallery.items.map((g, i) => ({
@@ -189,6 +256,9 @@ export function Invitation({
 
         {/* 7. Gift */}
         <Gift
+          sectionLabel={content.gift.sectionLabel}
+          sectionTitle={content.gift.sectionTitle}
+          sectionDesc={content.gift.sectionDesc}
           accounts={
             content.gift.accounts && content.gift.accounts.length > 0
               ? content.gift.accounts
@@ -207,8 +277,28 @@ export function Invitation({
           closingLine={content.footer.closingLine || guest.copy.closingLine}
           groomName={content.footer.groomName || guest.event.groomName}
           brideName={content.footer.brideName || guest.event.brideName}
+          copyright={content.footer.copyright}
         />
       </div>
+  );
+}
+
+export function Invitation({
+  guest,
+  siteContent,
+  isPreview = false,
+  isCoverForceOpened,
+}: InvitationProps) {
+  const content = siteContent || DEFAULT_SITE_CONTENT;
+
+  return (
+    <LenisProvider initiallyLocked={!isCoverForceOpened && !isPreview}>
+      <InvitationContent
+        guest={guest}
+        content={content}
+        isPreview={isPreview}
+        isCoverForceOpened={isCoverForceOpened}
+      />
     </LenisProvider>
   );
 }

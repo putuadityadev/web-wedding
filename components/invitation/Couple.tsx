@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { gsap } from '@/lib/motion/gsap';
 import { MediaFrame } from './MediaFrame';
 
-interface CoupleMember {
+export interface CoupleMember {
   name: string;
   childOf: string;
   bio: string;
@@ -15,14 +15,31 @@ interface CoupleMember {
     label?: string;
   };
   instagram?: string;
+  fatherName?: string;
+  motherName?: string;
+  parentsTitle?: string;
+  parentsAvatarSrc?: string;
 }
 
-interface CoupleProps {
+export interface CoupleProps {
+  sectionLabel?: string;
+  sectionTitle?: string;
+  sectionDesc?: string;
+  groomLabel?: string;
+  brideLabel?: string;
   groom: CoupleMember;
   bride: CoupleMember;
 }
 
-export function Couple({ groom, bride }: CoupleProps) {
+export function Couple({
+  sectionLabel,
+  sectionTitle,
+  sectionDesc,
+  groomLabel = 'MEMPELAI PRIA',
+  brideLabel = 'MEMPELAI WANITA',
+  groom,
+  bride,
+}: CoupleProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const groomCardRef = useRef<HTMLDivElement | null>(null);
   const brideCardRef = useRef<HTMLDivElement | null>(null);
@@ -109,6 +126,30 @@ export function Couple({ groom, bride }: CoupleProps) {
       className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none overflow-hidden"
     >
       <div className="max-w-7xl mx-auto w-full">
+        {/* Optional Editorial Header */}
+        {(sectionLabel || sectionTitle) && (
+          <div className="mb-14 md:mb-20 text-center max-w-2xl mx-auto">
+            {sectionLabel && (
+              <div className="inline-flex items-center gap-2 mb-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
+                <span className="label-eyebrow tracking-[0.25em] text-[11px] text-[var(--ink)] opacity-60 uppercase">
+                  {sectionLabel}
+                </span>
+              </div>
+            )}
+            {sectionTitle && (
+              <h2 className="display-l font-serif text-3xl sm:text-4xl text-[var(--ink)] tracking-[-0.01em]">
+                {sectionTitle}
+              </h2>
+            )}
+            {sectionDesc && (
+              <p className="body-base text-[var(--ink)] opacity-70 mt-3 text-sm sm:text-base leading-relaxed">
+                {sectionDesc}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Profiles Layout */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-16 md:gap-8 items-start">
           {/* PROFILE I: GROOM (Left-top) */}
@@ -123,8 +164,8 @@ export function Couple({ groom, bride }: CoupleProps) {
               >
                 I
               </span>
-              <span className="label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.22em]">
-                MEMPELAI PRIA
+              <span className="label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.22em] uppercase">
+                {groomLabel}
               </span>
             </div>
 
@@ -134,7 +175,7 @@ export function Couple({ groom, bride }: CoupleProps) {
                 alt={groom.photo?.alt || groom.name}
                 aspectRatio="4/5"
                 arch={true}
-                label={groom.photo?.label || 'POTRET DHARMA'}
+                label={groom.photo?.label || `POTRET ${groom.name.split(' ')[0].toUpperCase()}`}
               />
             </div>
 
@@ -149,6 +190,36 @@ export function Couple({ groom, bride }: CoupleProps) {
             <p className="couple-text-reveal body-base text-[var(--ink)] opacity-80 leading-relaxed max-w-md">
               {groom.bio}
             </p>
+
+            {/* Parents Editorial Card with Small Premium Avatar */}
+            {(groom.fatherName || groom.motherName || groom.parentsAvatarSrc) && (
+              <div className="mt-8 pt-6 border-t border-[var(--ink)]/15 flex items-center gap-4">
+                {groom.parentsAvatarSrc ? (
+                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-[var(--baby-blue)] p-0.5 shrink-0 shadow-xs bg-white/50">
+                    <img
+                      src={groom.parentsAvatarSrc}
+                      alt={groom.parentsTitle || 'Orang Tua Mempelai Pria'}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-full border border-[var(--deep)]/30 flex items-center justify-center bg-white/60 backdrop-blur-xs shrink-0 text-xs font-serif italic text-[var(--deep)] font-semibold shadow-2xs">
+                    {groom.fatherName?.charAt(0) || 'W'} &amp; {groom.motherName?.charAt(0) || 'M'}
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <span className="label-eyebrow text-[9.5px] tracking-[0.2em] text-[var(--deep)] font-medium uppercase">
+                    {groom.parentsTitle || 'Putra Pertama Dari Pasangan:'}
+                  </span>
+                  <span className="font-serif text-base sm:text-lg text-[var(--ink)] font-normal mt-0.5 leading-snug">
+                    {groom.fatherName && `${groom.fatherName}`}
+                    {groom.fatherName && groom.motherName && ' & '}
+                    {groom.motherName && `${groom.motherName}`}
+                  </span>
+                  <span className="text-[10px] text-[var(--ink)]/55 font-mono mt-0.5">Keluarga Mempelai Pria</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Spacer Column in Desktop */}
@@ -166,8 +237,8 @@ export function Couple({ groom, bride }: CoupleProps) {
               >
                 II
               </span>
-              <span className="label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.22em]">
-                MEMPELAI WANITA
+              <span className="label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.22em] uppercase">
+                {brideLabel}
               </span>
             </div>
 
@@ -177,7 +248,7 @@ export function Couple({ groom, bride }: CoupleProps) {
                 alt={bride.photo?.alt || bride.name}
                 aspectRatio="4/5"
                 arch={true}
-                label={bride.photo?.label || 'POTRET LUTFHY'}
+                label={bride.photo?.label || `POTRET ${bride.name.split(' ')[0].toUpperCase()}`}
               />
             </div>
 
@@ -192,6 +263,36 @@ export function Couple({ groom, bride }: CoupleProps) {
             <p className="couple-text-reveal body-base text-[var(--ink)] opacity-80 leading-relaxed max-w-md">
               {bride.bio}
             </p>
+
+            {/* Parents Editorial Card with Small Premium Avatar */}
+            {(bride.fatherName || bride.motherName || bride.parentsAvatarSrc) && (
+              <div className="mt-8 pt-6 border-t border-[var(--ink)]/15 flex items-center gap-4">
+                {bride.parentsAvatarSrc ? (
+                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-[var(--baby-blue)] p-0.5 shrink-0 shadow-xs bg-white/50">
+                    <img
+                      src={bride.parentsAvatarSrc}
+                      alt={bride.parentsTitle || 'Orang Tua Mempelai Wanita'}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-full border border-[var(--deep)]/30 flex items-center justify-center bg-white/60 backdrop-blur-xs shrink-0 text-xs font-serif italic text-[var(--deep)] font-semibold shadow-2xs">
+                    {bride.fatherName?.charAt(0) || 'W'} &amp; {bride.motherName?.charAt(0) || 'S'}
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <span className="label-eyebrow text-[9.5px] tracking-[0.2em] text-[var(--deep)] font-medium uppercase">
+                    {bride.parentsTitle || 'Putri Tercinta Dari Pasangan:'}
+                  </span>
+                  <span className="font-serif text-base sm:text-lg text-[var(--ink)] font-normal mt-0.5 leading-snug">
+                    {bride.fatherName && `${bride.fatherName}`}
+                    {bride.fatherName && bride.motherName && ' & '}
+                    {bride.motherName && `${bride.motherName}`}
+                  </span>
+                  <span className="text-[10px] text-[var(--ink)]/55 font-mono mt-0.5">Keluarga Mempelai Wanita</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

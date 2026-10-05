@@ -4,13 +4,14 @@ import React, { useEffect, useRef } from 'react';
 import { gsap } from '@/lib/motion/gsap';
 import { useLenisContext } from '@/lib/motion/lenis';
 
-interface FooterProps {
-  closingLine: string;
+export interface FooterProps {
+  closingLine?: string;
   groomName: string;
   brideName: string;
+  copyright?: string;
 }
 
-export function Footer({ closingLine, groomName, brideName }: FooterProps) {
+export function Footer({ closingLine, groomName, brideName, copyright }: FooterProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bigNameRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -137,7 +138,7 @@ export function Footer({ closingLine, groomName, brideName }: FooterProps) {
         {/* Bottom Editorial Colophon */}
         <div className="pt-8 border-t border-[var(--ink)]/15 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] font-mono label-eyebrow opacity-55">
           <span>THE WEDDING OF {groomName.toUpperCase()} &amp; {brideName.toUpperCase()}</span>
-          <span>BANGLI, BALI · 2026</span>
+          <span>{copyright || 'BANGLI, BALI · 2026'}</span>
         </div>
       </div>
 

@@ -3,10 +3,15 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from '@/lib/motion/gsap';
 
-interface HeroProps {
+export interface HeroProps {
+  badge?: string;
   groomName: string;
   brideName: string;
+  subtitle?: string;
   dateShort?: string;
+  portraitSrc?: string;
+  portraitAlt?: string;
+  scrollHint?: string;
   imageAvif?: string;
   imageWebp?: string;
   imageSrc?: string;
@@ -15,9 +20,14 @@ interface HeroProps {
 }
 
 export function Hero({
+  badge = 'THE WEDDING OF',
   groomName,
   brideName,
+  subtitle = 'DUA GARIS · SATU BENANG PERJALANAN',
   dateShort = '12 · 12 · 2026',
+  portraitSrc,
+  portraitAlt,
+  scrollHint = 'GULIR',
   imageAvif = '/KLK07943.avif',
   imageWebp = '/KLK07943.webp',
   imageSrc = '/KLK07943.jpg',
@@ -190,11 +200,11 @@ export function Hero({
           />
         ) : (
           <picture className="block w-full h-full">
-            {imageAvif && <source srcSet={imageAvif} type="image/avif" />}
-            {imageWebp && <source srcSet={imageWebp} type="image/webp" />}
+            {!portraitSrc && imageAvif && <source srcSet={imageAvif} type="image/avif" />}
+            {!portraitSrc && imageWebp && <source srcSet={imageWebp} type="image/webp" />}
             <img
-              src={imageSrc}
-              alt={`${groomName} & ${brideName}`}
+              src={portraitSrc || imageSrc}
+              alt={portraitAlt || `${groomName} & ${brideName}`}
               className="w-full h-full object-cover object-[center_28%] sm:object-[center_32%] filter brightness-[0.84] contrast-[1.05] select-none"
             />
           </picture>
@@ -212,8 +222,8 @@ export function Hero({
       >
         <div className="flex items-center gap-3">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-          <span className="label-eyebrow tracking-[0.28em] text-white/85 text-[11px] sm:text-xs">
-            THE WEDDING OF
+          <span className="label-eyebrow tracking-[0.28em] text-white/85 text-[11px] sm:text-xs uppercase">
+            {badge}
           </span>
         </div>
 
@@ -241,7 +251,7 @@ export function Hero({
         >
           <div className="w-12 sm:w-20 h-[1px] bg-white/40" />
           <span className="label-eyebrow tracking-[0.28em] text-[10px] sm:text-[11px] text-[var(--baby-blue)] uppercase">
-            DUA GARIS · SATU BENANG PERJALANAN
+            {subtitle}
           </span>
         </div>
 
@@ -268,7 +278,7 @@ export function Hero({
         className="relative z-10 w-full pb-8 sm:pb-10 px-[var(--gutter)] max-w-7xl mx-auto flex items-center justify-center pointer-events-none"
       >
         <div className="flex items-center gap-3 label-eyebrow tracking-[0.28em] text-white/75 text-[10px] sm:text-xs">
-          <span>GULIR</span>
+          <span>{scrollHint}</span>
           <div className="w-8 sm:w-12 h-[1px] bg-white/30 relative overflow-hidden">
             <div className="w-full h-full bg-[var(--baby-blue)] animate-pulse" />
           </div>

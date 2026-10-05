@@ -20,6 +20,10 @@ export function PreviewClient({
   const [isCoverForceOpened, setIsCoverForceOpened] = useState<boolean>(initialUnlocked);
 
   useEffect(() => {
+    // Ensure iframe body is always naturally scrollable and responsive to wheel & touch
+    document.documentElement.style.overflowY = 'auto';
+    document.body.style.overflowY = 'auto';
+
     const handleMessage = (event: MessageEvent) => {
       // Security check: only accept same-origin messages
       if (typeof window !== 'undefined' && event.origin !== window.location.origin) {
@@ -34,7 +38,11 @@ export function PreviewClient({
       }
 
       if (data.type === 'TOGGLE_COVER') {
-        setIsCoverForceOpened(Boolean(data.open));
+        const nextOpen = Boolean(data.open);
+        setIsCoverForceOpened(nextOpen);
+        if (nextOpen) {
+          document.body.style.overflowY = 'auto';
+        }
       }
 
       if (data.type === 'SCROLL_TO' && data.section) {
@@ -44,6 +52,7 @@ export function PreviewClient({
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           setIsCoverForceOpened(true);
+          document.body.style.overflowY = 'auto';
           // Wait a tick for cover unmount / layout update, then scroll smoothly
           setTimeout(() => {
             const el = document.getElementById(sectionId);

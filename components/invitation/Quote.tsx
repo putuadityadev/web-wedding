@@ -3,11 +3,17 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from '@/lib/motion/gsap';
 
-interface QuoteProps {
+export interface QuoteProps {
+  label?: string;
   text: string;
+  citation?: string;
 }
 
-export function Quote({ text }: QuoteProps) {
+export function Quote({
+  label = 'KUTIPAN SUCI',
+  text,
+  citation,
+}: QuoteProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wordsRef = useRef<(HTMLSpanElement | null)[]>([]);
 
@@ -57,6 +63,15 @@ export function Quote({ text }: QuoteProps) {
       <div className="max-w-6xl mx-auto w-full">
         {/* 8/12 width indented paragraph with 3D word-by-word illuminating motion */}
         <div className="w-full md:w-11/12 lg:w-10/12 md:pl-8 lg:pl-16">
+          {label && (
+            <div className="mb-6 flex items-center gap-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
+              <span className="label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.25em] text-[11px] uppercase">
+                {label}
+              </span>
+            </div>
+          )}
+
           <p className="display-m text-[var(--ink)] font-serif leading-[1.25] flex flex-wrap gap-x-[0.35em] gap-y-[0.15em] transform-gpu">
             {words.map((word, idx) => (
               <span
@@ -72,10 +87,16 @@ export function Quote({ text }: QuoteProps) {
             ))}
           </p>
 
-          <div className="mt-14 flex items-center gap-4">
+          {citation && (
+            <div className="mt-8 font-serif italic text-base sm:text-lg text-[var(--ink)] opacity-70">
+              — {citation}
+            </div>
+          )}
+
+          <div className="mt-12 flex items-center gap-4">
             <span className="w-2 h-2 rounded-full border border-[var(--deep)] opacity-60" />
-            <span className="label-eyebrow text-[var(--ink)] opacity-50 tracking-[0.22em] text-[11px]">
-              UNDANGAN RESEPSI PERNIKAHAN
+            <span className="label-eyebrow text-[var(--ink)] opacity-50 tracking-[0.22em] text-[11px] uppercase">
+              {citation ? citation : 'UNDANGAN RESEPSI PERNIKAHAN'}
             </span>
           </div>
         </div>

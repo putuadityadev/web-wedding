@@ -38,6 +38,17 @@ export async function PUT(request: Request) {
       return NextResponse.json({ ok: false, error: result.error }, { status: 500 });
     }
 
+    // Immediately revalidate public and preview pages so edits reflect seamlessly
+    try {
+      const { revalidatePath } = await import('next/cache');
+      revalidatePath('/', 'page');
+      revalidatePath('/u/[token]', 'page');
+      revalidatePath('/preview', 'page');
+      revalidatePath('/admin/content', 'page');
+    } catch (revalErr) {
+      console.warn('[CMS] Revalidation warning:', revalErr);
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Gagal menyimpan konten';

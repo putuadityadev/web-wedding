@@ -10,6 +10,10 @@ interface CoverProps {
   groomName: string;
   brideName: string;
   dateFormatted: string;
+  badge?: string;
+  guestGreetingLabel?: string;
+  openButtonLabel?: string;
+  tapHintLabel?: string;
   onOpenInvitation: () => void;
   isForceOpened?: boolean;
 }
@@ -82,6 +86,10 @@ export function Cover({
   groomName,
   brideName,
   dateFormatted,
+  badge,
+  guestGreetingLabel,
+  openButtonLabel,
+  tapHintLabel,
   onOpenInvitation,
   isForceOpened,
 }: CoverProps) {
@@ -665,103 +673,118 @@ export function Cover({
       {/* ============================================================== */}
       {/* 4. EDITORIAL UI TYPOGRAPHY & CTA (STAGGERED SMOOTH ENTRANCE)   */}
       {/* ============================================================== */}
-      <div
-        ref={uiOverlayRef}
-        className="absolute inset-0 z-30 flex flex-col justify-between pointer-events-none"
-      >
-        {/* TOP HEADER */}
-        <header
-          ref={headerRef}
-          style={{ opacity: 0 }}
-          className="relative z-30 pt-7 sm:pt-9 px-6 sm:px-12 max-w-7xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-4 text-center sm:text-left drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-        >
-          <div className="flex items-center gap-2">
-            <span className="label-eyebrow tracking-[0.26em] text-white text-[10px] sm:text-xs font-semibold drop-shadow-sm">
-              THE WEDDING OF {groomName.toUpperCase()} &amp; {brideName.toUpperCase()}
-            </span>
-          </div>
+      {(() => {
+        const names = `${(groomName || 'Dharma').toUpperCase()} & ${(brideName || 'Lutfhy').toUpperCase()}`;
+        const displayBadge = badge
+          ? (badge.toUpperCase().includes((groomName || 'Dharma').toUpperCase())
+              ? badge.toUpperCase()
+              : `${badge.toUpperCase()} ${names}`)
+          : `THE WEDDING OF ${names}`;
 
-          <div className="label-eyebrow tracking-[0.22em] text-white/85 text-[9px] sm:text-[11px] font-mono drop-shadow-sm">
-            {dateFormatted.toUpperCase()}
-          </div>
-        </header>
+        const displayGreeting = salutation
+          ? `KEPADA YTH. ${salutation.toUpperCase()}`
+          : (guestGreetingLabel ? guestGreetingLabel.toUpperCase().replace(/:$/, '') : 'KEPADA YTH. BAPAK / IBU / SAUDARA/I');
 
-        {/* BOTTOM RECIPIENT INFO & CTA BUTTON */}
-        <div
-          ref={contentRef}
-          className="relative z-30 pb-9 sm:pb-12 px-6 w-full max-w-xl mx-auto flex flex-col items-center text-center mt-auto"
-        >
-          {/* Eyebrow salutation */}
-          <span
-            ref={salutationRef}
-            style={{ opacity: 0 }}
-            className="label-eyebrow tracking-[0.28em] text-[#E8EFF8] text-[10px] sm:text-xs font-semibold mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
-          >
-            KEPADA YTH. {salutation ? salutation.toUpperCase() : 'BAPAK / IBU / SAUDARA/I'}
-          </span>
-
-          {/* Guest Name */}
-          <h1
-            ref={nameRef}
-            style={{ opacity: 0 }}
-            className="font-serif text-3xl sm:text-4xl md:text-5xl text-white font-normal tracking-tight mb-2.5 leading-tight drop-shadow-[0_3px_10px_rgba(0,0,0,0.7)]"
-          >
-            {guestName}
-          </h1>
-
-          {/* Separator */}
+        return (
           <div
-            ref={separatorRef}
-            style={{ opacity: 0 }}
-            className="flex items-center gap-3 opacity-75 mb-6 sm:mb-7"
+            ref={uiOverlayRef}
+            className="absolute inset-0 z-30 flex flex-col justify-between pointer-events-none"
           >
-            <span className="w-8 h-[1px] bg-white/60" />
-            <span className="text-[9px] sm:text-[10px] label-eyebrow tracking-[0.26em] text-white/90 font-mono">
-              DI TEMPAT
-            </span>
-            <span className="w-8 h-[1px] bg-white/60" />
-          </div>
-
-          {/* CTA Button */}
-          <button
-            ref={openButtonRef}
-            style={{ opacity: 0 }}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpen();
-            }}
-            className="pointer-events-auto group relative flex items-center gap-3 bg-white/90 hover:bg-white text-[var(--ink)] backdrop-blur-md px-8 sm:px-10 py-3.5 rounded-full text-xs font-semibold tracking-[0.24em] transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.45)] hover:scale-105 active:scale-95"
-            aria-label="Buka Undangan Pernikahan"
-          >
-            <span>BUKA UNDANGAN</span>
-            <svg
-              className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1"
-              viewBox="0 0 16 16"
-              fill="none"
+            {/* TOP HEADER */}
+            <header
+              ref={headerRef}
+              style={{ opacity: 0 }}
+              className="relative z-30 pt-7 sm:pt-9 px-6 sm:px-12 max-w-7xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-4 text-center sm:text-left drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
             >
-              <path
-                d="M3 8H13M13 8L8.5 3.5M13 8L8.5 12.5"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+              <div className="flex items-center gap-2">
+                <span className="label-eyebrow tracking-[0.26em] text-white text-[10px] sm:text-xs font-semibold drop-shadow-sm">
+                  {displayBadge}
+                </span>
+              </div>
 
-            {/* Subtle Pulsing Border Glow */}
-            <span className="absolute -inset-0.5 rounded-full border border-white/40 animate-ping opacity-30 pointer-events-none" />
-          </button>
+              <div className="label-eyebrow tracking-[0.22em] text-white/85 text-[9px] sm:text-[11px] font-mono drop-shadow-sm">
+                {(dateFormatted || 'Sabtu, 12 Desember 2026').toUpperCase()}
+              </div>
+            </header>
 
-          <p
-            ref={subtextRef}
-            style={{ opacity: 0 }}
-            className="label-eyebrow text-[9px] sm:text-[10px] text-white/70 tracking-[0.22em] mt-3.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
-          >
-            SENTUH LAYAR ATAU TOMBOL UNTUK MEMBUKA
-          </p>
-        </div>
-      </div>
+            {/* BOTTOM RECIPIENT INFO & CTA BUTTON */}
+            <div
+              ref={contentRef}
+              className="relative z-30 pb-9 sm:pb-12 px-6 w-full max-w-xl mx-auto flex flex-col items-center text-center mt-auto"
+            >
+              {/* Eyebrow salutation */}
+              <span
+                ref={salutationRef}
+                style={{ opacity: 0 }}
+                className="label-eyebrow tracking-[0.28em] text-[#E8EFF8] text-[10px] sm:text-xs font-semibold mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+              >
+                {displayGreeting}
+              </span>
+
+              {/* Guest Name */}
+              <h1
+                ref={nameRef}
+                style={{ opacity: 0 }}
+                className="font-serif text-3xl sm:text-4xl md:text-5xl text-white font-normal tracking-tight mb-2.5 leading-tight drop-shadow-[0_3px_10px_rgba(0,0,0,0.7)]"
+              >
+                {guestName}
+              </h1>
+
+              {/* Separator */}
+              <div
+                ref={separatorRef}
+                style={{ opacity: 0 }}
+                className="flex items-center gap-3 opacity-75 mb-6 sm:mb-7"
+              >
+                <span className="w-8 h-[1px] bg-white/60" />
+                <span className="text-[9px] sm:text-[10px] label-eyebrow tracking-[0.26em] text-white/90 font-mono">
+                  DI TEMPAT
+                </span>
+                <span className="w-8 h-[1px] bg-white/60" />
+              </div>
+
+              {/* CTA Button */}
+              <button
+                ref={openButtonRef}
+                style={{ opacity: 0 }}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpen();
+                }}
+                className="pointer-events-auto group relative flex items-center gap-3 bg-white/90 hover:bg-white text-[var(--ink)] backdrop-blur-md px-8 sm:px-10 py-3.5 rounded-full text-xs font-semibold tracking-[0.24em] transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.45)] hover:scale-105 active:scale-95"
+                aria-label="Buka Undangan Pernikahan"
+              >
+                <span>{openButtonLabel || 'BUKA UNDANGAN'}</span>
+                <svg
+                  className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                >
+                  <path
+                    d="M3 8H13M13 8L8.5 3.5M13 8L8.5 12.5"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+
+                {/* Subtle Pulsing Border Glow */}
+                <span className="absolute -inset-0.5 rounded-full border border-white/40 animate-ping opacity-30 pointer-events-none" />
+              </button>
+
+              <p
+                ref={subtextRef}
+                style={{ opacity: 0 }}
+                className="label-eyebrow text-[9px] sm:text-[10px] text-white/70 tracking-[0.22em] mt-3.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] uppercase"
+              >
+                {tapHintLabel || 'SENTUH LAYAR ATAU TOMBOL UNTUK MEMBUKA'}
+              </p>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

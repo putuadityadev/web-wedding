@@ -12,6 +12,7 @@ export interface HeroContent {
   badge: string;
   groomName: string;
   brideName: string;
+  subtitle: string;
   dateShort: string;
   portraitSrc: string;
   portraitAlt: string;
@@ -25,6 +26,15 @@ export interface QuoteContent {
   citation: string;
 }
 
+export interface PrayerContent {
+  sectionLabel: string;
+  title: string;
+  arabicOrSanskrit: string;
+  translation: string;
+  blessingText: string;
+  citation: string;
+}
+
 export interface PersonProfile {
   name: string;
   childOf: string;
@@ -33,6 +43,10 @@ export interface PersonProfile {
   photoAlt: string;
   photoLabel: string;
   instagram: string;
+  fatherName?: string;
+  motherName?: string;
+  parentsTitle?: string;
+  parentsAvatarSrc?: string;
 }
 
 export interface CoupleContent {
@@ -123,6 +137,7 @@ export interface SiteContent {
   cover: CoverContent;
   hero: HeroContent;
   quote: QuoteContent;
+  prayer: PrayerContent;
   couple: CoupleContent;
   story: StoryContent;
   event: EventContent;
@@ -146,6 +161,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     badge: 'THE WEDDING OF',
     groomName: 'Dharma',
     brideName: 'Lutfhy',
+    subtitle: 'DUA GARIS · SATU BENANG PERJALANAN',
     dateShort: '12 · 12 · 2026',
     portraitSrc: '/KLK07943.avif',
     portraitAlt: 'Potret I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo',
@@ -156,6 +172,14 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     label: 'KUTIPAN SUCI',
     text: 'Pertemuan dua jiwa bukanlah suatu kebetulan, melainkan perjalanan panjang yang telah digariskan semesta untuk saling melengkapi dan bertumbuh bersama.',
     citation: 'Harmoni Dua Hati',
+  },
+  prayer: {
+    sectionLabel: 'DOA & RESTU WIWAHA',
+    title: 'Asung Kertha Wara Nugraha',
+    arabicOrSanskrit: 'Om Ihaiva stam ma vi yaustam, visvam ayur vyasnutam, kridantau putrair naptrbhih modamanau sve grhe.',
+    translation: 'Wahai pasangan pengantin, semoga engkau senantiasa tetap bersatu, tidak pernah terpisahkan, mencapai usia hidup yang panjang dan bahagia, dikaruniai keturunan yang utama, serta senantiasa damai dan tenteram di dalam rumah tanggamu.',
+    blessingText: 'Om Swastyastu. Atas asung kertha wara nugraha Ida Sang Hyang Widhi Wasa, kami memohon doa restu agar perjalanan mahligai rumah tangga kami senantiasa dilimpahi kerahayuan, ketulusan, kedamaian lahir dan batin. Om Shanti, Shanti, Shanti, Om.',
+    citation: 'Rg Veda X.85.42',
   },
   couple: {
     sectionLabel: 'TENTANG MEMPELAI',
@@ -169,6 +193,10 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       photoAlt: 'I Wayan Dharma Wirahadi',
       photoLabel: 'POTRET DHARMA',
       instagram: 'dharmawirahadi',
+      fatherName: 'I Wayan Suweta',
+      motherName: 'Ni Wayan Murni',
+      parentsTitle: 'Putra Pertama Dari Pasangan:',
+      parentsAvatarSrc: '',
     },
     bride: {
       name: 'Luthfi Quasimah Widoyo',
@@ -178,6 +206,10 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       photoAlt: 'Luthfi Quasimah Widoyo',
       photoLabel: 'POTRET LUTFHY',
       instagram: 'lutfhyquasimah',
+      fatherName: 'Widoyo',
+      motherName: 'Sri Mulyani',
+      parentsTitle: 'Putri Tercinta Dari Pasangan:',
+      parentsAvatarSrc: '',
     },
   },
   story: {

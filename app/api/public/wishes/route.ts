@@ -1,22 +1,40 @@
 import { NextResponse } from 'next/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  // Phase 1 mock wishes
-  return NextResponse.json({
-    ok: true,
-    data: [
-      {
-        id: '1',
-        name: 'Bapak H. Sukardi & Keluarga',
-        wish: 'Selamat menempuh hidup baru untuk Dharma dan Lutfhy. Semoga senantiasa diberkahi kebahagiaan, keharmonisan, dan cinta yang abadi sepanjang hayat.',
-        createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-      },
-      {
-        id: '2',
-        name: 'Dimas Wicaksono',
-        wish: 'Akhirnya hari yang ditunggu tiba! Selamat menempuh perjalanan baru, Bli Dharma & Kak Lutfhy.',
-        createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-      },
-    ],
-  });
+  try {
+    const admin = createAdminClient();
+
+    const { data: rsvps, error } = await admin
+      .from('rsvps')
+      .select('id, wish, created_at, guests(name)')
+      .eq('wish_visible', true)
+      .not('wish', 'is', null)
+      .neq('wish', '')
+      .order('created_at', { ascending: false })
+      .limit(60);
+
+    if (error) {
+      console.warn('[Public Wishes] DB query error:', error.message);
+      return NextResponse.json({ ok: true, data: [] });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wishes = (rsvps || []).map((r: any) => ({
+      id: r.id,
+      name: r.guests?.name || 'Tamu Undangan',
+      wish: r.wish,
+      createdAt: r.created_at,
+    }));
+
+    return NextResponse.json({
+      ok: true,
+      data: wishes,
+    });
+  } catch (err: unknown) {
+    console.warn('[Public Wishes] Exception:', err);
+    return NextResponse.json({ ok: true, data: [] });
+  }
 }

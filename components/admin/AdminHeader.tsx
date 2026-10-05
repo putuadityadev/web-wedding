@@ -22,7 +22,7 @@ export function AdminHeader({ currentEmail }: AdminHeaderProps) {
   };
 
   return (
-    <header className="hidden md:flex items-center justify-between px-6 lg:px-8 py-4 bg-white/70 backdrop-blur-md border-b border-[#0F1B2D]/10 sticky top-0 z-20">
+    <header className="hidden md:flex items-center justify-between px-6 lg:px-8 py-4 bg-white border-b border-[#0F1B2D]/10 sticky top-0 z-20 shadow-xs">
       {/* Title & Breadcrumb */}
       <div>
         <h1 className="font-serif text-xl text-[#0F1B2D] font-medium tracking-tight">

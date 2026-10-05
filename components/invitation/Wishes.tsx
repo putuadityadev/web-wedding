@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export interface WishItem {
   id: string;
@@ -9,58 +9,64 @@ export interface WishItem {
   timeAgo: string;
 }
 
-const INITIAL_WISHES: WishItem[] = [
-  {
-    id: 'w-1',
-    name: 'Bapak H. Sukardi & Keluarga',
-    wish: 'Selamat menempuh hidup baru untuk Dharma dan Lutfhy. Semoga senantiasa diberkahi kebahagiaan, keharmonisan, dan cinta yang abadi sepanjang hayat.',
-    timeAgo: '2 jam yang lalu',
-  },
-  {
-    id: 'w-2',
-    name: 'Dimas Wicaksono',
-    wish: 'Akhirnya hari yang ditunggu tiba! Selamat menempuh perjalanan baru, Bli Dharma & Kak Lutfhy. Semoga cinta kalian semakin hangat dari hari ke hari.',
-    timeAgo: '5 jam yang lalu',
-  },
-  {
-    id: 'w-3',
-    name: 'Sarah & Danang',
-    wish: 'Selamat ya Lutfhy & Dharma! Rekan-rekan turut berbahagia dan bangga. Bahagia selalu dan saling menguatkan dalam setiap langkah.',
-    timeAgo: '1 hari yang lalu',
-  },
-  {
-    id: 'w-4',
-    name: 'Keluarga Besar dr. Bambang',
-    wish: 'Turut berbahagia atas pernikahan Dharma dan Lutfhy. Kiranya Tuhan Yang Maha Esa melimpahkan kebahagiaan, kesehatan, dan keharmonisan selalu.',
-    timeAgo: '2 hari yang lalu',
-  },
-  {
-    id: 'w-5',
-    name: 'Nadia & Kevin',
-    wish: 'Happy wedding! Semoga perjalanan indah kalian berdua selalu dipenuhi tawa dan berkah tanpa akhir.',
-    timeAgo: '3 hari yang lalu',
-  },
-  {
-    id: 'w-6',
-    name: 'Rian Pratama',
-    wish: 'Selamat kawan! Semoga langgeng sampai kakek nenek, dilancarkan segala urusan dan resepsinya nanti.',
-    timeAgo: '3 hari yang lalu',
-  },
-];
+function formatRelativeTime(dateString: string): string {
+  try {
+    const diffMs = Date.now() - new Date(dateString).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Baru saja';
+    if (diffMins < 60) return `${diffMins} menit lalu`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} jam lalu`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return `${diffDays} hari lalu`;
+    return new Date(dateString).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
+  } catch {
+    return 'Baru saja';
+  }
+}
 
 interface WishesProps {
   newWish?: { name: string; wish: string } | null;
 }
 
 export function Wishes({ newWish }: WishesProps) {
-  const [wishes] = useState<WishItem[]>(INITIAL_WISHES);
+  const [wishes, setWishes] = useState<WishItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(6);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadWishes() {
+      try {
+        const res = await fetch('/api/public/wishes');
+        const json = await res.json();
+        if (isMounted && json.ok && Array.isArray(json.data)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const items: WishItem[] = json.data.map((w: any) => ({
+            id: w.id,
+            name: w.name,
+            wish: w.wish,
+            timeAgo: formatRelativeTime(w.createdAt),
+          }));
+          setWishes(items);
+        }
+      } catch {
+        // Fallback gracefully to empty if network issue
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadWishes();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const allWishes = React.useMemo(() => {
     if (newWish && newWish.wish) {
       return [
         {
-          id: `w-user-${newWish.name}`,
+          id: `w-user-${Date.now()}`,
           name: newWish.name,
           wish: newWish.wish,
           timeAgo: 'Baru saja',
@@ -79,38 +85,67 @@ export function Wishes({ newWish }: WishesProps) {
       className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none"
     >
       <div className="max-w-5xl mx-auto w-full">
-        {/* Wishes Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-          {displayedWishes.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-col border-b border-[var(--hairline)] pb-6"
-            >
-              <div className="flex items-baseline justify-between mb-3">
-                <span className="label-eyebrow text-[var(--deep)] tracking-[0.16em] font-medium">
-                  {item.name}
-                </span>
-                <span className="text-[11px] text-[var(--ink)] opacity-40">
-                  {item.timeAgo}
-                </span>
-              </div>
-
-              <p className="body-l font-serif text-[var(--ink)] opacity-90 leading-relaxed italic">
-                &ldquo;{item.wish}&rdquo;
-              </p>
-            </div>
-          ))}
+        {/* Section Header */}
+        <div className="text-center max-w-xl mx-auto mb-16 md:mb-20">
+          <span className="label-eyebrow text-[var(--accent)] tracking-[0.2em] mb-4 block">
+            DOA & UCAPAN
+          </span>
+          <h2 className="title-display text-[var(--ink)] font-light mb-4">
+            Dinding Doa Restu
+          </h2>
+          <p className="body-m text-[var(--ink)] opacity-70">
+            Ungkapan kasih dan ketulusan doa dari keluarga serta sahabat terkasih.
+          </p>
         </div>
 
+        {/* Wishes List */}
+        {loading ? (
+          <div className="py-12 text-center text-xs text-[var(--ink)] opacity-40 font-mono">
+            Memuat doa restu...
+          </div>
+        ) : allWishes.length === 0 ? (
+          <div className="py-12 px-6 text-center max-w-md mx-auto border border-dashed border-[var(--hairline)] rounded-xl bg-[var(--paper)]">
+            <div className="text-2xl mb-2">💌</div>
+            <p className="font-serif italic text-[var(--ink)] opacity-80 text-sm">
+              Belum ada ucapan doa restu yang terkirim.
+            </p>
+            <p className="text-xs text-[var(--ink)] opacity-50 mt-1">
+              Jadilah yang pertama memberikan doa restu untuk kedua mempelai melalui formulir kehadiran di atas.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+            {displayedWishes.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col border-b border-[var(--hairline)] pb-6"
+              >
+                <div className="flex items-baseline justify-between mb-3">
+                  <span className="label-eyebrow text-[var(--deep)] tracking-[0.16em] font-medium">
+                    {item.name}
+                  </span>
+                  <span className="text-[11px] text-[var(--ink)] opacity-40">
+                    {item.timeAgo}
+                  </span>
+                </div>
+
+                <p className="body-l font-serif text-[var(--ink)] opacity-90 leading-relaxed italic">
+                  &ldquo;{item.wish}&rdquo;
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Load More Button */}
-        {visibleCount < wishes.length && (
-          <div className="flex justify-center mt-12">
+        {allWishes.length > visibleCount && (
+          <div className="mt-16 text-center">
             <button
               type="button"
-              onClick={() => setVisibleCount((prev) => prev + 4)}
-              className="label-eyebrow px-6 py-3 border border-[var(--ink)] rounded-[var(--radius-sm)] hover:bg-[var(--mist)] transition-colors tracking-[0.18em]"
+              onClick={() => setVisibleCount((prev) => prev + 6)}
+              className="inline-flex items-center gap-2 px-8 py-3.5 border border-[var(--deep)] text-[var(--deep)] hover:bg-[var(--deep)] hover:text-white transition-all duration-300 text-xs tracking-[0.2em] font-medium uppercase cursor-pointer"
             >
-              MUAT LEBIH BANYAK
+              <span>MUAT LEBIH BANYAK</span>
             </button>
           </div>
         )}

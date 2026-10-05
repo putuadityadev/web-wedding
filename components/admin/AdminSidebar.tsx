@@ -55,6 +55,16 @@ const NAV_ITEMS = [
     ),
   },
   {
+    label: 'WhatsApp Blasting',
+    href: '/admin/blast',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M22 2L11 13" />
+        <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+      </svg>
+    ),
+  },
+  {
     label: 'Dinding Ucapan',
     href: '/admin/wishes',
     icon: (

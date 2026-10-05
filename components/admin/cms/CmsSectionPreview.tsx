@@ -11,7 +11,7 @@ interface CmsSectionPreviewProps {
 export function CmsSectionPreview({ section, content }: CmsSectionPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [deviceMode, setDeviceMode] = useState<'mobile' | 'desktop'>('mobile');
-  const [coverOpen, setCoverOpen] = useState(true);
+  const [coverOpen, setCoverOpen] = useState(section !== 'cover');
   const [isIframeLoaded, setIsIframeLoaded] = useState(false);
 
   // Sync content updates into the iframe via postMessage on every change
@@ -34,6 +34,15 @@ export function CmsSectionPreview({ section, content }: CmsSectionPreviewProps) 
   useEffect(() => {
     if (!iframeRef.current?.contentWindow || !isIframeLoaded) return;
     try {
+      const nextOpen = section !== 'cover';
+      setCoverOpen(nextOpen);
+      iframeRef.current.contentWindow.postMessage(
+        {
+          type: 'TOGGLE_COVER',
+          open: nextOpen,
+        },
+        window.location.origin
+      );
       iframeRef.current.contentWindow.postMessage(
         {
           type: 'SCROLL_TO',
@@ -41,11 +50,6 @@ export function CmsSectionPreview({ section, content }: CmsSectionPreviewProps) 
         },
         window.location.origin
       );
-      if (section === 'cover') {
-        setCoverOpen(false);
-      } else {
-        setCoverOpen(true);
-      }
     } catch (e) {
       console.warn('Failed to scroll preview iframe:', e);
     }
@@ -154,8 +158,8 @@ export function CmsSectionPreview({ section, content }: CmsSectionPreviewProps) 
       <div
         className={`transition-all duration-300 mx-auto ${
           deviceMode === 'mobile'
-            ? 'w-[390px] h-[780px] rounded-[36px] border-[8px] border-[#0F1B2D] shadow-2xl overflow-hidden bg-[var(--paper)] flex flex-col'
-            : 'w-full h-[780px] rounded-xl border border-[#0F1B2D]/20 shadow-xl overflow-hidden bg-[var(--paper)] flex flex-col'
+            ? 'w-[335px] sm:w-[345px] h-[640px] rounded-[32px] border-[6px] border-[#0F1B2D] shadow-2xl overflow-hidden bg-[var(--paper)] flex flex-col'
+            : 'w-full h-[640px] rounded-xl border border-[#0F1B2D]/20 shadow-xl overflow-hidden bg-[var(--paper)] flex flex-col'
         }`}
       >
         {/* Dynamic Island / Mobile Notch (Only visible in mobile mode) */}
@@ -188,7 +192,7 @@ export function CmsSectionPreview({ section, content }: CmsSectionPreviewProps) 
 
           <iframe
             ref={iframeRef}
-            src="/preview?unlocked=1"
+            src={`/preview?unlocked=${section === 'cover' ? '0' : '1'}`}
             title="Real 1:1 Landing Preview"
             onLoad={() => {
               setIsIframeLoaded(true);
@@ -196,6 +200,10 @@ export function CmsSectionPreview({ section, content }: CmsSectionPreviewProps) 
               if (iframeRef.current?.contentWindow) {
                 iframeRef.current.contentWindow.postMessage(
                   { type: 'SYNC_CONTENT', content },
+                  window.location.origin
+                );
+                iframeRef.current.contentWindow.postMessage(
+                  { type: 'TOGGLE_COVER', open: section !== 'cover' },
                   window.location.origin
                 );
                 iframeRef.current.contentWindow.postMessage(
