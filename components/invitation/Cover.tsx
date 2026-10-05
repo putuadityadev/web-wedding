@@ -13,6 +13,68 @@ interface CoverProps {
   onOpenInvitation: () => void;
 }
 
+const SPRITE_CONFIG = {
+  cols: 4,
+  rows: 5,
+  framesPerSheet: 20,
+  frameWidth: 405,
+  frameHeight: 720,
+  totalFrames: 77, // Frame 0: closed, Frames 1-76: opening motion
+  sheets: [
+    '/envelope/sheet_0.webp',
+    '/envelope/sheet_1.webp',
+    '/envelope/sheet_2.webp',
+    '/envelope/sheet_3.webp',
+  ],
+  coverClosed: '/envelope/cover_closed.webp',
+};
+
+// Dispatch a subtle fluid burst on SplashCursor for ethereal smokey swirls
+function triggerSmokeyBurst(x: number, y: number) {
+  if (typeof window === 'undefined') return;
+  try {
+    const downEvent = new MouseEvent('mousedown', {
+      clientX: x,
+      clientY: y,
+      bubbles: true,
+    });
+    window.dispatchEvent(downEvent);
+
+    // Organic swirl motions
+    setTimeout(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          clientX: x + 45,
+          clientY: y - 35,
+          bubbles: true,
+        })
+      );
+    }, 60);
+
+    setTimeout(() => {
+      window.dispatchEvent(
+        new MouseEvent('mousemove', {
+          clientX: x - 35,
+          clientY: y + 25,
+          bubbles: true,
+        })
+      );
+    }, 130);
+
+    setTimeout(() => {
+      window.dispatchEvent(
+        new MouseEvent('mouseup', {
+          clientX: x,
+          clientY: y,
+          bubbles: true,
+        })
+      );
+    }, 220);
+  } catch {
+    // Ignore any environment restrictions
+  }
+}
+
 export function Cover({
   guestName,
   salutation,
@@ -22,123 +84,255 @@ export function Cover({
   onOpenInvitation,
 }: CoverProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const topFlapRef = useRef<HTMLDivElement | null>(null);
-  const bottomPanelRef = useRef<HTMLDivElement | null>(null);
-  const sealRef = useRef<HTMLButtonElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const uiOverlayRef = useRef<HTMLDivElement | null>(null);
+  const vignetteRef = useRef<HTMLDivElement | null>(null);
+  const smokeRef = useRef<HTMLDivElement | null>(null);
+
+  // Staggered text refs
   const headerRef = useRef<HTMLElement | null>(null);
-  const recipientContentRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const salutationRef = useRef<HTMLSpanElement | null>(null);
+  const nameRef = useRef<HTMLHeadingElement | null>(null);
+  const separatorRef = useRef<HTMLDivElement | null>(null);
+  const openButtonRef = useRef<HTMLButtonElement | null>(null);
+  const subtextRef = useRef<HTMLParagraphElement | null>(null);
+
+  // Preloader refs
+  const loaderRef = useRef<HTMLDivElement | null>(null);
+  const progressTextRef = useRef<HTMLSpanElement | null>(null);
+  const progressBarRef = useRef<HTMLDivElement | null>(null);
+
+  const sheetsRef = useRef<HTMLImageElement[]>([]);
+  const coverImgRef = useRef<HTMLImageElement | null>(null);
+  const currentFrameRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(false);
+  const isLoadedRef = useRef<boolean>(false);
 
   const [isOpened, setIsOpened] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
+
   const { unlockScroll } = useLenisContext();
 
-  // Entrance & Subtle Idle Float on mount
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  // Helper to draw a specific frame onto the full-screen canvas
+  const drawFrame = useCallback((frameIdx: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    const ctx = gsap.context(() => {
-      // Header entrance
-      if (headerRef.current) {
-        gsap.fromTo(
-          headerRef.current,
-          { opacity: 0, y: -20 },
-          { opacity: 1, y: 0, duration: 1.1, ease: 'power3.out', delay: 0.1 }
-        );
-      }
+    const w = canvas.width;
+    const h = canvas.height;
 
-      // Top Flap entrance
-      if (topFlapRef.current) {
-        gsap.fromTo(
-          topFlapRef.current,
-          { opacity: 0, y: -30, rotateX: 6 },
-          { opacity: 1, y: 0, rotateX: 0, duration: 1.3, ease: 'power3.out', delay: 0.2 }
-        );
-      }
+    ctx.clearRect(0, 0, w, h);
 
-      // Bottom Panel and Recipient content entrance
-      if (recipientContentRef.current) {
-        gsap.fromTo(
-          recipientContentRef.current,
-          { opacity: 0, y: 30 },
-          { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.35 }
-        );
-      }
+    // If frame 0 and high-res cover is available, draw high-res cover
+    if (frameIdx === 0 && coverImgRef.current && coverImgRef.current.complete) {
+      const img = coverImgRef.current;
+      const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+      const dw = img.naturalWidth * scale;
+      const dh = img.naturalHeight * scale;
+      const dx = (w - dw) / 2;
+      const dy = (h - dh) / 2;
+      ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, dx, dy, dw, dh);
+      return;
+    }
 
-      // Seal entrance with soft organic pop
-      if (sealRef.current) {
-        gsap.fromTo(
-          sealRef.current,
-          { scale: 0.5, opacity: 0, rotate: -15 },
-          { scale: 1, opacity: 1, rotate: 0, duration: 1.3, ease: 'back.out(1.8)', delay: 0.45 }
-        );
+    // Otherwise, draw from sprite sheet
+    const sheetIdx = Math.floor(frameIdx / SPRITE_CONFIG.framesPerSheet);
+    const slot = frameIdx % SPRITE_CONFIG.framesPerSheet;
+    const col = slot % SPRITE_CONFIG.cols;
+    const row = Math.floor(slot / SPRITE_CONFIG.cols);
 
-        // Gentle breathing animation on seal
-        gsap.to(sealRef.current, {
-          scale: 1.04,
-          duration: 2.6,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-          delay: 1.8,
-        });
-      }
-    }, containerRef);
+    const sx = col * SPRITE_CONFIG.frameWidth;
+    const sy = row * SPRITE_CONFIG.frameHeight;
+    const sw = SPRITE_CONFIG.frameWidth;
+    const sh = SPRITE_CONFIG.frameHeight;
 
-    return () => ctx.revert();
+    const sheetImg = sheetsRef.current[sheetIdx];
+    if (sheetImg && sheetImg.complete) {
+      const scale = Math.max(w / sw, h / sh);
+      const dw = sw * scale;
+      const dh = sh * scale;
+      const dx = (w - dw) / 2;
+      const dy = (h - dh) / 2;
+      ctx.drawImage(sheetImg, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
   }, []);
 
-  // 3D Mouse Parallax
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (isOpened || isOpening || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
+  // Smooth entrance choreograph for UI typography once loading finishes
+  const animateTextEntrance = useCallback(() => {
+    const tl = gsap.timeline();
 
-      if (topFlapRef.current) {
-        gsap.to(topFlapRef.current, {
-          rotateY: x * 5,
-          rotateX: -y * 4,
-          duration: 0.8,
-          ease: 'power2.out',
+    if (headerRef.current) {
+      tl.fromTo(
+        headerRef.current,
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 1.1, ease: 'power3.out' },
+        0.1
+      );
+    }
+
+    if (salutationRef.current) {
+      tl.fromTo(
+        salutationRef.current,
+        { opacity: 0, y: 16 },
+        { opacity: 0.9, y: 0, duration: 1.0, ease: 'power3.out' },
+        0.2
+      );
+    }
+
+    if (nameRef.current) {
+      tl.fromTo(
+        nameRef.current,
+        { opacity: 0, y: 22, scale: 0.97 },
+        { opacity: 1, y: 0, scale: 1, duration: 1.25, ease: 'power3.out' },
+        0.3
+      );
+    }
+
+    if (separatorRef.current) {
+      tl.fromTo(
+        separatorRef.current,
+        { opacity: 0, scaleX: 0.7 },
+        { opacity: 0.8, scaleX: 1, duration: 1.0, ease: 'power2.out' },
+        0.42
+      );
+    }
+
+    if (openButtonRef.current) {
+      tl.fromTo(
+        openButtonRef.current,
+        { opacity: 0, scale: 0.92, y: 14 },
+        { opacity: 1, scale: 1, y: 0, duration: 1.15, ease: 'back.out(1.4)' },
+        0.55
+      );
+    }
+
+    if (subtextRef.current) {
+      tl.fromTo(
+        subtextRef.current,
+        { opacity: 0, y: 10 },
+        { opacity: 0.7, y: 0, duration: 0.9, ease: 'power2.out' },
+        0.7
+      );
+    }
+  }, []);
+
+  // Preload all assets with real progress tracking & smooth exit
+  useEffect(() => {
+    const totalAssets = 1 + SPRITE_CONFIG.sheets.length; // 5 assets total
+    let loadedAssets = 0;
+    const sheets: HTMLImageElement[] = [];
+    const animTracker = { progress: 0 };
+
+    const finishPreloader = () => {
+      if (isLoadedRef.current) return;
+      isLoadedRef.current = true;
+
+      // Ensure frame 0 is rendered cleanly
+      drawFrame(0);
+
+      // Fade out luxury loader screen
+      if (loaderRef.current) {
+        gsap.to(loaderRef.current, {
+          opacity: 0,
+          scale: 1.025,
+          duration: 0.75,
+          ease: 'power3.inOut',
+          delay: 0.2,
+          onComplete: () => {
+            if (loaderRef.current) loaderRef.current.style.display = 'none';
+          },
         });
       }
-      if (sealRef.current) {
-        gsap.to(sealRef.current, {
-          x: x * 10,
-          y: y * 8,
-          duration: 0.6,
-          ease: 'power2.out',
-        });
+
+      // Start text entrance choreography organically as loader dissolves
+      setTimeout(() => {
+        animateTextEntrance();
+      }, 350);
+    };
+
+    const updateProgress = () => {
+      loadedAssets++;
+      const targetPercent = Math.min(100, Math.round((loadedAssets / totalAssets) * 100));
+
+      gsap.to(animTracker, {
+        progress: targetPercent,
+        duration: 0.35,
+        ease: 'power1.out',
+        onUpdate: () => {
+          const currentVal = Math.round(animTracker.progress);
+          if (progressTextRef.current) {
+            progressTextRef.current.textContent = `${currentVal}%`;
+          }
+          if (progressBarRef.current) {
+            progressBarRef.current.style.width = `${currentVal}%`;
+          }
+        },
+        onComplete: () => {
+          if (targetPercent >= 100) {
+            finishPreloader();
+          }
+        },
+      });
+    };
+
+    // 1. High-res closed cover
+    const cover = new Image();
+    cover.src = SPRITE_CONFIG.coverClosed;
+    cover.onload = () => {
+      coverImgRef.current = cover;
+      drawFrame(0);
+      updateProgress();
+    };
+    cover.onerror = updateProgress;
+
+    // 2. Sprite sheets
+    SPRITE_CONFIG.sheets.forEach((src, idx) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        updateProgress();
+      };
+      img.onerror = updateProgress;
+      sheets[idx] = img;
+    });
+
+    sheetsRef.current = sheets;
+
+    // Safety fallback timeout
+    const timeout = setTimeout(() => {
+      if (!isLoadedRef.current) {
+        if (progressTextRef.current) progressTextRef.current.textContent = '100%';
+        if (progressBarRef.current) progressBarRef.current.style.width = '100%';
+        finishPreloader();
       }
-    },
-    [isOpened, isOpening]
-  );
+    }, 4000);
 
-  const handleMouseLeave = useCallback(() => {
-    if (isOpened || isOpening) return;
-    if (topFlapRef.current) {
-      gsap.to(topFlapRef.current, {
-        rotateY: 0,
-        rotateX: 0,
-        duration: 1.0,
-        ease: 'power2.out',
-      });
-    }
-    if (sealRef.current) {
-      gsap.to(sealRef.current, {
-        x: 0,
-        y: 0,
-        duration: 0.8,
-        ease: 'power2.out',
-      });
-    }
-  }, [isOpened, isOpening]);
+    return () => clearTimeout(timeout);
+  }, [drawFrame, animateTextEntrance]);
 
-  // Grand Seamless Envelope Opening Sequence
-  const handleOpen = () => {
-    if (isOpened || isOpening) return;
+  // Canvas resize with devicePixelRatio support
+  useEffect(() => {
+    const handleResize = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      drawFrame(currentFrameRef.current);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [drawFrame]);
+
+  // Envelope Opening Sequence (With post-open smokey diffusion preventing sudden brightness)
+  const handleOpen = useCallback(() => {
+    if (isOpened || isOpening || isPlayingRef.current || !isLoadedRef.current) return;
+    isPlayingRef.current = true;
     setIsOpening(true);
     setIsOpened(true);
 
@@ -150,17 +344,13 @@ export function Cover({
     if (prefersReducedMotion) {
       gsap.to(containerRef.current, {
         opacity: 0,
-        duration: 0.5,
+        duration: 0.45,
         onComplete: () => {
           unlockScroll();
           if (containerRef.current) containerRef.current.style.display = 'none';
         },
       });
       return;
-    }
-
-    if (sealRef.current) {
-      gsap.killTweensOf(sealRef.current);
     }
 
     const tl = gsap.timeline({
@@ -172,250 +362,360 @@ export function Cover({
       },
     });
 
-    // 1. Header fades out
+    // 1. Silky Smooth Fadeout of Header & Typography
     if (headerRef.current) {
-      tl.to(headerRef.current, { opacity: 0, y: -16, duration: 0.35, ease: 'power2.in' }, 0);
+      tl.to(
+        headerRef.current,
+        {
+          opacity: 0,
+          y: -22,
+          duration: 0.6,
+          ease: 'power2.out',
+        },
+        0
+      );
     }
 
-    // 2. Wax Seal pops up, cracks, and dissolves
-    if (sealRef.current) {
+    if (contentRef.current) {
       tl.to(
-        sealRef.current,
+        contentRef.current,
         {
-          scale: 1.25,
-          rotate: 10,
-          y: -10,
-          duration: 0.24,
-          ease: 'back.out(2)',
-        },
-        0.04
-      );
-
-      tl.to(
-        sealRef.current,
-        {
-          scale: 0.3,
           opacity: 0,
-          y: -28,
-          duration: 0.3,
+          y: 20,
+          duration: 0.6,
+          ease: 'power2.out',
+        },
+        0
+      );
+    }
+
+    if (openButtonRef.current) {
+      tl.to(
+        openButtonRef.current,
+        {
+          opacity: 0,
+          scale: 0.94,
+          duration: 0.45,
           ease: 'power2.in',
         },
-        0.26
+        0
       );
     }
 
-    // 3. Top Flap ("Kop Surat") folds smoothly UPWARDS in 3D (0deg -> 180deg)
-    if (topFlapRef.current) {
+    // 2. Silky Dissolve of the Dark Vignette
+    if (vignetteRef.current) {
       tl.to(
-        topFlapRef.current,
+        vignetteRef.current,
         {
-          rotateX: 180,
-          duration: 1.15,
-          ease: 'power3.inOut',
+          opacity: 0,
+          duration: 0.75,
+          ease: 'sine.inOut',
         },
-        0.2
+        0
       );
     }
 
-    // 4. Bottom Panel glides DOWNWARDS offscreen
-    if (bottomPanelRef.current) {
+    // 3. Ethereal Smokey Aura / Mist Layer
+    // Positioned behind the canvas, it acts as an exposure shield while flaps open,
+    // and continues lingering AFTER the envelope opens so the screen doesn't suddenly flash bright!
+    if (smokeRef.current) {
+      // Fade in the soft smokey shield right as the envelope aperture starts widening
+      tl.fromTo(
+        smokeRef.current,
+        { opacity: 0, scale: 0.85 },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.7,
+          ease: 'power2.out',
+        },
+        0.35
+      );
+
+      // Dissolve the smokey veil AFTER the envelope flaps clear out (from 1.75s to 3.2s)
       tl.to(
-        bottomPanelRef.current,
+        smokeRef.current,
         {
-          yPercent: 105,
-          opacity: 0.8,
-          duration: 1.15,
-          ease: 'power3.inOut',
+          opacity: 0,
+          scale: 1.15,
+          duration: 1.45,
+          ease: 'power2.inOut',
         },
-        0.2
+        1.75
       );
     }
 
-    // 5. Seamless Match-Cut Reveal of Hero Section underneath!
+    // 4. Animate Sprite Sheet Frames (0 -> 76) at smooth ~34 fps (2.25s duration)
+    const animState = { frame: 0 };
+    tl.to(
+      animState,
+      {
+        frame: SPRITE_CONFIG.totalFrames - 1,
+        duration: 2.25,
+        ease: 'power1.inOut',
+        onUpdate: () => {
+          const current = Math.round(animState.frame);
+          currentFrameRef.current = current;
+          drawFrame(current);
+        },
+      },
+      0.08
+    );
+
+    // 5. Trigger WebGL fluid smoke burst on SplashCursor right as the envelope opens wide
+    tl.call(() => {
+      if (typeof window !== 'undefined') {
+        triggerSmokeyBurst(window.innerWidth / 2, window.innerHeight / 2);
+      }
+    }, [], 1.45);
+
+    // 6. Cinematic Match-Cut: Reveal Hero Section with gentle exposure bloom & de-blur from behind the dissipating smoke
     const heroEl = document.getElementById('hero');
     if (heroEl) {
       tl.fromTo(
         heroEl,
-        { scale: 1.1, filter: 'blur(10px)' },
-        { scale: 1, filter: 'blur(0px)', duration: 1.35, ease: 'power3.out' },
-        0.32
+        { filter: 'brightness(0.68) blur(10px)', scale: 1.05 },
+        { filter: 'brightness(1) blur(0px)', scale: 1, duration: 1.6, ease: 'power2.out' },
+        1.5
       );
     }
 
-    // 6. Container fades out completely as panels part
-    if (containerRef.current) {
+    // 7. Smoothly fade out the envelope canvas as the flaps exit
+    if (canvasRef.current) {
       tl.to(
-        containerRef.current,
+        canvasRef.current,
         {
           opacity: 0,
           duration: 0.45,
           ease: 'power2.inOut',
         },
-        0.95
+        1.85
       );
     }
-  };
+
+    // 8. Container finishes completely after the smokey veil dissolves (at 3.2s)
+    tl.to({}, { duration: 0.05 }, 3.2);
+  }, [isOpened, isOpening, onOpenInvitation, unlockScroll, drawFrame]);
 
   return (
     <div
       ref={containerRef}
       id="cover"
-      className="fixed inset-0 z-50 overflow-hidden flex flex-col justify-between text-[var(--ink)] select-none bg-[#EAF0F6]"
-      style={{ height: '100dvh', perspective: 1800 }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      onClick={handleOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          handleOpen();
+        }
+      }}
+      aria-label="Klik atau sentuh layar untuk membuka undangan"
+      className="fixed inset-0 z-50 overflow-hidden select-none cursor-pointer bg-transparent"
+      style={{ height: '100dvh' }}
     >
-      {/* Paper Fiber Grain Texture (Pure Procedural SVG) */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.035] pointer-events-none z-40">
-        <filter id="clean-cover-noise">
-          <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
-          <feColorMatrix type="saturate" values="0" />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#clean-cover-noise)" />
-      </svg>
-
       {/* ============================================================== */}
-      {/* 1. TOP HEADER (Responsive, never overlaps on mobile)           */}
-      {/* ============================================================== */}
-      <header
-        ref={headerRef}
-        className="absolute top-0 left-0 right-0 z-30 pt-6 sm:pt-8 px-6 sm:px-12 max-w-7xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-4 pointer-events-none"
-      >
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--deep)] opacity-70 animate-pulse" />
-          <span className="label-eyebrow tracking-[0.24em] text-[var(--ink)] opacity-75 text-[10px] sm:text-xs font-semibold">
-            THE WEDDING OF {groomName.toUpperCase()} &amp; {brideName.toUpperCase()}
-          </span>
-        </div>
-
-        <div className="label-eyebrow tracking-[0.22em] text-[var(--ink)] opacity-55 text-[9px] sm:text-[11px] font-mono">
-          {dateFormatted.toUpperCase()}
-        </div>
-      </header>
-
-      {/* ============================================================== */}
-      {/* 2. TOP FLAP ("KOP SURAT", 3D UPWARD FOLD)                       */}
-      {/* Symmetrical SVG geometry so flap & gold trim always match 100%  */}
+      {/* 0. LUXURY EDITORIAL PRELOADER (Awwwards Style)                 */}
       {/* ============================================================== */}
       <div
-        ref={topFlapRef}
-        className="absolute top-0 left-0 right-0 h-[46vh] sm:h-[48vh] origin-top transform-gpu will-change-transform z-20"
-        style={{
-          transformOrigin: 'top center',
-          transformStyle: 'preserve-3d',
-          filter: 'drop-shadow(0 14px 28px rgba(15, 30, 52, 0.16))',
-        }}
+        ref={loaderRef}
+        className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#0D1A2D] text-white pointer-events-auto"
       >
-        {/* Flap Exterior (facing viewer when closed) */}
+        {/* Soft Ambient Radial Light */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            backfaceVisibility: 'hidden',
+            background:
+              'radial-gradient(circle at 50% 45%, rgba(45, 78, 115, 0.35) 0%, rgba(13, 26, 45, 0.95) 75%)',
           }}
-        >
-          {/* Symmetrical Triangle SVG with integrated gold foil trim */}
-          <svg
-            viewBox="0 0 1000 600"
-            preserveAspectRatio="none"
-            className="w-full h-full block"
-          >
-            <defs>
-              <linearGradient id="flapCleanGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#F5F8FC" />
-                <stop offset="60%" stopColor="#E6F0F8" />
-                <stop offset="100%" stopColor="#D5E4F2" />
-              </linearGradient>
-              <linearGradient id="flapGoldTrim" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#C8A96E" stopOpacity="0.3" />
-                <stop offset="50%" stopColor="#E2BE75" stopOpacity="0.85" />
-                <stop offset="100%" stopColor="#C8A96E" stopOpacity="0.3" />
-              </linearGradient>
-            </defs>
+        />
 
-            {/* Flap face polygon */}
-            <polygon points="0,0 1000,0 500,600" fill="url(#flapCleanGrad)" />
+        <div className="relative z-10 flex flex-col items-center max-w-xs text-center px-6">
+          {/* Monogram */}
+          <span className="font-serif italic text-4xl sm:text-5xl text-[#F2DFB8] tracking-widest mb-3.5 opacity-90 drop-shadow-[0_2px_12px_rgba(226,190,117,0.3)]">
+            {groomName.charAt(0)} &amp; {brideName.charAt(0)}
+          </span>
 
-            {/* Crisp Gold Foil Accent along the V-fold */}
-            <polyline
-              points="0,0 500,600 1000,0"
-              fill="none"
-              stroke="url(#flapGoldTrim)"
-              strokeWidth="2.5"
+          <span className="label-eyebrow tracking-[0.34em] text-[10px] text-[#A6C0DE] uppercase mb-7 font-mono opacity-80">
+            MEMUAT PENGALAMAN
+          </span>
+
+          {/* Hairline Gold Progress Bar */}
+          <div className="relative w-52 h-[2px] bg-white/10 rounded-full overflow-hidden mb-3">
+            <div
+              ref={progressBarRef}
+              className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-[#B49458] via-[#F2DFB8] to-[#B49458] transition-all duration-150 ease-out"
+              style={{ width: '0%' }}
             />
-          </svg>
-
-          {/* Minimalist Watermark Monogram */}
-          <div className="absolute top-[28%] left-1/2 -translate-x-1/2 flex flex-col items-center opacity-15 pointer-events-none">
-            <span className="font-serif italic text-4xl sm:text-5xl tracking-widest text-[var(--deep)]">
-              {groomName.charAt(0)} &amp; {brideName.charAt(0)}
-            </span>
           </div>
-        </div>
 
-        {/* Flap Interior Lining (visible when folded open 180deg) */}
-        <div
-          className="absolute inset-0 overflow-hidden"
-          style={{
-            transform: 'rotateX(180deg)',
-            backfaceVisibility: 'hidden',
-          }}
-        >
-          <svg
-            viewBox="0 0 1000 600"
-            preserveAspectRatio="none"
-            className="w-full h-full block"
+          {/* Percentage Counter */}
+          <span
+            ref={progressTextRef}
+            className="font-mono text-[10px] tracking-[0.24em] text-white/50"
           >
-            <defs>
-              <pattern id="cleanLinerPattern" width="48" height="48" patternUnits="userSpaceOnUse">
-                <path
-                  d="M24,6 Q30,16 24,24 Q18,16 24,6 Z M6,24 Q16,30 24,24 Q16,18 6,24 Z M42,24 Q32,30 24,24 Q32,18 42,24 Z M24,42 Q30,32 24,24 Q18,32 24,42 Z"
-                  fill="none"
-                  stroke="#F0D59B"
-                  strokeWidth="0.8"
-                />
-                <circle cx="24" cy="24" r="2" fill="#F0D59B" opacity="0.8" />
-              </pattern>
-            </defs>
-            <polygon points="0,0 1000,0 500,600" fill="#14263B" />
-            <polygon points="0,0 1000,0 500,600" fill="url(#cleanLinerPattern)" opacity="0.22" />
-          </svg>
+            0%
+          </span>
         </div>
       </div>
 
       {/* ============================================================== */}
-      {/* 3. BOTTOM PANEL (Recipient info & CTA)                         */}
+      {/* 1. ETHEREAL SMOKEY AURA & EXPOSURE SHIELD (BEHIND CANVAS)      */}
+      {/* Softens Hero light when opening so it doesn't flash bright,     */}
+      {/* then softly dissolves AFTER the envelope flaps clear away!      */}
       {/* ============================================================== */}
       <div
-        ref={bottomPanelRef}
-        className="absolute inset-0 bg-[#E6EFF7] flex flex-col justify-end pb-8 sm:pb-12 px-6 z-10"
+        ref={smokeRef}
+        className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center opacity-0 overflow-hidden"
       >
+        {/* Ambient Exposure Dimmer (Prevents sudden bright flash) */}
         <div
-          ref={recipientContentRef}
-          className="w-full max-w-xl mx-auto flex flex-col items-center text-center mt-auto"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse at center, rgba(16, 30, 48, 0.52) 0%, rgba(10, 20, 34, 0.78) 65%, rgba(6, 14, 24, 0.9) 100%)',
+          }}
+        />
+
+        {/* Primary Luminous Smokey Mist Cloud */}
+        <div
+          className="w-[125vw] h-[125vw] max-w-[920px] max-h-[920px] rounded-full pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(circle at center, rgba(230, 242, 255, 0.75) 0%, rgba(195, 222, 248, 0.38) 35%, rgba(15, 28, 45, 0.22) 65%, transparent 85%)',
+            filter: 'blur(36px)',
+          }}
+        />
+
+        {/* Secondary Floating Ethereal Mist Wisps */}
+        <div
+          className="absolute w-[85vw] h-[85vw] max-w-[650px] max-h-[650px] rounded-full pointer-events-none animate-pulse"
+          style={{
+            background:
+              'radial-gradient(circle at center, rgba(255, 255, 255, 0.55) 0%, rgba(210, 232, 255, 0.25) 45%, transparent 75%)',
+            filter: 'blur(45px)',
+          }}
+        />
+      </div>
+
+      {/* ============================================================== */}
+      {/* 2. FULL-SCREEN SPRITE SHEET CANVAS (ENVELOPE OPENING)          */}
+      {/* Flaps open to reveal the smokey aura layer underneath          */}
+      {/* ============================================================== */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full block pointer-events-none z-20"
+        style={{
+          width: '100%',
+          height: '100%',
+        }}
+      />
+
+      {/* ============================================================== */}
+      {/* 3. PREMIUM GRADIENT SHADE & VIGNETTE (SEPARATION FROM BG)      */}
+      {/* Dissolves silky-smooth when opening sequence begins            */}
+      {/* ============================================================== */}
+      <div
+        ref={vignetteRef}
+        className="absolute inset-0 z-25 pointer-events-none"
+      >
+        {/* Subtle Radial Vignette across entire viewport */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse at center, rgba(12, 24, 38, 0.08) 0%, rgba(8, 16, 28, 0.38) 70%, rgba(5, 12, 20, 0.55) 100%)',
+          }}
+        />
+
+        {/* Top Vignette Shade for Header */}
+        <div
+          className="absolute top-0 left-0 right-0 h-40 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(5, 14, 25, 0.6) 0%, rgba(5, 14, 25, 0.25) 55%, transparent 100%)',
+          }}
+        />
+
+        {/* Bottom Vignette Shade for Recipient & CTA Button */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-80 sm:h-96 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(to top, rgba(5, 14, 25, 0.72) 0%, rgba(5, 14, 25, 0.42) 50%, rgba(5, 14, 25, 0.12) 80%, transparent 100%)',
+          }}
+        />
+      </div>
+
+      {/* ============================================================== */}
+      {/* 4. EDITORIAL UI TYPOGRAPHY & CTA (STAGGERED SMOOTH ENTRANCE)   */}
+      {/* ============================================================== */}
+      <div
+        ref={uiOverlayRef}
+        className="absolute inset-0 z-30 flex flex-col justify-between pointer-events-none"
+      >
+        {/* TOP HEADER */}
+        <header
+          ref={headerRef}
+          style={{ opacity: 0 }}
+          className="relative z-30 pt-7 sm:pt-9 px-6 sm:px-12 max-w-7xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-4 text-center sm:text-left drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+        >
+          <div className="flex items-center gap-2">
+            <span className="label-eyebrow tracking-[0.26em] text-white text-[10px] sm:text-xs font-semibold drop-shadow-sm">
+              THE WEDDING OF {groomName.toUpperCase()} &amp; {brideName.toUpperCase()}
+            </span>
+          </div>
+
+          <div className="label-eyebrow tracking-[0.22em] text-white/85 text-[9px] sm:text-[11px] font-mono drop-shadow-sm">
+            {dateFormatted.toUpperCase()}
+          </div>
+        </header>
+
+        {/* BOTTOM RECIPIENT INFO & CTA BUTTON */}
+        <div
+          ref={contentRef}
+          className="relative z-30 pb-9 sm:pb-12 px-6 w-full max-w-xl mx-auto flex flex-col items-center text-center mt-auto"
         >
           {/* Eyebrow salutation */}
-          <span className="label-eyebrow tracking-[0.26em] text-[var(--deep)] text-[10px] sm:text-xs font-semibold mb-1.5 opacity-75">
+          <span
+            ref={salutationRef}
+            style={{ opacity: 0 }}
+            className="label-eyebrow tracking-[0.28em] text-[#E8EFF8] text-[10px] sm:text-xs font-semibold mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+          >
             KEPADA YTH. {salutation ? salutation.toUpperCase() : 'BAPAK / IBU / SAUDARA/I'}
           </span>
 
           {/* Guest Name */}
-          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[var(--ink)] font-normal tracking-tight mb-2 leading-tight">
+          <h1
+            ref={nameRef}
+            style={{ opacity: 0 }}
+            className="font-serif text-3xl sm:text-4xl md:text-5xl text-white font-normal tracking-tight mb-2.5 leading-tight drop-shadow-[0_3px_10px_rgba(0,0,0,0.7)]"
+          >
             {guestName}
           </h1>
 
-          <div className="flex items-center gap-3 opacity-40 mb-6 sm:mb-8">
-            <span className="w-8 h-[1px] bg-[var(--ink)]" />
-            <span className="text-[9px] sm:text-[10px] label-eyebrow tracking-[0.22em]">
+          {/* Separator */}
+          <div
+            ref={separatorRef}
+            style={{ opacity: 0 }}
+            className="flex items-center gap-3 opacity-75 mb-6 sm:mb-7"
+          >
+            <span className="w-8 h-[1px] bg-white/60" />
+            <span className="text-[9px] sm:text-[10px] label-eyebrow tracking-[0.26em] text-white/90 font-mono">
               DI TEMPAT
             </span>
-            <span className="w-8 h-[1px] bg-[var(--ink)]" />
+            <span className="w-8 h-[1px] bg-white/60" />
           </div>
 
           {/* CTA Button */}
           <button
+            ref={openButtonRef}
+            style={{ opacity: 0 }}
             type="button"
-            onClick={handleOpen}
-            className="btn-signature group bg-white/80 hover:bg-white text-[var(--ink)] backdrop-blur-md border-[var(--ink)]/30 hover:border-[var(--ink)] py-3 px-8 sm:px-10 text-xs tracking-[0.22em] transition-all duration-300 shadow-[0_4px_20px_rgba(15,30,50,0.06)]"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpen();
+            }}
+            className="pointer-events-auto group relative flex items-center gap-3 bg-white/90 hover:bg-white text-[var(--ink)] backdrop-blur-md px-8 sm:px-10 py-3.5 rounded-full text-xs font-semibold tracking-[0.24em] transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.45)] hover:scale-105 active:scale-95"
             aria-label="Buka Undangan Pernikahan"
           >
             <span>BUKA UNDANGAN</span>
@@ -427,90 +727,25 @@ export function Cover({
               <path
                 d="M3 8H13M13 8L8.5 3.5M13 8L8.5 12.5"
                 stroke="currentColor"
-                strokeWidth="1.2"
+                strokeWidth="1.4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
+
+            {/* Subtle Pulsing Border Glow */}
+            <span className="absolute -inset-0.5 rounded-full border border-white/40 animate-ping opacity-30 pointer-events-none" />
           </button>
 
-          <p className="label-eyebrow text-[9px] text-[var(--ink)] opacity-45 tracking-[0.22em] mt-3">
-            KLIK SEGEL ATAU TOMBOL UNTUK MEMBUKA
+          <p
+            ref={subtextRef}
+            style={{ opacity: 0 }}
+            className="label-eyebrow text-[9px] sm:text-[10px] text-white/70 tracking-[0.22em] mt-3.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+          >
+            SENTUH LAYAR ATAU TOMBOL UNTUK MEMBUKA
           </p>
         </div>
       </div>
-
-      {/* ============================================================== */}
-      {/* 4. 3D ORGANIC WAX SEAL (Centered exactly at apex of V-flap)    */}
-      {/* ============================================================== */}
-      <button
-        ref={sealRef}
-        type="button"
-        onClick={handleOpen}
-        className="absolute left-1/2 -translate-x-1/2 top-[46vh] sm:top-[48vh] -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center cursor-pointer group/seal focus:outline-hidden z-30 transform-gpu will-change-transform"
-        aria-label="Buka Segel Lilin Undangan"
-      >
-        <svg
-          viewBox="0 0 100 100"
-          className="w-full h-full drop-shadow-[0_10px_24px_rgba(10,22,36,0.42)] transform transition-transform duration-300 group-hover/seal:scale-108"
-        >
-          <defs>
-            <radialGradient id="cleanWaxGrad" cx="35%" cy="32%" r="65%">
-              <stop offset="0%" stopColor="#3F688F" />
-              <stop offset="38%" stopColor="#25466A" />
-              <stop offset="80%" stopColor="#142A42" />
-              <stop offset="100%" stopColor="#0B1A2A" />
-            </radialGradient>
-            <radialGradient id="cleanWaxHighlight" cx="32%" cy="26%" r="40%">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-            </radialGradient>
-            <linearGradient id="cleanGoldMonogram" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#FFF2D1" />
-              <stop offset="50%" stopColor="#E2BE75" />
-              <stop offset="100%" stopColor="#A8812E" />
-            </linearGradient>
-            <filter id="cleanWaxInnerShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0.8" dy="1.2" stdDeviation="0.8" floodColor="#000000" floodOpacity="0.75" />
-            </filter>
-          </defs>
-
-          {/* Organic 12-lobed melted wax outer contour */}
-          <path
-            d="M 50,4 C 62,3 71,11 79,18 C 87,25 96,35 96,48 C 96,61 90,72 81,81 C 72,90 59,96 48,96 C 36,96 24,91 16,82 C 8,73 3,61 4,49 C 5,36 12,24 21,17 C 30,10 39,5 50,4 Z"
-            fill="url(#cleanWaxGrad)"
-          />
-
-          {/* Specular highlight pool */}
-          <path
-            d="M 50,4 C 62,3 71,11 79,18 C 87,25 96,35 96,48 C 96,61 90,72 81,81 C 72,90 59,96 48,96 C 36,96 24,91 16,82 C 8,73 3,61 4,49 C 5,36 12,24 21,17 C 30,10 39,5 50,4 Z"
-            fill="url(#cleanWaxHighlight)"
-          />
-
-          {/* Sunken debossed stamp basin */}
-          <circle cx="50" cy="50" r="32" fill="#11243A" stroke="#254A70" strokeWidth="1.2" />
-          <circle cx="50" cy="50" r="28" fill="none" stroke="#D4AF37" strokeWidth="0.75" strokeDasharray="2,2" opacity="0.65" />
-
-          {/* Monogram D & L */}
-          <text
-            x="50"
-            y="54"
-            textAnchor="middle"
-            fontFamily="var(--font-serif)"
-            fontStyle="italic"
-            fontSize="18"
-            fontWeight="bold"
-            fill="url(#cleanGoldMonogram)"
-            filter="url(#cleanWaxInnerShadow)"
-          >
-            {groomName.charAt(0)} &amp; {brideName.charAt(0)}
-          </text>
-          <circle cx="50" cy="62" r="1.5" fill="#E2BE75" opacity="0.85" />
-        </svg>
-
-        {/* Ambient Attention Ring */}
-        <div className="absolute -inset-1 rounded-full border border-[var(--deep)] opacity-35 animate-ping pointer-events-none" />
-      </button>
     </div>
   );
 }
