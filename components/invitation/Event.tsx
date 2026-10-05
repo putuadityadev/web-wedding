@@ -1,8 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { gsap } from '@/lib/motion/gsap';
 import { downloadCalendarEvent } from '@/lib/calendar/ics';
+
+// Safe dynamic client-side import for the map to prevent any SSR hydration conflict
+const InteractiveMap = dynamic(
+  () => import('./InteractiveMap').then((m) => m.InteractiveMap),
+  { ssr: false }
+);
 
 interface EventProps {
   dayFormatted: string; // e.g. "SABTU"
@@ -32,9 +39,9 @@ export function Event({
   monthYearFormatted = 'DESEMBER 2026',
   dateFormatted = 'Sabtu, 12 Desember 2026',
   timeFormatted = '11.00 – 14.00 WITA',
-  venueName = 'The Royal Santrian & Glasshouse Bali',
-  venueAddress = 'Jl. Pratama, Benoa, Nusa Dua, Badung, Bali',
-  mapsUrl = 'https://maps.google.com/?q=The+Royal+Santrian+Bali',
+  venueName = 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
+  venueAddress = 'Banjar Kawan, Desa Kayubihi, Kec. Bangli, Kabupaten Bangli, Bali 80614',
+  mapsUrl = 'https://www.google.com/maps/search/?api=1&query=-8.3981403,115.3643337',
   guestArrivalTime,
   inviteLine,
   startsAt,
@@ -42,6 +49,7 @@ export function Event({
 }: EventProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dateCardRef = useRef<HTMLDivElement | null>(null);
+
   const [timeLeft, setTimeLeft] = useState<TimeRemaining>({
     days: 0,
     hours: 0,
@@ -96,28 +104,30 @@ export function Event({
       });
 
       // Date number 3D reveal
-      gsap.fromTo(
-        dateCardRef.current,
-        {
-          opacity: 0,
-          y: 60,
-          rotateX: 25,
-          scale: 0.94,
-        },
-        {
-          opacity: 1,
-          y: 0,
-          rotateX: 0,
-          scale: 1,
-          duration: 1.4,
-          ease: 'power4.out',
-          scrollTrigger: {
-            trigger: container,
-            start: 'top 65%',
-            once: true,
+      if (dateCardRef.current) {
+        gsap.fromTo(
+          dateCardRef.current,
+          {
+            opacity: 0,
+            y: 50,
+            rotateX: 20,
+            scale: 0.95,
           },
-        }
-      );
+          {
+            opacity: 1,
+            y: 0,
+            rotateX: 0,
+            scale: 1,
+            duration: 1.3,
+            ease: 'power4.out',
+            scrollTrigger: {
+              trigger: container,
+              start: 'top 70%',
+              once: true,
+            },
+          }
+        );
+      }
     }, containerRef);
 
     return () => ctx.revert();
@@ -125,9 +135,9 @@ export function Event({
 
   const handleDownloadICS = () => {
     downloadCalendarEvent({
-      title: 'Pernikahan Dharma & Lutfhy (Resepsi)',
+      title: 'Pernikahan Dharma & Lutfhy',
       description: guestArrivalTime
-        ? `Waktu kehadiran Anda: ${guestArrivalTime}. ${inviteLine || ''}`
+        ? `Waktu kehadiran: ${guestArrivalTime}. ${inviteLine || ''}`
         : 'Resepsi Pernikahan I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo',
       location: `${venueName}, ${venueAddress}`,
       startDate: startsAt,
@@ -141,80 +151,87 @@ export function Event({
       id="event"
       className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] transition-colors select-none overflow-hidden"
     >
-      <div className="max-w-5xl mx-auto w-full">
-        {/* Date Display with 3D Card Treatment */}
+      <div className="max-w-4xl mx-auto w-full">
+        {/* Section Eyebrow */}
+        <div className="text-center mb-6">
+          <span className="label-eyebrow tracking-[0.32em] text-[var(--deep)] text-[10px] sm:text-xs font-semibold uppercase">
+            Waktu &amp; Lokasi Acara
+          </span>
+        </div>
+
+        {/* Date Display */}
         <div
           ref={dateCardRef}
-          className="flex flex-col items-center text-center my-10 transform-gpu"
+          className="flex flex-col items-center text-center my-6 transform-gpu"
         >
-          <span className="label-eyebrow tracking-[0.3em] text-[var(--ink)] opacity-75 mb-2">
+          <span className="label-eyebrow tracking-[0.3em] text-[var(--ink)] opacity-70 mb-2">
             {dayFormatted}
           </span>
-          <div className="event-date-numeral display-xl font-serif text-[var(--ink)] leading-none my-2 font-light drop-shadow-sm">
+          <div className="event-date-numeral display-xl font-serif text-[var(--ink)] leading-none my-1 font-light drop-shadow-sm">
             {dateNumeral}
           </div>
-          <span className="label-eyebrow tracking-[0.3em] text-[var(--ink)] opacity-75 mt-2">
+          <span className="label-eyebrow tracking-[0.3em] text-[var(--ink)] opacity-70 mt-2">
             {monthYearFormatted}
           </span>
         </div>
 
-        {/* Personalized Arrival Time Box */}
+        {/* Simple & Clean Personalized Arrival Time (Quiet Luxury) */}
         {guestArrivalTime && (
-          <div className="my-12 p-6 md:p-8 bg-white/75 backdrop-blur-md border border-[var(--ink)]/20 rounded-[var(--radius-sm)] shadow-[0_4px_20px_rgba(0,0,0,0.04)] max-w-2xl mx-auto text-center">
-            <span className="label-eyebrow tracking-[0.22em] text-[var(--deep)] block mb-2">
+          <div className="my-10 p-6 sm:p-8 bg-white/60 backdrop-blur-xs border border-[var(--ink)]/15 rounded-[var(--radius-sm)] max-w-xl mx-auto text-center">
+            <span className="label-eyebrow tracking-[0.24em] text-[var(--deep)] text-[10px] sm:text-xs block mb-2 font-medium">
               WAKTU KEHADIRAN ANDA
             </span>
-            <div className="font-serif text-3xl md:text-4xl text-[var(--ink)] mb-3">
+            <div className="font-serif text-3xl sm:text-4xl text-[var(--ink)] mb-2 font-normal">
               {guestArrivalTime}
             </div>
             {inviteLine && (
-              <p className="body-base text-[var(--ink)] opacity-85 leading-relaxed">
+              <p className="body-base text-[var(--ink)] opacity-80 text-xs sm:text-sm leading-relaxed mt-2">
                 {inviteLine}
               </p>
             )}
           </div>
         )}
 
-        {/* Event Details: 3 Hairline Rows */}
-        <div className="border-t border-[var(--ink)]/20 divide-y divide-[var(--ink)]/20 my-16 max-w-3xl mx-auto">
+        {/* Event Details: Clean Hairline Rows */}
+        <div className="border-t border-[var(--ink)]/20 divide-y divide-[var(--ink)]/15 my-12 max-w-3xl mx-auto">
           {/* Row 1: Tanggal */}
-          <div className="py-5 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-baseline">
-            <span className="sm:col-span-4 label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.2em]">
+          <div className="py-4 sm:py-5 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-6 items-baseline">
+            <span className="sm:col-span-4 label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.2em] text-[10px] sm:text-xs">
               TANGGAL
             </span>
-            <span className="sm:col-span-8 body-l font-serif text-[var(--ink)]">
+            <span className="sm:col-span-8 font-serif text-lg sm:text-xl text-[var(--ink)]">
               {dateFormatted}
             </span>
           </div>
 
-          {/* Row 2: Waktu */}
-          <div className="py-5 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-baseline">
-            <span className="sm:col-span-4 label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.2em]">
+          {/* Row 2: Waktu Acara */}
+          <div className="py-4 sm:py-5 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-6 items-baseline">
+            <span className="sm:col-span-4 label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.2em] text-[10px] sm:text-xs">
               WAKTU ACARA
             </span>
-            <span className="sm:col-span-8 body-l font-serif text-[var(--ink)]">
+            <span className="sm:col-span-8 font-serif text-lg sm:text-xl text-[var(--ink)]">
               {timeFormatted}
             </span>
           </div>
 
           {/* Row 3: Lokasi */}
-          <div className="py-5 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-6 items-baseline">
-            <span className="sm:col-span-4 label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.2em]">
+          <div className="py-4 sm:py-5 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-6 items-baseline">
+            <span className="sm:col-span-4 label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.2em] text-[10px] sm:text-xs">
               LOKASI
             </span>
             <div className="sm:col-span-8 flex flex-col">
-              <span className="body-l font-serif text-[var(--ink)] font-medium">
+              <span className="font-serif text-lg sm:text-xl text-[var(--ink)] font-normal">
                 {venueName}
               </span>
-              <span className="body-base text-[var(--ink)] opacity-75 mt-1">
+              <span className="body-base text-[var(--ink)] opacity-70 text-xs sm:text-sm mt-1 leading-relaxed">
                 {venueAddress}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Action Buttons: Maps & Calendar */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 my-10">
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 my-8">
           <a
             href={mapsUrl}
             target="_blank"
@@ -250,49 +267,61 @@ export function Event({
           </button>
         </div>
 
-        {/* Countdown Timer Block with 3D Depth */}
-        <div className="mt-20 pt-12 border-t border-[var(--ink)]/20 text-center">
-          <span className="label-eyebrow tracking-[0.25em] text-[var(--ink)] opacity-70 block mb-8">
+        {/* Clean Interactive Map */}
+        <div className="my-10">
+          <InteractiveMap
+            lat={-8.3981403}
+            lng={115.3643337}
+            zoom={16}
+            mapsUrl={mapsUrl}
+            venueName={venueName}
+            venueAddress={venueAddress}
+          />
+        </div>
+
+        {/* Countdown Timer Block */}
+        <div className="mt-16 pt-10 border-t border-[var(--ink)]/15 text-center">
+          <span className="label-eyebrow tracking-[0.25em] text-[var(--ink)] opacity-60 block mb-6 text-[10px] uppercase">
             MENGHITUNG HARI
           </span>
 
-          <div className="grid grid-cols-4 gap-3 sm:gap-6 max-w-2xl mx-auto">
+          <div className="grid grid-cols-4 gap-2 sm:gap-4 max-w-xl mx-auto">
             {/* Days */}
-            <div className="flex flex-col items-center p-3 sm:p-5 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)] shadow-xs">
-              <div className="display-l font-serif tabular-nums text-[var(--ink)]">
+            <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)]">
+              <div className="font-serif tabular-nums text-2xl sm:text-4xl text-[var(--ink)] font-light">
                 {String(timeLeft.days).padStart(2, '0')}
               </div>
-              <span className="label-eyebrow text-[9px] sm:text-[10px] tracking-[0.2em] text-[var(--ink)] opacity-60 mt-2">
+              <span className="label-eyebrow text-[9px] tracking-[0.2em] text-[var(--ink)] opacity-55 mt-1.5 font-mono">
                 HARI
               </span>
             </div>
 
             {/* Hours */}
-            <div className="flex flex-col items-center p-3 sm:p-5 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)] shadow-xs">
-              <div className="display-l font-serif tabular-nums text-[var(--ink)]">
+            <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)]">
+              <div className="font-serif tabular-nums text-2xl sm:text-4xl text-[var(--ink)] font-light">
                 {String(timeLeft.hours).padStart(2, '0')}
               </div>
-              <span className="label-eyebrow text-[9px] sm:text-[10px] tracking-[0.2em] text-[var(--ink)] opacity-60 mt-2">
+              <span className="label-eyebrow text-[9px] tracking-[0.2em] text-[var(--ink)] opacity-55 mt-1.5 font-mono">
                 JAM
               </span>
             </div>
 
             {/* Minutes */}
-            <div className="flex flex-col items-center p-3 sm:p-5 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)] shadow-xs">
-              <div className="display-l font-serif tabular-nums text-[var(--ink)]">
+            <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)]">
+              <div className="font-serif tabular-nums text-2xl sm:text-4xl text-[var(--ink)] font-light">
                 {String(timeLeft.minutes).padStart(2, '0')}
               </div>
-              <span className="label-eyebrow text-[9px] sm:text-[10px] tracking-[0.2em] text-[var(--ink)] opacity-60 mt-2">
+              <span className="label-eyebrow text-[9px] tracking-[0.2em] text-[var(--ink)] opacity-55 mt-1.5 font-mono">
                 MENIT
               </span>
             </div>
 
             {/* Seconds */}
-            <div className="flex flex-col items-center p-3 sm:p-5 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)] shadow-xs">
-              <div className="display-l font-serif tabular-nums text-[var(--ink)]">
+            <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)]">
+              <div className="font-serif tabular-nums text-2xl sm:text-4xl text-[var(--ink)] font-light">
                 {String(timeLeft.seconds).padStart(2, '0')}
               </div>
-              <span className="label-eyebrow text-[9px] sm:text-[10px] tracking-[0.2em] text-[var(--ink)] opacity-60 mt-2">
+              <span className="label-eyebrow text-[9px] tracking-[0.2em] text-[var(--ink)] opacity-55 mt-1.5 font-mono">
                 DETIK
               </span>
             </div>

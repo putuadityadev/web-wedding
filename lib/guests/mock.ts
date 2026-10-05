@@ -28,7 +28,7 @@ export function getMockGuestView(overrides?: {
     panggilan: nickname,
     tanggal: '12 Desember 2026',
     jam_hadir: guestArrivalTimeFormatted || '11.00 WITA',
-    lokasi: 'The Royal Santrian & Glasshouse Bali',
+    lokasi: 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
     link: 'https://dharmalutfhy.wedding',
     mempelai: 'Dharma & Lutfhy',
   };
@@ -58,9 +58,9 @@ export function getMockGuestView(overrides?: {
       guestArrivalTimeFormatted,
       startsAt,
       endsAt,
-      venueName: 'The Royal Santrian & Glasshouse Bali',
-      venueAddress: 'Jl. Pratama, Benoa, Nusa Dua, Badung, Bali',
-      mapsUrl: 'https://maps.google.com/?q=The+Royal+Santrian+Bali',
+      venueName: 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
+      venueAddress: 'Banjar Kawan, Desa Kayubihi, Kec. Bangli, Kabupaten Bangli, Bali 80614',
+      mapsUrl: 'https://www.google.com/maps/search/?api=1&query=-8.3981403,115.3643337',
       rsvpDeadline: '2026-11-28T23:59:59+08:00',
       bankAccounts: [
         {

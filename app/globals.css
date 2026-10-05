@@ -235,3 +235,10 @@ body {
 .wave-bar:nth-child(3) {
   animation-delay: 0.4s;
 }
+
+/* Editorial Minimalist Map Tiles */
+.editorial-map .leaflet-tile {
+  filter: grayscale(45%) contrast(92%) brightness(101%) sepia(8%);
+  transition: filter 0.3s ease;
+}
+

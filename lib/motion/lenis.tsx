@@ -74,11 +74,15 @@ export function LenisProvider({
     setIsUnlocked(true);
     if (lenisRef.current) {
       lenisRef.current.start();
+      lenisRef.current.resize();
     }
     document.body.style.overflow = '';
     setTimeout(() => {
+      if (lenisRef.current) {
+        lenisRef.current.resize();
+      }
       ScrollTrigger.refresh();
-    }, 100);
+    }, 200);
   }, []);
 
   const scrollTo = React.useCallback((target: string | number | HTMLElement, options?: { offset?: number; duration?: number }) => {
