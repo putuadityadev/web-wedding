@@ -17,7 +17,7 @@ import { Rsvp } from './Rsvp';
 import { Wishes } from './Wishes';
 import { Footer } from './Footer';
 import { SplashCursor } from '@/components/ui/SplashCursor';
-import { SiteContent, DEFAULT_SITE_CONTENT } from '@/lib/content/types';
+import { SiteContent, DEFAULT_SITE_CONTENT, GalleryItem } from '@/lib/content/types';
 import { Prayer } from './Prayer';
 import { useLenisContext } from '@/lib/motion/lenis';
 
@@ -240,17 +240,24 @@ function InvitationContent({
           sectionLabel={content.gallery.sectionLabel}
           sectionTitle={content.gallery.sectionTitle}
           sectionDesc={content.gallery.sectionDesc}
+          groomName={content.hero.groomName || guest.event.groomName}
+          brideName={content.hero.brideName || guest.event.brideName}
           items={
             content.gallery.items && content.gallery.items.length > 0
               ? content.gallery.items.map((g, i) => ({
-                  id: typeof g.id === 'number' ? g.id : i + 1,
+                  id: g.id || i + 1,
                   label: g.label || `0${i + 1} / 0${content.gallery.items.length}`,
-                  type: g.type,
-                  title: g.title,
-                  aspectRatio: g.aspectRatio,
+                  type: g.type || 'portrait',
+                  title: g.title || `Momen ${i + 1}`,
+                  aspectRatio: g.aspectRatio || '4/5',
                   src: g.src,
+                  mediaType: g.mediaType || (g.videoSrc ? 'video' : 'photo'),
+                  videoSrc: g.videoSrc,
+                  posterSrc: g.posterSrc,
+                  isPrimary: g.isPrimary ?? (i < 8),
+                  category: g.category,
                 }))
-              : ASSETS.gallery
+              : (ASSETS.gallery as unknown as GalleryItem[])
           }
         />
 

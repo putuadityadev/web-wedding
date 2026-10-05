@@ -10,6 +10,8 @@ interface ImageUploadFieldProps {
   folder?: string;
   hint?: string;
   aspectRatio?: string;
+  accept?: string;
+  mediaType?: 'image' | 'video' | 'any';
 }
 
 export function ImageUploadField({
@@ -19,12 +21,26 @@ export function ImageUploadField({
   folder = 'general',
   hint,
   aspectRatio = '4/5',
+  accept,
+  mediaType = 'image',
 }: ImageUploadFieldProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [manualUrl, setManualUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const isVideo =
+    mediaType === 'video' ||
+    (value && (value.endsWith('.mp4') || value.endsWith('.webm') || value.endsWith('.mov')));
+
+  const resolvedAccept =
+    accept ||
+    (mediaType === 'video'
+      ? 'video/mp4,video/webm,video/quicktime'
+      : mediaType === 'any'
+      ? 'image/*,video/mp4,video/webm,video/quicktime'
+      : 'image/jpeg,image/png,image/webp,image/avif');
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -111,20 +127,31 @@ export function ImageUploadField({
           {/* Thumbnail preview */}
           {value ? (
             <div
-              className="relative w-20 h-24 rounded overflow-hidden bg-black/5 border border-black/10 shrink-0"
+              className="relative w-20 h-24 rounded overflow-hidden bg-black/10 border border-black/10 shrink-0"
               style={{ aspectRatio }}
             >
-              <Image
-                src={value}
-                alt={label}
-                fill
-                className="object-cover"
-                unoptimized={value.startsWith('http')}
-              />
+              {isVideo ? (
+                <video
+                  src={value}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={value}
+                  alt={label}
+                  fill
+                  className="object-cover"
+                  unoptimized={value.startsWith('http')}
+                />
+              )}
             </div>
           ) : (
             <div className="w-20 h-24 rounded bg-stone-200/50 flex items-center justify-center text-[10px] text-stone-400 font-mono shrink-0">
-              KOSONG
+              {isVideo ? 'NO VIDEO' : 'KOSONG'}
             </div>
           )}
 
@@ -133,7 +160,7 @@ export function ImageUploadField({
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/avif"
+              accept={resolvedAccept}
               onChange={handleFileChange}
               className="hidden"
             />
@@ -145,7 +172,15 @@ export function ImageUploadField({
                 disabled={uploading}
                 className="px-3 py-1.5 rounded bg-white hover:bg-stone-50 border border-[#0F1B2D]/15 text-[#0F1B2D] text-xs font-medium tracking-wide shadow-2xs transition-all disabled:opacity-50"
               >
-                {uploading ? 'Mengunggah...' : value ? 'Ganti Foto' : 'Unggah Foto'}
+                {uploading
+                  ? 'Mengunggah...'
+                  : value
+                  ? isVideo
+                    ? 'Ganti Video'
+                    : 'Ganti Foto'
+                  : isVideo
+                  ? 'Unggah Video'
+                  : 'Unggah Foto'}
               </button>
 
               {value && (
@@ -160,7 +195,11 @@ export function ImageUploadField({
             </div>
 
             <p className="text-[10px] text-[#0F1B2D]/45 font-mono truncate max-w-xs" title={value}>
-              {value ? value : 'Format JPG, PNG, WEBP, atau AVIF (maks 12MB)'}
+              {value
+                ? value
+                : isVideo
+                ? 'Format MP4, WebM, MOV (maks 50MB)'
+                : 'Format JPG, PNG, WEBP, atau AVIF (maks 15MB)'}
             </p>
           </div>
         </div>

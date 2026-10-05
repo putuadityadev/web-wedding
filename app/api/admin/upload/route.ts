@@ -14,9 +14,13 @@ const ALLOWED_MIME_TYPES = [
   'image/avif',
   'audio/mpeg',
   'audio/mp3',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
 ];
 
-const MAX_FILE_SIZE = 12 * 1024 * 1024; // 12 MB
+const MAX_IMAGE_SIZE = 15 * 1024 * 1024; // 15 MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50 MB
 
 export async function POST(request: Request) {
   try {
@@ -33,16 +37,19 @@ export async function POST(request: Request) {
       );
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    const isVideo = file.type.startsWith('video/');
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+
+    if (file.size > maxSize) {
       return NextResponse.json(
-        { ok: false, error: 'Ukuran file melebihi batas 12MB' },
+        { ok: false, error: `Ukuran file melebihi batas ${isVideo ? '50MB' : '15MB'}` },
         { status: 400 }
       );
     }
 
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { ok: false, error: `Format file tidak didukung: ${file.type}` },
+        { ok: false, error: `Format file tidak didukung: ${file.type}. Format yang didukung: JPG, PNG, WEBP, AVIF, MP3, MP4, WEBM, MOV.` },
         { status: 400 }
       );
     }

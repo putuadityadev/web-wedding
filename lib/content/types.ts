@@ -94,10 +94,15 @@ export interface EventContent {
 export interface GalleryItem {
   id: number | string;
   label: string;
-  type: 'portrait' | 'landscape';
+  type: 'portrait' | 'landscape' | 'square' | string;
   title: string;
   aspectRatio: string;
   src: string;
+  mediaType?: 'photo' | 'video';
+  videoSrc?: string;
+  posterSrc?: string;
+  isPrimary?: boolean;
+  category?: string;
 }
 
 export interface GalleryContent {
@@ -274,6 +279,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         title: 'Senja di Pesisir',
         aspectRatio: '3/4',
         src: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=80',
+        mediaType: 'photo',
+        isPrimary: true,
       },
       {
         id: 2,
@@ -282,6 +289,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         title: 'Langkah Sepadan',
         aspectRatio: '16/10',
         src: 'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=1400&q=80',
+        mediaType: 'photo',
+        isPrimary: true,
       },
       {
         id: 3,
@@ -290,6 +299,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         title: 'Genggaman Tenang',
         aspectRatio: '4/5',
         src: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=80',
+        mediaType: 'photo',
+        isPrimary: true,
       },
       {
         id: 4,
@@ -298,6 +309,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         title: 'Di Balik Jendela Kaca',
         aspectRatio: '3/2',
         src: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=1400&q=80',
+        mediaType: 'photo',
+        isPrimary: true,
       },
       {
         id: 5,
@@ -306,6 +319,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         title: 'Detik Sebelum Hari-H',
         aspectRatio: '3/4',
         src: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=1200&q=80',
+        mediaType: 'photo',
+        isPrimary: true,
       },
       {
         id: 6,
@@ -314,6 +329,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         title: 'Tawa yang Utuh',
         aspectRatio: '4/5',
         src: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1200&q=80',
+        mediaType: 'photo',
+        isPrimary: true,
       },
       {
         id: 7,
@@ -322,6 +339,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         title: 'Dua Cangkir Kopi',
         aspectRatio: '16/10',
         src: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1400&q=80',
+        mediaType: 'photo',
+        isPrimary: true,
       },
       {
         id: 8,
@@ -330,6 +349,32 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         title: 'Tatapan Penuh Syukur',
         aspectRatio: '4/5',
         src: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1200&q=80',
+        mediaType: 'photo',
+        isPrimary: true,
+      },
+      {
+        id: 9,
+        label: 'VIDEO · 01',
+        type: 'landscape',
+        title: 'Teaser Sinematik Janji Suci',
+        aspectRatio: '16/9',
+        src: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=80',
+        mediaType: 'video',
+        videoSrc: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        posterSrc: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=80',
+        isPrimary: false,
+        category: 'Video Momen',
+      },
+      {
+        id: 10,
+        label: 'MOMEN · 10',
+        type: 'portrait',
+        title: 'Tawa Bersama Keluarga',
+        aspectRatio: '4/5',
+        src: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=1200&q=80',
+        mediaType: 'photo',
+        isPrimary: false,
+        category: 'Kenangan',
       },
     ],
   },

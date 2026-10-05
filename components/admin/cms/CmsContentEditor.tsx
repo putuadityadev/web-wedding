@@ -1310,9 +1310,47 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
             {/* 7. GALLERY FORM */}
             {activeTab === 'gallery' && (
               <div className="space-y-6">
+                {/* Header Information & Description */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Label Bagian (Eyebrow)
+                    </label>
+                    <input
+                      type="text"
+                      value={content.gallery.sectionLabel || 'GALERI KENANGAN'}
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          gallery: { ...content.gallery, sectionLabel: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                      placeholder="GALERI KENANGAN"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Judul Bagian (Subheading)
+                    </label>
+                    <input
+                      type="text"
+                      value={content.gallery.sectionTitle || 'Momen Terindah'}
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          gallery: { ...content.gallery, sectionTitle: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                      placeholder="Momen Terindah"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Deskripsi Galeri
+                    Deskripsi Galeri (Pop-up &amp; Beranda)
                   </label>
                   <input
                     type="text"
@@ -1323,83 +1361,346 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                         gallery: { ...content.gallery, sectionDesc: e.target.value },
                       })
                     }
-                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20"
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                    placeholder="Kumpulan potret & video perjalanan cinta kami..."
                   />
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono uppercase font-semibold text-[#0F1B2D]/70">
-                      Foto Galeri ({content.gallery.items.length})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newId = Date.now();
-                        setContent({
-                          ...content,
-                          gallery: {
-                            ...content.gallery,
-                            items: [
-                              ...content.gallery.items,
-                              {
-                                id: newId,
-                                label: `${String(content.gallery.items.length + 1).padStart(2, '0')}`,
-                                type: 'portrait',
-                                title: 'Foto Baru',
-                                aspectRatio: '4/5',
-                                src: '',
-                              },
-                            ],
-                          },
-                        });
-                      }}
-                      className="text-xs px-2.5 py-1 rounded bg-[#0F1B2D] text-white"
-                    >
-                      + Tambah Foto
-                    </button>
+                {/* Status & Metrics Bar */}
+                <div className="p-4 rounded-lg bg-stone-50 border border-[#0F1B2D]/15 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                      <span className="px-2.5 py-1 rounded bg-[#0F1B2D] text-white font-medium">
+                        Total Media: {content.gallery.items.length}
+                      </span>
+                      <span className="px-2.5 py-1 rounded bg-white border border-[#0F1B2D]/20 text-[#0F1B2D]">
+                        📷 {content.gallery.items.filter((i) => i.mediaType !== 'video').length} Foto
+                      </span>
+                      <span className="px-2.5 py-1 rounded bg-white border border-[#0F1B2D]/20 text-[#0F1B2D]">
+                        🎬 {content.gallery.items.filter((i) => i.mediaType === 'video').length} Video
+                      </span>
+                      <span
+                        className={`px-2.5 py-1 rounded font-semibold ${
+                          content.gallery.items.filter((i) => i.isPrimary !== false).length <= 8
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                            : 'bg-amber-50 text-amber-800 border border-amber-300'
+                        }`}
+                      >
+                        ★ Slot Beranda: {content.gallery.items.filter((i) => i.isPrimary !== false).length} / 8
+                      </span>
+                    </div>
+
+                    {/* Add Buttons */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newId = Date.now();
+                          const primaryCount = content.gallery.items.filter(
+                            (i) => i.isPrimary !== false
+                          ).length;
+                          setContent({
+                            ...content,
+                            gallery: {
+                              ...content.gallery,
+                              items: [
+                                ...content.gallery.items,
+                                {
+                                  id: newId,
+                                  label: `Momen ${String(content.gallery.items.length + 1).padStart(2, '0')}`,
+                                  type: 'portrait',
+                                  title: 'Foto Baru',
+                                  aspectRatio: '4/5',
+                                  src: '',
+                                  mediaType: 'photo',
+                                  isPrimary: primaryCount < 8,
+                                  category: 'Prewedding',
+                                },
+                              ],
+                            },
+                          });
+                        }}
+                        className="text-xs px-3 py-1.5 rounded bg-[#0F1B2D] text-white hover:bg-[#1a2d4b] font-medium tracking-wide transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <span>+ Tambah Foto</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newId = Date.now();
+                          const primaryCount = content.gallery.items.filter(
+                            (i) => i.isPrimary !== false
+                          ).length;
+                          setContent({
+                            ...content,
+                            gallery: {
+                              ...content.gallery,
+                              items: [
+                                ...content.gallery.items,
+                                {
+                                  id: newId,
+                                  label: `Video ${String(content.gallery.items.length + 1).padStart(2, '0')}`,
+                                  type: 'landscape',
+                                  title: 'Video Kenangan',
+                                  aspectRatio: '16/9',
+                                  src: '',
+                                  videoSrc: '',
+                                  posterSrc: '',
+                                  mediaType: 'video',
+                                  isPrimary: primaryCount < 8,
+                                  category: 'Video Kenangan',
+                                },
+                              ],
+                            },
+                          });
+                        }}
+                        className="text-xs px-3 py-1.5 rounded bg-emerald-800 text-white hover:bg-emerald-900 font-medium tracking-wide transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <span>+ Tambah Video</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-4">
-                    {content.gallery.items.map((item, idx) => (
-                      <div key={item.id} className="p-4 rounded border border-[#0F1B2D]/15 bg-[#F9FAFB] space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-mono font-bold text-[#0F1B2D]">
-                            Foto #{idx + 1}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = content.gallery.items.filter((_, i) => i !== idx);
+                  <p className="text-[11px] text-[#0F1B2D]/60 leading-relaxed font-sans">
+                    💡 <strong>Aturan Tampilan:</strong> Anda bebas menambahkan foto &amp; video tanpa batas (unlimited). 
+                    Maksimal 8 item pertama bertanda <strong>&ldquo;Slot Utama Beranda&rdquo;</strong> akan ditampilkan 
+                    pada scroll horizontal di halaman depan (video otomatis berputar autoplay tanpa suara). 
+                    Seluruh koleksi foto &amp; video dapat dibuka oleh pengunjung melalui tombol pop-up <strong>&ldquo;Buka Galeri&rdquo;</strong>.
+                  </p>
+                </div>
+
+                {/* Items List */}
+                <div className="space-y-4">
+                  {content.gallery.items.map((item, idx) => {
+                    const isVideo = item.mediaType === 'video';
+                    const isPrimary = item.isPrimary !== false;
+
+                    const moveItem = (fromIdx: number, toIdx: number) => {
+                      if (toIdx < 0 || toIdx >= content.gallery.items.length) return;
+                      const updated = [...content.gallery.items];
+                      const [moved] = updated.splice(fromIdx, 1);
+                      updated.splice(toIdx, 0, moved);
+                      setContent({
+                        ...content,
+                        gallery: { ...content.gallery, items: updated },
+                      });
+                    };
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`p-4 rounded-lg border transition-all space-y-4 ${
+                          isPrimary
+                            ? 'border-[#0F1B2D]/25 bg-white shadow-xs'
+                            : 'border-stone-200 bg-[#FBFBFB] opacity-90'
+                        }`}
+                      >
+                        {/* Header bar of item */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#0F1B2D]/10">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-[#0F1B2D] text-white text-[11px] font-mono flex items-center justify-center font-bold">
+                              {idx + 1}
+                            </span>
+                            <span className="text-xs font-mono font-bold text-[#0F1B2D]">
+                              {item.title || `Media #${idx + 1}`}
+                            </span>
+
+                            {/* Type badge */}
+                            <span
+                              className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
+                                isVideo
+                                  ? 'bg-rose-100 text-rose-800 font-semibold'
+                                  : 'bg-blue-100 text-blue-800 font-semibold'
+                              }`}
+                            >
+                              {isVideo ? '🎬 VIDEO' : '📷 FOTO'}
+                            </span>
+
+                            {/* Primary Slot Badge */}
+                            {isPrimary ? (
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold flex items-center gap-1">
+                                <span>★</span>
+                                <span>Beranda #{content.gallery.items.slice(0, idx + 1).filter(i => i.isPrimary !== false).length}</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-stone-200 text-stone-700">
+                                Galeri Penuh Saja
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            {/* Reorder Up */}
+                            <button
+                              type="button"
+                              onClick={() => moveItem(idx, idx - 1)}
+                              disabled={idx === 0}
+                              className="px-2 py-1 rounded border border-stone-300 bg-white text-xs disabled:opacity-30 hover:bg-stone-50 cursor-pointer"
+                              title="Pindahkan ke atas"
+                            >
+                              ↑
+                            </button>
+                            {/* Reorder Down */}
+                            <button
+                              type="button"
+                              onClick={() => moveItem(idx, idx + 1)}
+                              disabled={idx === content.gallery.items.length - 1}
+                              className="px-2 py-1 rounded border border-stone-300 bg-white text-xs disabled:opacity-30 hover:bg-stone-50 cursor-pointer"
+                              title="Pindahkan ke bawah"
+                            >
+                              ↓
+                            </button>
+                            {/* Delete */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm(`Hapus "${item.title || 'media ini'}" dari galeri?`)) {
+                                  const updated = content.gallery.items.filter((_, i) => i !== idx);
+                                  setContent({
+                                    ...content,
+                                    gallery: { ...content.gallery, items: updated },
+                                  });
+                                }
+                              }}
+                              className="px-2.5 py-1 rounded text-xs text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Primary Slot Toggle & Type Switcher */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 rounded bg-stone-50/70 border border-stone-200">
+                          {/* Primary Checkbox */}
+                          <label className="flex items-start gap-2.5 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isPrimary}
+                              onChange={(e) => {
+                                const updated = [...content.gallery.items];
+                                updated[idx].isPrimary = e.target.checked;
+                                setContent({
+                                  ...content,
+                                  gallery: { ...content.gallery, items: updated },
+                                });
+                              }}
+                              className="mt-0.5 w-4 h-4 rounded text-[#0F1B2D] focus:ring-[#0F1B2D]"
+                            />
+                            <div>
+                              <span className="text-xs font-semibold text-[#0F1B2D] block">
+                                Tampilkan di Beranda (Slot Utama)
+                              </span>
+                              <span className="text-[11px] text-[#0F1B2D]/60 block leading-tight">
+                                Centang agar tampil di 8 slot scroll depan beranda.
+                              </span>
+                            </div>
+                          </label>
+
+                          {/* Media Type Toggle */}
+                          <div className="flex items-center justify-between sm:justify-end gap-2">
+                            <span className="text-xs font-mono text-[#0F1B2D]/70">Tipe Media:</span>
+                            <div className="inline-flex rounded-md border border-stone-300 p-0.5 bg-white text-xs">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...content.gallery.items];
+                                  updated[idx].mediaType = 'photo';
+                                  setContent({
+                                    ...content,
+                                    gallery: { ...content.gallery, items: updated },
+                                  });
+                                }}
+                                className={`px-2.5 py-1 rounded text-xs transition-colors cursor-pointer ${
+                                  !isVideo ? 'bg-[#0F1B2D] text-white font-medium' : 'text-stone-600'
+                                }`}
+                              >
+                                📷 Foto
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...content.gallery.items];
+                                  updated[idx].mediaType = 'video';
+                                  setContent({
+                                    ...content,
+                                    gallery: { ...content.gallery, items: updated },
+                                  });
+                                }}
+                                className={`px-2.5 py-1 rounded text-xs transition-colors cursor-pointer ${
+                                  isVideo ? 'bg-emerald-800 text-white font-medium' : 'text-stone-600'
+                                }`}
+                              >
+                                🎬 Video
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Media Upload Fields */}
+                        {isVideo ? (
+                          <div className="space-y-4 p-3 rounded border border-emerald-900/15 bg-emerald-50/20">
+                            {/* Video File Field */}
+                            <ImageUploadField
+                              label="File Video (MP4 / WebM / QuickTime)"
+                              value={item.videoSrc || item.src || ''}
+                              folder="gallery/videos"
+                              mediaType="video"
+                              hint="Unggah file video (maks 50MB) yang tersimpan otomatis di Supabase Storage."
+                              onChange={(url) => {
+                                const updated = [...content.gallery.items];
+                                updated[idx].videoSrc = url;
+                                if (!updated[idx].src) {
+                                  updated[idx].src = url;
+                                }
+                                setContent({
+                                  ...content,
+                                  gallery: { ...content.gallery, items: updated },
+                                });
+                              }}
+                            />
+
+                            {/* Poster / Thumbnail Field */}
+                            <ImageUploadField
+                              label="Poster / Gambar Thumbnail Video (Opsional)"
+                              value={item.posterSrc || ''}
+                              folder="gallery/posters"
+                              mediaType="image"
+                              hint="Gambar sampul sebelum video dimuat."
+                              onChange={(url) => {
+                                const updated = [...content.gallery.items];
+                                updated[idx].posterSrc = url;
+                                setContent({
+                                  ...content,
+                                  gallery: { ...content.gallery, items: updated },
+                                });
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <ImageUploadField
+                            label="File Foto (JPG / PNG / WebP)"
+                            value={item.src || ''}
+                            folder="gallery"
+                            mediaType="image"
+                            aspectRatio={item.aspectRatio || '4/5'}
+                            hint="Disimpan otomatis ke Supabase Storage pada folder 'gallery'."
+                            onChange={(url) => {
+                              const updated = [...content.gallery.items];
+                              updated[idx].src = url;
                               setContent({
                                 ...content,
                                 gallery: { ...content.gallery, items: updated },
                               });
                             }}
-                            className="text-xs text-red-600 hover:underline"
-                          >
-                            Hapus
-                          </button>
-                        </div>
+                          />
+                        )}
 
-                        <ImageUploadField
-                          label="File Foto"
-                          value={item.src}
-                          folder="gallery"
-                          onChange={(url) => {
-                            const updated = [...content.gallery.items];
-                            updated[idx].src = url;
-                            setContent({
-                              ...content,
-                              gallery: { ...content.gallery, items: updated },
-                            });
-                          }}
-                        />
-
-                        <div className="grid grid-cols-2 gap-3">
+                        {/* Metadata Inputs */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                           <div>
                             <label className="text-[11px] font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                              Judul Foto
+                              Judul Momen
                             </label>
                             <input
                               type="text"
@@ -1413,17 +1714,59 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                                 });
                               }}
                               className="w-full px-3 py-1.5 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                              placeholder="Judul momen..."
                             />
                           </div>
+
                           <div>
                             <label className="text-[11px] font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                              Orientasi
+                              Label / Subjudul
                             </label>
-                            <select
-                              value={item.type}
+                            <input
+                              type="text"
+                              value={item.label}
                               onChange={(e) => {
                                 const updated = [...content.gallery.items];
-                                updated[idx].type = e.target.value as 'portrait' | 'landscape';
+                                updated[idx].label = e.target.value;
+                                setContent({
+                                  ...content,
+                                  gallery: { ...content.gallery, items: updated },
+                                });
+                              }}
+                              className="w-full px-3 py-1.5 rounded text-xs border border-[#0F1B2D]/20 bg-white font-mono text-[11px]"
+                              placeholder="01 / 08 atau Momen 01"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                              Kategori / Tag
+                            </label>
+                            <input
+                              type="text"
+                              value={item.category || ''}
+                              onChange={(e) => {
+                                const updated = [...content.gallery.items];
+                                updated[idx].category = e.target.value;
+                                setContent({
+                                  ...content,
+                                  gallery: { ...content.gallery, items: updated },
+                                });
+                              }}
+                              className="w-full px-3 py-1.5 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                              placeholder="Prewedding / Acara"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                              Aspek Rasio
+                            </label>
+                            <select
+                              value={item.aspectRatio || (isVideo ? '16/9' : '4/5')}
+                              onChange={(e) => {
+                                const updated = [...content.gallery.items];
+                                updated[idx].aspectRatio = e.target.value;
                                 setContent({
                                   ...content,
                                   gallery: { ...content.gallery, items: updated },
@@ -1431,14 +1774,18 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                               }}
                               className="w-full px-3 py-1.5 rounded text-xs border border-[#0F1B2D]/20 bg-white"
                             >
-                              <option value="portrait">Portrait (Vertikal)</option>
-                              <option value="landscape">Landscape (Horizontal)</option>
+                              <option value="4/5">4:5 (Portrait Estetik)</option>
+                              <option value="3/4">3:4 (Portrait Standar)</option>
+                              <option value="16/9">16:9 (Landscape Video)</option>
+                              <option value="16/10">16:10 (Landscape Lebar)</option>
+                              <option value="1/1">1:1 (Persegi)</option>
+                              <option value="3/2">3:2 (Landscape Foto)</option>
                             </select>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
