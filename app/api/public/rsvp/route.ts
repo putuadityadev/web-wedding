@@ -54,8 +54,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Enforce maxPax limit
-    const actualPax = status === 'attending' ? Math.min(pax, guest.max_pax || 20) : 0;
+    // Flexible pax limit (up to 20 for families/groups, without rigid restriction to 2)
+    const actualPax = status === 'attending' ? Math.min(Math.max(1, pax), 20) : 0;
     const trimmedWish = wish?.trim() || null;
     const now = new Date().toISOString();
 

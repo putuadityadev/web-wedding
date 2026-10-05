@@ -118,6 +118,7 @@ export function Cover({
   const currentFrameRef = useRef<number>(0);
   const isPlayingRef = useRef<boolean>(false);
   const isLoadedRef = useRef<boolean>(false);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
   const [isOpened, setIsOpened] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
@@ -142,7 +143,10 @@ export function Cover({
   const drawFrame = useCallback((frameIdx: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    if (!ctxRef.current || ctxRef.current.canvas !== canvas) {
+      ctxRef.current = canvas.getContext('2d', { alpha: true });
+    }
+    const ctx = ctxRef.current;
     if (!ctx) return;
 
     const w = canvas.width;
@@ -360,6 +364,10 @@ export function Cover({
     setIsOpening(true);
     setIsOpened(true);
 
+    if (containerRef.current) {
+      containerRef.current.style.pointerEvents = 'none';
+    }
+
     // Audio starts playing immediately
     onOpenInvitation();
 
@@ -479,8 +487,10 @@ export function Cover({
         ease: 'power1.inOut',
         onUpdate: () => {
           const current = Math.round(animState.frame);
-          currentFrameRef.current = current;
-          drawFrame(current);
+          if (current !== currentFrameRef.current) {
+            currentFrameRef.current = current;
+            drawFrame(current);
+          }
         },
       },
       0.08
@@ -538,36 +548,36 @@ export function Cover({
       style={{ height: '100dvh' }}
     >
       {/* ============================================================== */}
-      {/* 0. LUXURY EDITORIAL PRELOADER (Awwwards Style)                 */}
+      {/* 0. QUIET LUXURY EDITORIAL PRELOADER (Awwwards Clean Style)    */}
       {/* ============================================================== */}
       <div
         ref={loaderRef}
-        className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#0D1A2D] text-white pointer-events-auto"
+        className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#0F1B2D] text-white pointer-events-auto"
       >
         {/* Soft Ambient Radial Light */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'radial-gradient(circle at 50% 45%, rgba(45, 78, 115, 0.35) 0%, rgba(13, 26, 45, 0.95) 75%)',
+              'radial-gradient(circle at 50% 48%, rgba(30, 52, 84, 0.4) 0%, rgba(15, 27, 45, 1) 75%)',
           }}
         />
 
         <div className="relative z-10 flex flex-col items-center max-w-xs text-center px-6">
           {/* Monogram */}
-          <span className="font-serif italic text-4xl sm:text-5xl text-[#F2DFB8] tracking-widest mb-3.5 opacity-90 drop-shadow-[0_2px_12px_rgba(226,190,117,0.3)]">
+          <span className="font-serif italic text-4xl sm:text-5xl text-white tracking-widest mb-3.5 font-light opacity-95 drop-shadow-[0_2px_16px_rgba(255,255,255,0.25)]">
             {groomName.charAt(0)} &amp; {brideName.charAt(0)}
           </span>
 
-          <span className="label-eyebrow tracking-[0.34em] text-[10px] text-[#A6C0DE] uppercase mb-7 font-mono opacity-80">
+          <span className="label-eyebrow tracking-[0.34em] text-[10px] text-white/60 uppercase mb-7 font-mono">
             MEMUAT PENGALAMAN
           </span>
 
-          {/* Hairline Gold Progress Bar */}
-          <div className="relative w-52 h-[2px] bg-white/10 rounded-full overflow-hidden mb-3">
+          {/* Hairline White Progress Bar */}
+          <div className="relative w-48 h-[2px] bg-white/15 rounded-full overflow-hidden mb-3.5">
             <div
               ref={progressBarRef}
-              className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-[#B49458] via-[#F2DFB8] to-[#B49458] transition-all duration-150 ease-out"
+              className="absolute top-0 bottom-0 left-0 bg-white transition-all duration-150 ease-out shadow-[0_0_8px_rgba(255,255,255,0.85)]"
               style={{ width: '0%' }}
             />
           </div>
@@ -575,7 +585,7 @@ export function Cover({
           {/* Percentage Counter */}
           <span
             ref={progressTextRef}
-            className="font-mono text-[10px] tracking-[0.24em] text-white/50"
+            className="font-mono text-[10px] tracking-[0.24em] text-white/70"
           >
             0%
           </span>

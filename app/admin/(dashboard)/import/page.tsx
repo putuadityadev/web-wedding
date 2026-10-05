@@ -144,6 +144,12 @@ export default function AdminImportPage() {
           <p className="text-xs text-[#0F1B2D]/60 mt-1 max-w-2xl">
             Unggah file CSV untuk memasukkan puluhan hingga ratusan tamu sekaligus ke database Supabase dan secara otomatis membuat tautan unik personal per tamu.
           </p>
+          <div className="mt-2.5 inline-flex items-center gap-2 px-3 py-1.5 rounded bg-blue-50/70 border border-blue-200 text-[11px] text-blue-900">
+            <span>💡</span>
+            <span>
+              <strong>Nomor HP bersifat opsional:</strong> Tamu tanpa nomor HP tetap akan tersimpan dengan aman dan dapat langsung Anda lengkapi kapan saja di Buku Tamu sebelum WhatsApp Blasting.
+            </span>
+          </div>
         </div>
 
         <button
@@ -285,13 +291,17 @@ export default function AdminImportPage() {
               <h3 className="font-serif text-lg font-medium text-[#0F1B2D]">
                 Pratinjau Data ({rows.length} Tamu)
               </h3>
-              <div className="flex items-center gap-3 text-xs text-[#0F1B2D]/60 mt-1">
-                <span className="text-emerald-700 font-medium">✓ {validRows.length} baris valid</span>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-[#0F1B2D]/60 mt-1">
+                <span className="text-emerald-700 font-medium">✓ {validRows.length} tamu siap diimport</span>
                 {missingPhoneRows.length > 0 && (
-                  <span className="text-amber-700">⚠️ {missingPhoneRows.length} tanpa nomor HP</span>
+                  <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    ℹ️ {missingPhoneRows.length} belum ada No. HP (bisa diisi nanti di Buku Tamu)
+                  </span>
                 )}
                 {invalidRows.length > 0 && (
-                  <span className="text-red-600">✕ {invalidRows.length} tanpa nama</span>
+                  <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                    ✕ {invalidRows.length} baris tanpa nama (akan dilewati)
+                  </span>
                 )}
               </div>
             </div>
@@ -389,7 +399,13 @@ export default function AdminImportPage() {
                         {name ? name : <span className="text-red-500 italic">(Nama kosong)</span>}
                       </td>
                       <td className="py-2 px-3 font-mono text-[#0F1B2D]/80">
-                        {phone ? phone : <span className="text-amber-600 italic">Tanpa nomor</span>}
+                        {phone ? (
+                          phone
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[10px] font-mono">
+                            Belum ada No. HP
+                          </span>
+                        )}
                       </td>
                       <td className="py-2 px-3 text-[#0F1B2D]/70">{salutation}</td>
                       <td className="py-2 px-3">
@@ -401,9 +417,13 @@ export default function AdminImportPage() {
                       <td className="py-2 px-3 font-mono text-[#0F1B2D]/70">{tone}</td>
                       <td className="py-2 px-3">
                         {name ? (
-                          <span className="text-emerald-700 font-mono text-[10px]">Siap</span>
+                          <span className="text-emerald-700 font-mono text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            Siap Import
+                          </span>
                         ) : (
-                          <span className="text-red-600 font-mono text-[10px]">Lewati</span>
+                          <span className="text-red-600 font-mono text-[10px] bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                            Nama Kosong (Dilewati)
+                          </span>
                         )}
                       </td>
                     </tr>

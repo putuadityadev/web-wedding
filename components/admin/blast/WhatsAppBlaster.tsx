@@ -200,6 +200,10 @@ export function WhatsAppBlaster() {
     }
   };
 
+  const [editingPhoneGuestId, setEditingPhoneGuestId] = useState<string | null>(null);
+  const [editPhoneValue, setEditPhoneValue] = useState('');
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+
   const handleCopyMessage = (guest: GuestItem) => {
     const msg = formatMessageForGuest(guest);
     navigator.clipboard.writeText(msg);
@@ -210,7 +214,36 @@ export function WhatsAppBlaster() {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const link = `${origin}/u/${guest.token}`;
     navigator.clipboard.writeText(link);
-    showToast('Link undangan disalin ke clipboard!');
+    showToast(`🔗 Link undangan (/u/${guest.token.substring(0, 8)}...) berhasil disalin!`);
+  };
+
+  const handleSavePhone = async (guest: GuestItem) => {
+    if (!editPhoneValue.trim()) return;
+    setIsSavingPhone(true);
+    try {
+      const res = await fetch(`/api/admin/guests/${guest.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...guest,
+          phone: editPhoneValue.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Gagal menyimpan nomor HP');
+      const updatedPhone = json.data?.phone || editPhoneValue.trim();
+      setGuests((prev) =>
+        prev.map((g) => (g.id === guest.id ? { ...g, phone: updatedPhone } : g))
+      );
+      showToast(`Nomor HP untuk ${guest.name} berhasil disimpan!`);
+      setEditingPhoneGuestId(null);
+      setEditPhoneValue('');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan nomor HP';
+      showToast(msg, 'error');
+    } finally {
+      setIsSavingPhone(false);
+    }
   };
 
   const insertVariable = (variable: string) => {
@@ -507,31 +540,55 @@ export function WhatsAppBlaster() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                      {guest.phone && (
+                    <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {guest.phone ? (
                         <button
                           type="button"
                           onClick={() => handleSendWa(guest)}
-                          className="px-3 py-1.5 rounded bg-[#25D366] hover:bg-[#20ba5a] text-[#0F1B2D] font-semibold text-[11px] shadow-2xs inline-flex items-center gap-1.5 transition-all"
+                          className="px-3 py-1.5 rounded bg-[#25D366] hover:bg-[#20ba5a] text-[#0F1B2D] font-semibold text-[11px] shadow-2xs inline-flex items-center gap-1 transition-all cursor-pointer"
                         >
                           <span>Kirim WA</span>
                         </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveGuestId(guest.id);
+                            setEditingPhoneGuestId(guest.id);
+                            setEditPhoneValue('');
+                          }}
+                          className="px-2.5 py-1.5 rounded bg-amber-50 border border-amber-300 text-amber-900 hover:bg-amber-100 text-[11px] font-medium transition-all cursor-pointer"
+                        >
+                          + No. HP
+                        </button>
                       )}
+
                       <button
                         type="button"
                         onClick={() => handleCopyLink(guest)}
-                        title="Salin Tautan"
-                        className="px-2.5 py-1.5 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[#0F1B2D] text-[11px] font-mono"
+                        title="Salin Tautan Personal Tamu Saja (/u/...)"
+                        className="px-2.5 py-1.5 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[#0F1B2D] text-[11px] font-mono inline-flex items-center gap-1 cursor-pointer"
                       >
-                        Link
+                        <span>🔗 Link</span>
                       </button>
+
+                      <a
+                        href={`/u/${guest.token}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Buka Halaman Undangan Tamu di Tab Baru"
+                        className="p-1.5 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[#0F1B2D] text-[11px] font-mono"
+                      >
+                        ↗
+                      </a>
+
                       <button
                         type="button"
                         onClick={() => handleCopyMessage(guest)}
-                        title="Salin Pesan"
-                        className="px-2.5 py-1.5 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[#0F1B2D] text-[11px] font-mono"
+                        title="Salin Format Teks Pesan WhatsApp Lengkap"
+                        className="px-2 py-1.5 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[#0F1B2D] text-[11px] font-mono cursor-pointer"
                       >
-                        Salin
+                        Pesan
                       </button>
                     </div>
                   </div>
@@ -542,20 +599,98 @@ export function WhatsAppBlaster() {
         </div>
 
         {/* Right Column: Live Message Preview (5 cols) */}
-        <div className="lg:col-span-5 sticky top-6">
+        <div className="lg:col-span-5 sticky top-6 space-y-4">
           {activeGuest ? (
-            <div className="bg-white border border-[#0F1B2D]/10 rounded-[var(--radius-sm)] p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-[#0F1B2D]/10 rounded-[var(--radius-sm)] p-5 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#0F1B2D]/10">
-                <span className="text-[10px] font-mono tracking-wider uppercase text-[#0F1B2D]/50 font-semibold">
-                  PRATINJAU PESAN WA
-                </span>
-                <span className="text-xs font-serif font-medium text-[#0F1B2D]">
-                  {activeGuest.name}
-                </span>
+                <div>
+                  <span className="text-[10px] font-mono tracking-wider uppercase text-[#0F1B2D]/50 font-semibold block">
+                    PRATINJAU PESAN WA
+                  </span>
+                  <h4 className="text-sm font-serif font-medium text-[#0F1B2D] mt-0.5">
+                    {activeGuest.salutation} {activeGuest.name}
+                  </h4>
+                </div>
+                {activeGuest.lastBlastedAt ? (
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    ✓ Sudah Terkirim
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                    Siap Kirim
+                  </span>
+                )}
               </div>
 
+              {/* Shareable Link Box (Direct URL testing) */}
+              <div className="bg-stone-50 border border-[#0F1B2D]/10 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-mono text-[#0F1B2D]/70 uppercase tracking-wider text-[10px] font-semibold flex items-center gap-1">
+                    <span>🔗</span>
+                    <span>Tautan Personal Tamu:</span>
+                  </span>
+                  <a
+                    href={`/u/${activeGuest.token}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-700 hover:text-blue-900 font-medium inline-flex items-center gap-1 text-[11px] underline underline-offset-2"
+                  >
+                    <span>Tes Buka Undangan ↗</span>
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/u/${activeGuest.token}`}
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                    className="flex-1 px-3 py-1.5 text-xs font-mono bg-white border border-[#0F1B2D]/15 rounded text-[#0F1B2D] select-all cursor-pointer"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleCopyLink(activeGuest)}
+                    className="px-3 py-1.5 rounded bg-[#0F1B2D] text-white hover:bg-[#1E293B] text-xs font-medium shrink-0 cursor-pointer shadow-2xs inline-flex items-center gap-1"
+                  >
+                    <span>Salin Link Saja</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Missing Phone Prompt if applicable */}
+              {!activeGuest.phone && (
+                <div className="bg-amber-50/70 border border-amber-200 rounded p-3 text-xs space-y-2">
+                  <div className="text-amber-900 font-medium flex items-center gap-1.5">
+                    <span>⚠️</span>
+                    <span>Tamu ini belum memiliki nomor WhatsApp:</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="tel"
+                      placeholder="081234567890"
+                      value={editingPhoneGuestId === activeGuest.id ? editPhoneValue : ''}
+                      onChange={(e) => {
+                        setEditingPhoneGuestId(activeGuest.id);
+                        setEditPhoneValue(e.target.value);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSavePhone(activeGuest);
+                      }}
+                      className="px-3 py-1.5 text-xs border border-amber-300 rounded font-mono bg-white flex-1 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      disabled={isSavingPhone}
+                      onClick={() => handleSavePhone(activeGuest)}
+                      className="px-3 py-1.5 bg-[#0F1B2D] text-white hover:bg-[#1E293B] rounded text-xs font-medium cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingPhone ? '...' : 'Simpan'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Chat Bubble UI */}
-              <div className="bg-[#EFEAE2] p-4 rounded-xl shadow-inner border border-black/5 min-h-[350px] flex flex-col justify-between">
+              <div className="bg-[#EFEAE2] p-4 rounded-xl shadow-inner border border-black/5 min-h-[300px] flex flex-col justify-between">
                 <div className="bg-white rounded-lg rounded-tl-none p-3.5 shadow-xs max-w-sm text-xs text-[#111B21] leading-relaxed whitespace-pre-wrap font-sans relative">
                   {formatMessageForGuest(activeGuest)}
                   <div className="text-[10px] text-black/40 text-right mt-1 font-mono">
@@ -563,25 +698,34 @@ export function WhatsAppBlaster() {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-black/5 flex items-center justify-between">
-                  <span className="text-[11px] font-mono text-[#0F1B2D]/60">
-                    No. HP: <strong>{activeGuest.phone || '(Belum ada)'}</strong>
+                <div className="mt-4 pt-3 border-t border-black/5 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono text-[#0F1B2D]/70">
+                    No. HP: <strong>{activeGuest.phone || '(Belum diisi)'}</strong>
                   </span>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => handleCopyMessage(activeGuest)}
-                      className="px-2.5 py-1 rounded bg-white hover:bg-stone-50 border border-black/10 text-[11px] font-medium"
+                      onClick={() => handleCopyLink(activeGuest)}
+                      title="Salin Tautan Saja"
+                      className="px-2.5 py-1.5 rounded bg-white hover:bg-stone-50 border border-black/10 text-[11px] font-medium inline-flex items-center gap-1 cursor-pointer"
                     >
-                      Salin Pesan
+                      <span>🔗 Salin Link</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyMessage(activeGuest)}
+                      title="Salin Teks Lengkap Pesan WhatsApp"
+                      className="px-2.5 py-1.5 rounded bg-white hover:bg-stone-50 border border-black/10 text-[11px] font-medium inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>📋 Salin Pesan WA</span>
                     </button>
                     {activeGuest.phone && (
                       <button
                         type="button"
                         onClick={() => handleSendWa(activeGuest)}
-                        className="px-3 py-1 rounded bg-[#25D366] text-[#0F1B2D] font-bold text-[11px] shadow-xs"
+                        className="px-3 py-1.5 rounded bg-[#25D366] text-[#0F1B2D] font-bold text-[11px] shadow-xs cursor-pointer inline-flex items-center gap-1"
                       >
-                        Buka WA 🚀
+                        <span>Buka WA 🚀</span>
                       </button>
                     )}
                   </div>

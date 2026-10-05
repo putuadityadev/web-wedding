@@ -23,7 +23,7 @@ export function Rsvp({ guest, onRsvpSubmitted }: RsvpProps) {
   const [isSuccess, setIsSuccess] = useState(Boolean(guest.rsvp));
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const maxPax = guest.maxPax || 2;
+  const maxPax = Math.max(guest.maxPax || 2, 20);
   const isPastDeadline = guest.event.rsvpDeadline
     ? new Date().getTime() > new Date(guest.event.rsvpDeadline).getTime()
     : false;
@@ -221,42 +221,68 @@ export function Rsvp({ guest, onRsvpSubmitted }: RsvpProps) {
               </button>
             </div>
 
-            {/* 2. Stepper for Pax (only if attending) */}
+            {/* 2. Flexible Stepper for Pax (only if attending) */}
             {status === 'attending' && (
-              <div className="p-6 border border-[var(--hairline)] rounded-[var(--radius-sm)] bg-white/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <span className="label-eyebrow text-[var(--deep)] tracking-[0.2em] block mb-1">
-                    JUMLAH TAMU
-                  </span>
-                  <span className="body-base text-[var(--ink)] opacity-75">
-                    Maksimal alokasi kursi untuk Anda: {maxPax} orang
-                  </span>
+              <div className="p-6 border border-[var(--hairline)] rounded-[var(--radius-sm)] bg-white/40 flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <span className="label-eyebrow text-[var(--deep)] tracking-[0.2em] block mb-1">
+                      JUMLAH TAMU YANG HADIR
+                    </span>
+                    <span className="body-base text-[var(--ink)] opacity-75 text-sm">
+                      Berapa orang yang akan hadir bersama Anda? (Termasuk Anda &amp; keluarga)
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4 self-center sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setPax(Math.max(1, pax - 1))}
+                      disabled={pax <= 1}
+                      className="w-11 h-11 border border-[var(--ink)] rounded-[var(--radius-sm)] flex items-center justify-center font-mono text-xl hover:bg-[var(--mist)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                      aria-label="Kurangi satu tamu"
+                    >
+                      −
+                    </button>
+
+                    <span className="font-serif text-3xl tabular-nums text-[var(--ink)] w-10 text-center">
+                      {pax}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => setPax(Math.min(maxPax, pax + 1))}
+                      disabled={pax >= maxPax}
+                      className="w-11 h-11 border border-[var(--ink)] rounded-[var(--radius-sm)] flex items-center justify-center font-mono text-xl hover:bg-[var(--mist)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                      aria-label="Tambah satu tamu"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-4 self-center sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => setPax(Math.max(1, pax - 1))}
-                    disabled={pax <= 1}
-                    className="w-11 h-11 border border-[var(--ink)] rounded-[var(--radius-sm)] flex items-center justify-center font-mono text-xl hover:bg-[var(--mist)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                    aria-label="Kurangi satu tamu"
-                  >
-                    −
-                  </button>
-
-                  <span className="font-serif text-3xl tabular-nums text-[var(--ink)] w-10 text-center">
-                    {pax}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => setPax(Math.min(maxPax, pax + 1))}
-                    disabled={pax >= maxPax}
-                    className="w-11 h-11 border border-[var(--ink)] rounded-[var(--radius-sm)] flex items-center justify-center font-mono text-xl hover:bg-[var(--mist)] disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                    aria-label="Tambah satu tamu"
-                  >
-                    +
-                  </button>
+                {/* Quick Pax Selector Chips */}
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--hairline)]/60">
+                  <span className="text-xs text-[var(--ink)] opacity-60 mr-1 font-mono">Pilihan cepat:</span>
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setPax(num)}
+                      className={`px-3 py-1 rounded text-xs font-mono transition-all ${
+                        pax === num
+                          ? 'bg-[var(--ink)] text-white'
+                          : 'bg-white/80 hover:bg-white text-[var(--ink)] border border-[var(--hairline)]'
+                      }`}
+                    >
+                      {num} Orang
+                    </button>
+                  ))}
+                  {pax > 5 && (
+                    <span className="px-3 py-1 rounded text-xs font-mono bg-[var(--ink)] text-white">
+                      {pax} Orang
+                    </span>
+                  )}
                 </div>
               </div>
             )}

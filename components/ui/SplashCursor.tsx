@@ -728,14 +728,42 @@ export function SplashCursor({
     updateKeywords();
     initFramebuffers();
     let lastUpdateTime = Date.now();
+    let isSleeping = false;
+    let lastActiveTime = Date.now();
+
+    // Optimize pressure iterations on touch screens to prevent scroll stutter
+    const isTouch =
+      typeof window !== 'undefined' &&
+      ('ontouchstart' in window || (navigator && navigator.maxTouchPoints > 0));
+    if (isTouch) {
+      config.PRESSURE_ITERATIONS = Math.min(config.PRESSURE_ITERATIONS, 8);
+    }
+
+    function wakeUp() {
+      lastActiveTime = Date.now();
+      if (isSleeping) {
+        isSleeping = false;
+        lastUpdateTime = Date.now();
+        animationFrameId.current = requestAnimationFrame(updateFrame);
+      }
+    }
 
     function updateFrame() {
       if (!isActive) return;
+      const now = Date.now();
       const dt = calcDeltaTime();
       if (resizeCanvas()) initFramebuffers();
       applyInputs();
       step(dt);
       render(null);
+
+      // Sleep when inactive for > 2.2 seconds (all fluid has dissipated)
+      if (now - lastActiveTime > 2200 && !pointers.some((p) => p.down || p.moved)) {
+        isSleeping = true;
+        animationFrameId.current = null;
+        return;
+      }
+
       animationFrameId.current = requestAnimationFrame(updateFrame);
     }
 
@@ -956,6 +984,7 @@ export function SplashCursor({
     const currentColor = { r: 0.25, g: 0.42, b: 0.58 };
 
     function handleMouseDown(e: MouseEvent) {
+      wakeUp();
       const pointer = pointers[0];
       const posX = scaleByPixelRatio(e.clientX);
       const posY = scaleByPixelRatio(e.clientY);
@@ -968,6 +997,7 @@ export function SplashCursor({
     }
 
     function handleMouseMove(e: MouseEvent) {
+      wakeUp();
       const pointer = pointers[0];
       const posX = scaleByPixelRatio(e.clientX);
       const posY = scaleByPixelRatio(e.clientY);
@@ -980,6 +1010,7 @@ export function SplashCursor({
     }
 
     function handleTouchStart(e: TouchEvent) {
+      wakeUp();
       const touches = e.targetTouches;
       const pointer = pointers[0];
       for (let i = 0; i < touches.length; i++) {
@@ -994,6 +1025,7 @@ export function SplashCursor({
     }
 
     function handleTouchMove(e: TouchEvent) {
+      wakeUp();
       const touches = e.targetTouches;
       const pointer = pointers[0];
       for (let i = 0; i < touches.length; i++) {

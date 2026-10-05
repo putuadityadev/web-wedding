@@ -31,6 +31,11 @@ export function GuestManager() {
   const [search, setSearch] = useState('');
   const [filterGroup, setFilterGroup] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterPhone, setFilterPhone] = useState<'ALL' | 'NO_PHONE' | 'HAS_PHONE'>('ALL');
+
+  const [inlineEditPhoneId, setInlineEditPhoneId] = useState<string | null>(null);
+  const [inlinePhoneInput, setInlinePhoneInput] = useState('');
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestItem | null>(null);
@@ -175,6 +180,42 @@ export function GuestManager() {
     }
   };
 
+  const handleStartInlineEditPhone = (guest: GuestItem) => {
+    setInlineEditPhoneId(guest.id);
+    setInlinePhoneInput(guest.phone || '');
+  };
+
+  const handleSaveInlinePhone = async (guest: GuestItem) => {
+    setIsSavingPhone(true);
+    try {
+      const res = await fetch(`/api/admin/guests/${guest.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...guest,
+          phone: inlinePhoneInput.trim(),
+        }),
+      });
+
+      const json = await res.json();
+      if (!json.ok) {
+        throw new Error(json.error || 'Gagal menyimpan nomor HP');
+      }
+
+      const updatedPhone = json.data?.phone || inlinePhoneInput.trim();
+      setGuests((prev) =>
+        prev.map((g) => (g.id === guest.id ? { ...g, phone: updatedPhone } : g))
+      );
+      showToast(`Nomor HP untuk "${guest.name}" berhasil disimpan!`);
+      setInlineEditPhoneId(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan nomor HP';
+      showToast(msg, 'error');
+    } finally {
+      setIsSavingPhone(false);
+    }
+  };
+
   const handleDeleteGuest = async (id: string, name: string) => {
     if (!confirm(`Hapus tamu "${name}" secara permanen? Data RSVP tamu ini juga akan dihapus.`)) {
       return;
@@ -195,6 +236,9 @@ export function GuestManager() {
     }
   };
 
+  const noPhoneCount = guests.filter((g) => !g.phone).length;
+  const withPhoneCount = guests.length - noPhoneCount;
+
   const filteredGuests = guests.filter((g) => {
     const matchSearch =
       g.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -205,7 +249,14 @@ export function GuestManager() {
     const matchGroup = filterGroup === 'ALL' || g.groupLabel === filterGroup;
     const matchStatus = filterStatus === 'ALL' || g.status === filterStatus;
 
-    return matchSearch && matchGroup && matchStatus;
+    let matchPhone = true;
+    if (filterPhone === 'NO_PHONE') {
+      matchPhone = !g.phone;
+    } else if (filterPhone === 'HAS_PHONE') {
+      matchPhone = Boolean(g.phone);
+    }
+
+    return matchSearch && matchGroup && matchStatus && matchPhone;
   });
 
   return (
@@ -277,13 +328,28 @@ export function GuestManager() {
             <option value="pending">Belum Konfirmasi</option>
           </select>
 
-          {(search || filterGroup !== 'ALL' || filterStatus !== 'ALL') && (
+          <select
+            value={filterPhone}
+            onChange={(e) => setFilterPhone(e.target.value as any)}
+            className={`px-3 py-2 rounded text-xs border focus:outline-none bg-white font-medium ${
+              filterPhone === 'NO_PHONE'
+                ? 'border-amber-400 text-amber-900 bg-amber-50/50'
+                : 'border-[#0F1B2D]/20 text-[#0F1B2D]'
+            }`}
+          >
+            <option value="ALL">Semua Kontak ({guests.length})</option>
+            <option value="NO_PHONE">⚠️ Belum Ada No. HP ({noPhoneCount})</option>
+            <option value="HAS_PHONE">✓ Ada No. HP ({withPhoneCount})</option>
+          </select>
+
+          {(search || filterGroup !== 'ALL' || filterStatus !== 'ALL' || filterPhone !== 'ALL') && (
             <button
               type="button"
               onClick={() => {
                 setSearch('');
                 setFilterGroup('ALL');
                 setFilterStatus('ALL');
+                setFilterPhone('ALL');
               }}
               className="text-[11px] text-[#0F1B2D]/60 hover:text-[#0F1B2D] underline underline-offset-2"
             >
@@ -393,22 +459,75 @@ export function GuestManager() {
                     </td>
 
                     {/* Phone */}
-                    <td className="py-3 px-4 whitespace-nowrap font-mono text-[#0F1B2D]/80">
-                      {guest.phone ? (
-                        <div className="space-y-0.5">
-                          <div>{guest.phone}</div>
-                          {guest.lastBlastedAt ? (
-                            <span className="inline-block text-[9px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
-                              ✓ Terkirim WA
-                            </span>
-                          ) : (
-                            <span className="inline-block text-[9px] font-mono text-stone-500 bg-stone-50 border border-stone-200 px-1.5 py-0.2 rounded">
-                              Belum dikirim
-                            </span>
-                          )}
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      {inlineEditPhoneId === guest.id ? (
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="tel"
+                            autoFocus
+                            placeholder="081234567890"
+                            value={inlinePhoneInput}
+                            onChange={(e) => setInlinePhoneInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveInlinePhone(guest);
+                              if (e.key === 'Escape') setInlineEditPhoneId(null);
+                            }}
+                            className="w-36 px-2 py-1 text-xs border border-[#0F1B2D] rounded font-mono bg-white focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            disabled={isSavingPhone}
+                            onClick={() => handleSaveInlinePhone(guest)}
+                            className="px-2.5 py-1 rounded bg-[#0F1B2D] text-white hover:bg-[#1E293B] text-[10px] font-medium"
+                          >
+                            {isSavingPhone ? '...' : 'Simpan'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setInlineEditPhoneId(null)}
+                            className="p-1 rounded text-stone-400 hover:text-stone-700 text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : guest.phone ? (
+                        <div className="space-y-0.5 group flex items-start justify-between gap-2">
+                          <div className="font-mono text-[#0F1B2D]/80">
+                            <div>{guest.phone}</div>
+                            {guest.lastBlastedAt ? (
+                              <span className="inline-block text-[9px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                                ✓ Terkirim WA
+                              </span>
+                            ) : (
+                              <span className="inline-block text-[9px] font-mono text-stone-500 bg-stone-50 border border-stone-200 px-1.5 py-0.2 rounded">
+                                Belum dikirim
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleStartInlineEditPhone(guest)}
+                            title="Edit Nomor HP"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-stone-400 hover:text-[#0F1B2D] text-[11px]"
+                          >
+                            ✏️
+                          </button>
                         </div>
                       ) : (
-                        <span className="text-red-500 italic text-[11px]">Tanpa nomor</span>
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-mono font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                            ⚠️ Belum ada No. HP
+                          </span>
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => handleStartInlineEditPhone(guest)}
+                              className="text-[11px] text-[#0F1B2D] hover:underline font-medium inline-flex items-center gap-1"
+                            >
+                              <span>+ Isi No. HP</span>
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </td>
 
@@ -464,20 +583,41 @@ export function GuestManager() {
                           Salin Link
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleOpenWhatsApp(guest)}
-                          title="Buka Chat WhatsApp"
-                          className="px-2.5 py-1 rounded bg-[#25D366]/10 border border-[#25D366]/30 text-[#128C7E] hover:bg-[#25D366]/20 text-[11px] font-medium transition-colors"
+                        <a
+                          href={`/u/${guest.token}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Buka Halaman Tamu di Tab Baru"
+                          className="px-2 py-1 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[#0F1B2D] text-[11px] font-mono transition-colors"
                         >
-                          Kirim WA
-                        </button>
+                          ↗ Buka
+                        </a>
+
+                        {guest.phone ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenWhatsApp(guest)}
+                            title="Buka Chat WhatsApp"
+                            className="px-2.5 py-1 rounded bg-[#25D366]/10 border border-[#25D366]/30 text-[#128C7E] hover:bg-[#25D366]/20 text-[11px] font-medium transition-colors"
+                          >
+                            Kirim WA
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleStartInlineEditPhone(guest)}
+                            title="Isi Nomor WhatsApp Tamu"
+                            className="px-2.5 py-1 rounded bg-amber-50 border border-amber-300 text-amber-900 hover:bg-amber-100 text-[11px] font-medium transition-colors"
+                          >
+                            + No. HP
+                          </button>
+                        )}
 
                         <button
                           type="button"
                           onClick={() => setEditingGuest(guest)}
-                          title="Edit Tamu"
-                          className="px-2.5 py-1 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[#0F1B2D] text-[11px] transition-colors"
+                          title="Edit Lengkap Tamu"
+                          className="px-2.5 py-1 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[#0F1B2D] text-[11px] transition-colors font-medium"
                         >
                           Edit
                         </button>

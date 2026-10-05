@@ -27,7 +27,19 @@ export function normalizePhoneNumber(raw: string | null | undefined): string | n
       return phoneNumber.number; // E.164 format: +628...
     }
   } catch {
-    return null;
+    // Fallback below
+  }
+
+  // Graceful fallback for Indonesian numbers that might be valid locally:
+  // e.g. 08..., +628..., 628... with 9 to 15 digits
+  if (/^08\d{7,12}$/.test(cleaned)) {
+    return '+628' + cleaned.slice(2);
+  }
+  if (/^\+628\d{7,12}$/.test(cleaned)) {
+    return cleaned;
+  }
+  if (/^628\d{7,12}$/.test(cleaned)) {
+    return '+' + cleaned;
   }
 
   return null;
