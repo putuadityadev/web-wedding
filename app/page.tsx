@@ -1,6 +1,7 @@
 import { getMockGuestView } from '@/lib/guests/mock';
 import { Invitation } from '@/components/invitation/Invitation';
 import { Tone } from '@/lib/guests/view';
+import { getSiteContent } from '@/lib/content/service';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,9 +29,11 @@ export default async function HomePage({ searchParams }: PageProps) {
     tone,
   });
 
+  const siteContent = await getSiteContent();
+
   return (
     <main>
-      <Invitation guest={guest} isPreview={Boolean(sp?.preview)} />
+      <Invitation guest={guest} siteContent={siteContent} isPreview={Boolean(sp?.preview)} />
     </main>
   );
 }

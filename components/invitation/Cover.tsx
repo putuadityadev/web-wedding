@@ -11,6 +11,7 @@ interface CoverProps {
   brideName: string;
   dateFormatted: string;
   onOpenInvitation: () => void;
+  isForceOpened?: boolean;
 }
 
 const SPRITE_CONFIG = {
@@ -82,6 +83,7 @@ export function Cover({
   brideName,
   dateFormatted,
   onOpenInvitation,
+  isForceOpened,
 }: CoverProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -111,6 +113,20 @@ export function Cover({
 
   const [isOpened, setIsOpened] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
+  const { lenis } = useLenisContext();
+
+  useEffect(() => {
+    if (isForceOpened) {
+      if (containerRef.current) {
+        containerRef.current.style.display = 'none';
+      }
+      lenis?.start();
+    } else {
+      if (containerRef.current) {
+        containerRef.current.style.display = 'block';
+      }
+    }
+  }, [isForceOpened, lenis]);
 
   const { unlockScroll } = useLenisContext();
 

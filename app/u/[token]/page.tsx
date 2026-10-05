@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getMockGuestView } from '@/lib/guests/mock';
 import { Invitation } from '@/components/invitation/Invitation';
+import { getSiteContent } from '@/lib/content/service';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,5 +32,7 @@ export default async function PersonalInvitationPage({
   // Assign the URL token
   guest.token = token;
 
-  return <Invitation guest={guest} isPreview={isPreview} />;
+  const siteContent = await getSiteContent();
+
+  return <Invitation guest={guest} siteContent={siteContent} isPreview={isPreview} />;
 }
