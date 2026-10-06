@@ -1,29 +1,42 @@
 export interface CoverContent {
-  badge: string;
+  headline?: string;
+  badge?: string;
   groomName: string;
   brideName: string;
-  dateDisplay: string;
+  dateDisplay?: string;
   guestGreetingLabel: string;
   openButtonLabel: string;
-  tapHintLabel: string;
+  tapHintLabel?: string;
 }
+
+export type HeroBackgroundMode = 'image' | 'video' | 'slideshow';
+export type HeroSlideshowSource = 'gallery' | 'custom';
 
 export interface HeroContent {
   badge: string;
   groomName: string;
   brideName: string;
-  subtitle: string;
+  subtitle?: string;
   dateShort: string;
   portraitSrc: string;
   portraitAlt: string;
-  portraitLabel: string;
-  scrollHint: string;
+  portraitLabel?: string;
+  scrollHint?: string;
+  bgMode?: HeroBackgroundMode;
+  videoSrc?: string;
+  slideshowSource?: HeroSlideshowSource;
+  slideshowImages?: string[];
+  slideshowDuration?: number;
 }
+
+export type QuoteBackgroundMode = 'solid' | 'image';
 
 export interface QuoteContent {
   label: string;
   text: string;
-  citation: string;
+  citation?: string;
+  bgMode?: QuoteBackgroundMode;
+  bgImage?: string;
 }
 
 export interface PrayerContent {
@@ -49,10 +62,13 @@ export interface PersonProfile {
   parentsAvatarSrc?: string;
 }
 
+export type CoupleBackgroundMode = 'solid' | 'image';
+
 export interface CoupleContent {
   sectionLabel: string;
   sectionTitle: string;
   sectionDesc: string;
+  bgMode?: CoupleBackgroundMode;
   groom: PersonProfile;
   bride: PersonProfile;
 }
@@ -154,29 +170,36 @@ export interface SiteContent {
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
   cover: {
-    badge: 'THE WEDDING CELEBRATION OF',
+    headline: 'We invite you to celebrate our wedding',
+    badge: 'We invite you to celebrate our wedding',
     groomName: 'Dharma',
     brideName: 'Lutfhy',
-    dateDisplay: 'Sabtu, 12 Desember 2026',
-    guestGreetingLabel: 'KEPADA YTH. BAPAK/IBU/SAUDARA/I:',
-    openButtonLabel: 'BUKA UNDANGAN',
-    tapHintLabel: 'Ketuk layar untuk membuka',
+    dateDisplay: '12 · 12 · 2026',
+    guestGreetingLabel: 'Kepada Yth. Bapak/Ibu Tamu Undangan',
+    openButtonLabel: 'Buka Undangan',
+    tapHintLabel: '',
   },
   hero: {
     badge: 'THE WEDDING OF',
     groomName: 'Dharma',
     brideName: 'Lutfhy',
     subtitle: 'DUA GARIS · SATU BENANG PERJALANAN',
-    dateShort: '12 · 12 · 2026',
+    dateShort: 'SENIN, 12 OKTOBER 2026',
     portraitSrc: '/KLK07943.avif',
     portraitAlt: 'Potret I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo',
     portraitLabel: 'POTRET MEMPELAI',
     scrollHint: 'GULIR PERLAHAN',
+    bgMode: 'image',
+    slideshowSource: 'gallery',
+    slideshowImages: [],
+    slideshowDuration: 5,
   },
   quote: {
-    label: 'KUTIPAN SUCI',
-    text: 'Pertemuan dua jiwa bukanlah suatu kebetulan, melainkan perjalanan panjang yang telah digariskan semesta untuk saling melengkapi dan bertumbuh bersama.',
-    citation: 'Harmoni Dua Hati',
+    label: 'OM SWASTYASTU',
+    text: 'Atas Asung Kertha Wara Nugraha Ida Sang Hyang Widhi Wasa / Tuhan Yang Maha Esa, kami bermaksud mengundang Bapak / Ibu / Saudara / i pada Upacara Manusa Yadnya Pawiwahan putra dan putri kami.',
+    citation: '',
+    bgMode: 'solid',
+    bgImage: '',
   },
   prayer: {
     sectionLabel: 'DOA & RESTU WIWAHA',
@@ -190,6 +213,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     sectionLabel: 'TENTANG MEMPELAI',
     sectionTitle: 'Dua Jiwa, Satu Cerita',
     sectionDesc: 'Dengan penuh rasa syukur dan hormat, kami memohon doa restu keluarga dan sahabat.',
+    bgMode: 'image',
     groom: {
       name: 'I Wayan Dharma Wirahadi',
       childOf: 'Putra pertama dari Bapak I Wayan Suweta & Ibu Ni Wayan Murni',

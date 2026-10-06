@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { SiteContent, DEFAULT_SITE_CONTENT } from '@/lib/content/types';
 import { CmsSectionPreview } from './CmsSectionPreview';
 import { ImageUploadField } from './ImageUploadField';
+import { HeroSlideshowModal } from './HeroSlideshowModal';
 
 interface CmsContentEditorProps {
   initialContent: SiteContent;
@@ -14,8 +15,7 @@ interface CmsContentEditorProps {
 const TABS: { id: keyof SiteContent; label: string; icon: string }[] = [
   { id: 'cover', label: 'Cover & Amplop', icon: '✉️' },
   { id: 'hero', label: 'Hero Utama', icon: '✨' },
-  { id: 'quote', label: 'Kutipan Pembuka', icon: '📜' },
-  { id: 'prayer', label: 'Doa Pernikahan', icon: '🤲' },
+  { id: 'quote', label: 'Kutipan & Doa Pembuka', icon: '📜' },
   { id: 'couple', label: 'Profil Mempelai', icon: '💍' },
   { id: 'story', label: 'Kisah Perjalanan', icon: '📖' },
   { id: 'event', label: 'Waktu & Lokasi', icon: '📍' },
@@ -33,6 +33,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
   const [mobileMode, setMobileMode] = useState<'editor' | 'preview'>('editor');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isSlideshowModalOpen, setIsSlideshowModalOpen] = useState(false);
 
   const isSectionDirty =
     JSON.stringify(content[activeTab]) !== JSON.stringify(savedContent[activeTab]);
@@ -216,14 +217,40 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
             {/* 1. COVER FORM */}
             {activeTab === 'cover' && (
               <>
+                <div>
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                    Headline / Tagline Atas Cover
+                  </label>
+                  <input
+                    type="text"
+                    value={content.cover.headline ?? content.cover.badge ?? ''}
+                    placeholder="We invite you to celebrate our wedding"
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        cover: {
+                          ...content.cover,
+                          headline: e.target.value,
+                          badge: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                  />
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Teks kecil elegan di bagian atas layar amplop pembuka.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Nama Panggilan Pria
+                      Nama Panggilan Pria (Cover)
                     </label>
                     <input
                       type="text"
                       value={content.cover.groomName}
+                      placeholder="Dharma"
                       onChange={(e) =>
                         setContent({
                           ...content,
@@ -235,11 +262,12 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                   </div>
                   <div>
                     <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Nama Panggilan Wanita
+                      Nama Panggilan Wanita (Cover)
                     </label>
                     <input
                       type="text"
                       value={content.cover.brideName}
+                      placeholder="Lutfhy"
                       onChange={(e) =>
                         setContent({
                           ...content,
@@ -253,46 +281,34 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
 
                 <div>
                   <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Badge / Tagline Atas
+                    Teks Sapaan Tamu Undangan
                   </label>
                   <input
                     type="text"
-                    value={content.cover.badge}
+                    value={content.cover.guestGreetingLabel ?? ''}
+                    placeholder="Kepada Yth. Bapak/Ibu Tamu Undangan"
                     onChange={(e) =>
                       setContent({
                         ...content,
-                        cover: { ...content.cover, badge: e.target.value },
+                        cover: { ...content.cover, guestGreetingLabel: e.target.value },
                       })
                     }
                     className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
                   />
-                </div>
-
-                <div>
-                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Format Tanggal Cover
-                  </label>
-                  <input
-                    type="text"
-                    value={content.cover.dateDisplay}
-                    onChange={(e) =>
-                      setContent({
-                        ...content,
-                        cover: { ...content.cover, dateDisplay: e.target.value },
-                      })
-                    }
-                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
-                  />
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Misal: <em>Kepada Yth. Bapak/Ibu Tamu Undangan</em> atau <em>Dear</em>.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Label Tombol Buka
+                      Label Tombol Buka Undangan
                     </label>
                     <input
                       type="text"
                       value={content.cover.openButtonLabel}
+                      placeholder="Buka Undangan"
                       onChange={(e) =>
                         setContent({
                           ...content,
@@ -304,15 +320,16 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                   </div>
                   <div>
                     <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Teks Hint Ketuk Layar
+                      Format Tanggal Cover (Opsional)
                     </label>
                     <input
                       type="text"
-                      value={content.cover.tapHintLabel}
+                      value={content.cover.dateDisplay ?? ''}
+                      placeholder="12 · 12 · 2026"
                       onChange={(e) =>
                         setContent({
                           ...content,
-                          cover: { ...content.cover, tapHintLabel: e.target.value },
+                          cover: { ...content.cover, dateDisplay: e.target.value },
                         })
                       }
                       className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
@@ -325,6 +342,27 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
             {/* 2. HERO FORM */}
             {activeTab === 'hero' && (
               <>
+                <div>
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                    Eyebrow / Badge Atas Hero
+                  </label>
+                  <input
+                    type="text"
+                    value={content.hero.badge}
+                    placeholder="THE WEDDING OF"
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        hero: { ...content.hero, badge: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                  />
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Teks kecil di bagian atas judul (contoh: <em>THE WEDDING OF</em>).
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
@@ -333,6 +371,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                     <input
                       type="text"
                       value={content.hero.groomName}
+                      placeholder="Dharma"
                       onChange={(e) =>
                         setContent({
                           ...content,
@@ -349,6 +388,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                     <input
                       type="text"
                       value={content.hero.brideName}
+                      placeholder="Lutfhy"
                       onChange={(e) =>
                         setContent({
                           ...content,
@@ -362,138 +402,334 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
 
                 <div>
                   <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Eyebrow Badge Atas
+                    Format Tanggal Hero
                   </label>
                   <input
                     type="text"
-                    value={content.hero.badge}
+                    value={content.hero.dateShort}
+                    placeholder="SENIN, 12 OKTOBER 2026"
                     onChange={(e) =>
                       setContent({
                         ...content,
-                        hero: { ...content.hero, badge: e.target.value },
+                        hero: { ...content.hero, dateShort: e.target.value },
                       })
                     }
                     className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
                   />
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Teks tanggal di bawah nama mempelai di layar utama Hero.
+                  </p>
+                </div>
+
+                {/* PILIHAN MODE LATAR BELAKANG HERO */}
+                <div className="bg-stone-50/70 p-4 rounded-xl border border-stone-200/80 space-y-4">
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 block mb-1 font-semibold">
+                      Mode Latar Belakang Hero
+                    </label>
+                    <p className="text-[11px] text-stone-500 mb-2.5">
+                      Pilih format media yang ditampilkan di layar pembuka Hero (bisa foto tunggal, video berulang, atau slideshow sinematik).
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setContent({
+                            ...content,
+                            hero: { ...content.hero, bgMode: 'image' },
+                          })
+                        }
+                        className={`py-2 px-3 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                          (content.hero.bgMode || 'image') === 'image'
+                            ? 'bg-[#0F1B2D] text-white border-[#0F1B2D] shadow-xs font-semibold'
+                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
+                        }`}
+                      >
+                        📷 Foto Tunggal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setContent({
+                            ...content,
+                            hero: { ...content.hero, bgMode: 'video' },
+                          })
+                        }
+                        className={`py-2 px-3 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                          content.hero.bgMode === 'video'
+                            ? 'bg-[#0F1B2D] text-white border-[#0F1B2D] shadow-xs font-semibold'
+                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
+                        }`}
+                      >
+                        🎬 Video Looping
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setContent({
+                            ...content,
+                            hero: { ...content.hero, bgMode: 'slideshow' },
+                          })
+                        }
+                        className={`py-2 px-3 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                          content.hero.bgMode === 'slideshow'
+                            ? 'bg-[#0F1B2D] text-white border-[#0F1B2D] shadow-xs font-semibold'
+                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
+                        }`}
+                      >
+                        🎞️ Slideshow Sinematik
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 1. JIKA FOTO TUNGGAL */}
+                  {(content.hero.bgMode || 'image') === 'image' && (
+                    <ImageUploadField
+                      label="Foto Potret Utama (Hero Portrait Background)"
+                      value={content.hero.portraitSrc}
+                      folder="hero"
+                      onChange={(url) =>
+                        setContent({
+                          ...content,
+                          hero: { ...content.hero, portraitSrc: url },
+                        })
+                      }
+                      hint="Foto terbaik kedua mempelai. Disarankan rasio vertikal portrait (2:3 atau 4:5)."
+                    />
+                  )}
+
+                  {/* 2. JIKA VIDEO */}
+                  {content.hero.bgMode === 'video' && (
+                    <div className="space-y-3">
+                      <ImageUploadField
+                        label="Video Background (MP4 / WebM)"
+                        value={content.hero.videoSrc || content.hero.portraitSrc}
+                        folder="hero"
+                        accept="video/mp4,video/webm,video/quicktime,video/*"
+                        mediaType="video"
+                        onChange={(url) =>
+                          setContent({
+                            ...content,
+                            hero: {
+                              ...content.hero,
+                              videoSrc: url,
+                              portraitSrc: url,
+                            },
+                          })
+                        }
+                        hint="Format video disarankan MP4 atau WebM dengan rasio vertikal (9:16) dan kompresi halus."
+                      />
+                    </div>
+                  )}
+
+                  {/* 3. JIKA SLIDESHOW SINEMATIK */}
+                  {content.hero.bgMode === 'slideshow' && (
+                    <div className="space-y-4 pt-1">
+                      <div>
+                        <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 block mb-1">
+                          Sumber Foto Slideshow
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1.5">
+                          <label
+                            className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
+                              (content.hero.slideshowSource || 'gallery') === 'gallery'
+                                ? 'bg-white border-[#0F1B2D] ring-1 ring-[#0F1B2D] shadow-xs'
+                                : 'bg-white/60 border-stone-200 hover:bg-white'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="slideshowSource"
+                              checked={(content.hero.slideshowSource || 'gallery') === 'gallery'}
+                              onChange={() =>
+                                setContent({
+                                  ...content,
+                                  hero: {
+                                    ...content.hero,
+                                    slideshowSource: 'gallery',
+                                  },
+                                })
+                              }
+                              className="mt-0.5 text-[#0F1B2D]"
+                            />
+                            <div>
+                              <p className="text-xs font-semibold text-[#0F1B2D]">
+                                Acak Otomatis Seluruh Galeri
+                              </p>
+                              <p className="text-[10px] text-stone-500 mt-0.5">
+                                Sistem secara otomatis mengambil dan mengacak foto-foto dari Galeri Foto pernikahan.
+                              </p>
+                            </div>
+                          </label>
+
+                          <label
+                            className={`flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
+                              content.hero.slideshowSource === 'custom'
+                                ? 'bg-white border-[#0F1B2D] ring-1 ring-[#0F1B2D] shadow-xs'
+                                : 'bg-white/60 border-stone-200 hover:bg-white'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="slideshowSource"
+                              checked={content.hero.slideshowSource === 'custom'}
+                              onChange={() =>
+                                setContent({
+                                  ...content,
+                                  hero: {
+                                    ...content.hero,
+                                    slideshowSource: 'custom',
+                                  },
+                                })
+                              }
+                              className="mt-0.5 text-[#0F1B2D]"
+                            />
+                            <div>
+                              <p className="text-xs font-semibold text-[#0F1B2D]">
+                                Pilih Foto Spesifik
+                              </p>
+                              <p className="text-[10px] text-stone-500 mt-0.5">
+                                Pilih urutan foto-foto tertentu dari galeri untuk ditayangkan bergantian.
+                              </p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Jika Memilih Foto Spesifik */}
+                      {content.hero.slideshowSource === 'custom' && (
+                        <div className="bg-white p-4 rounded-xl border border-stone-200 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-medium text-stone-700">
+                                Daftar Foto Slideshow ({content.hero.slideshowImages?.length || 0} Foto)
+                              </p>
+                              <p className="text-[10px] text-stone-400">
+                                Foto akan bertransisi morphing crossfade secara bergantian.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setIsSlideshowModalOpen(true)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0F1B2D] text-white hover:bg-[#1E293B] transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                            >
+                              <span>🖼️ Kelola / Pilih Foto</span>
+                            </button>
+                          </div>
+
+                          {/* Thumbnails preview */}
+                          {content.hero.slideshowImages && content.hero.slideshowImages.length > 0 ? (
+                            <div className="flex gap-2.5 overflow-x-auto pb-2 pt-1">
+                              {content.hero.slideshowImages.map((imgUrl, idx) => (
+                                <div
+                                  key={`${imgUrl}-${idx}`}
+                                  className="relative group shrink-0 w-20 h-24 rounded-lg overflow-hidden border border-stone-200 bg-stone-100"
+                                >
+                                  <img
+                                    src={imgUrl}
+                                    alt={`Slide ${idx + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1 rounded font-mono">
+                                    #{idx + 1}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = (content.hero.slideshowImages || []).filter(
+                                        (_, i) => i !== idx
+                                      );
+                                      setContent({
+                                        ...content,
+                                        hero: { ...content.hero, slideshowImages: updated },
+                                      });
+                                    }}
+                                    className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-600 text-white flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                                    title="Hapus foto ini dari slideshow"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div
+                              onClick={() => setIsSlideshowModalOpen(true)}
+                              className="py-6 border-2 border-dashed border-stone-200 rounded-xl flex flex-col items-center justify-center text-stone-400 hover:border-[#0F1B2D] hover:text-stone-600 transition-colors cursor-pointer"
+                            >
+                              <span className="text-xl mb-1">🖼️</span>
+                              <span className="text-xs font-medium">Belum ada foto yang dipilih</span>
+                              <span className="text-[10px] text-stone-400">Klik di sini untuk memilih foto dari galeri</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Pengaturan Durasi per Slide */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 block mb-1">
+                            Durasi Tayang per Slide (Detik)
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="number"
+                              min={2}
+                              max={20}
+                              value={content.hero.slideshowDuration || 5}
+                              onChange={(e) =>
+                                setContent({
+                                  ...content,
+                                  hero: {
+                                    ...content.hero,
+                                    slideshowDuration: Math.max(2, Math.min(20, Number(e.target.value) || 5)),
+                                  },
+                                })
+                              }
+                              className="w-24 px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                            />
+                            <span className="text-xs text-stone-500">detik per foto</span>
+                          </div>
+                          <p className="text-[10px] text-stone-400 mt-1">
+                            Transisi morphing crossfade berlangsung halus selama ~1.8 detik.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Garis Puitis / Subtitle Tengah
+                    Deskripsi Alt Foto
                   </label>
                   <input
                     type="text"
-                    value={content.hero.subtitle}
+                    value={content.hero.portraitAlt}
+                    placeholder="Potret Pengantin"
                     onChange={(e) =>
                       setContent({
                         ...content,
-                        hero: { ...content.hero, subtitle: e.target.value },
+                        hero: { ...content.hero, portraitAlt: e.target.value },
                       })
                     }
-                    placeholder="DUA GARIS · SATU BENANG PERJALANAN"
                     className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
                   />
-                  <p className="text-[10px] text-[#0F1B2D]/50 mt-1">
-                    Teks puitis di antara nama mempelai pria dan wanita di tengah layar Hero.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Format Tanggal Singkat
-                    </label>
-                    <input
-                      type="text"
-                      value={content.hero.dateShort}
-                      onChange={(e) =>
-                        setContent({
-                          ...content,
-                          hero: { ...content.hero, dateShort: e.target.value },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Teks Petunjuk Gulir Bawah
-                    </label>
-                    <input
-                      type="text"
-                      value={content.hero.scrollHint}
-                      onChange={(e) =>
-                        setContent({
-                          ...content,
-                          hero: { ...content.hero, scrollHint: e.target.value },
-                        })
-                      }
-                      placeholder="GULIR PERLAHAN"
-                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
-                    />
-                  </div>
-                </div>
-
-                <ImageUploadField
-                  label="Foto Potret Utama (Hero Portrait Background)"
-                  value={content.hero.portraitSrc}
-                  folder="hero"
-                  onChange={(url) =>
-                    setContent({
-                      ...content,
-                      hero: { ...content.hero, portraitSrc: url },
-                    })
-                  }
-                  hint="Foto terbaik kedua mempelai. Disarankan rasio vertikal portrait (2:3 atau 4:5)."
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Label Badge Pada Foto
-                    </label>
-                    <input
-                      type="text"
-                      value={content.hero.portraitLabel}
-                      onChange={(e) =>
-                        setContent({
-                          ...content,
-                          hero: { ...content.hero, portraitLabel: e.target.value },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Deskripsi Alt Foto
-                    </label>
-                    <input
-                      type="text"
-                      value={content.hero.portraitAlt}
-                      onChange={(e) =>
-                        setContent({
-                          ...content,
-                          hero: { ...content.hero, portraitAlt: e.target.value },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
-                    />
-                  </div>
                 </div>
               </>
             )}
 
-            {/* 3. QUOTE FORM */}
+            {/* 3. QUOTE / SALAM & DOA PEMBUKA FORM */}
             {activeTab === 'quote' && (
               <>
                 <div>
-                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Label Sub-header
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 block mb-1 font-semibold">
+                    Judul / Salam Pembuka (Header)
                   </label>
                   <input
                     type="text"
                     value={content.quote.label}
+                    placeholder="OM SWASTYASTU"
                     onChange={(e) =>
                       setContent({
                         ...content,
@@ -502,14 +738,19 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                     }
                     className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
                   />
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Judul besar terpusat di atas isi teks (contoh: <em>OM SWASTYASTU</em>, <em>BISMILLAHIRRAHMANIRRAHIM</em>, atau <em>KUTIPAN SUCI</em>).
+                  </p>
                 </div>
+
                 <div>
-                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Isi Kutipan / Ayat Suci
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 block mb-1 font-semibold">
+                    Isi Teks Doa / Kutipan Pembuka
                   </label>
                   <textarea
                     rows={4}
                     value={content.quote.text}
+                    placeholder="Atas Asung Kertha Wara Nugraha Ida Sang Hyang Widhi Wasa/ Tuhan Yang Maha Esa, kami bermaksud mengundang Bapak/ Ibu/ Saudara/ i pada Upacara Manusa Yadnya Pawiwahan putra dan putri kami."
                     onChange={(e) =>
                       setContent({
                         ...content,
@@ -518,14 +759,19 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                     }
                     className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] leading-relaxed"
                   />
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Teks doa restu atau kutipan yang ditampilkan terpusat di layar.
+                  </p>
                 </div>
+
                 <div>
-                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Sumber / Sitasi Kutipan
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 block mb-1 font-semibold">
+                    Sumber / Sitasi Kutipan (Opsional)
                   </label>
                   <input
                     type="text"
-                    value={content.quote.citation}
+                    value={content.quote.citation || ''}
+                    placeholder="Rg Veda X.85.42 (Kosongkan jika tidak ada)"
                     onChange={(e) =>
                       setContent({
                         ...content,
@@ -535,119 +781,67 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                     className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
                   />
                 </div>
-              </>
-            )}
 
-            {/* 3.5 PRAYER FORM (DOA PERNIKAHAN) */}
-            {activeTab === 'prayer' && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* PILIHAN MODE LATAR BELAKANG KUTIPAN */}
+                <div className="bg-stone-50/70 p-4 rounded-xl border border-stone-200/80 space-y-4">
                   <div>
-                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Label Eyebrow / Kategori
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 block mb-1 font-semibold">
+                      Latar Belakang Seksi Kutipan
                     </label>
-                    <input
-                      type="text"
-                      value={content.prayer?.sectionLabel || ''}
-                      onChange={(e) =>
+                    <p className="text-[11px] text-stone-500 mb-2.5">
+                      Pilih tampilan latar belakang polos bersih atau foto atmosferik sinematik dari galeri.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setContent({
+                            ...content,
+                            quote: { ...content.quote, bgMode: 'solid' },
+                          })
+                        }
+                        className={`py-2 px-3 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                          (content.quote.bgMode || 'solid') === 'solid'
+                            ? 'bg-[#0F1B2D] text-white border-[#0F1B2D] shadow-xs font-semibold'
+                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
+                        }`}
+                      >
+                        ⚪ Polos (Bersih & Elegan)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setContent({
+                            ...content,
+                            quote: { ...content.quote, bgMode: 'image' },
+                          })
+                        }
+                        className={`py-2 px-3 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                          content.quote.bgMode === 'image'
+                            ? 'bg-[#0F1B2D] text-white border-[#0F1B2D] shadow-xs font-semibold'
+                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
+                        }`}
+                      >
+                        🖼️ Foto Sinematik (Dari Galeri)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Jika Memilih Foto Sinematik */}
+                  {content.quote.bgMode === 'image' && (
+                    <ImageUploadField
+                      label="Foto Latar Belakang Kutipan"
+                      value={content.quote.bgImage || ''}
+                      folder="quote"
+                      onChange={(url) =>
                         setContent({
                           ...content,
-                          prayer: { ...content.prayer, sectionLabel: e.target.value },
+                          quote: { ...content.quote, bgImage: url },
                         })
                       }
-                      placeholder="DOA & RESTU WIWAHA"
-                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                      hint="Foto akan otomatis dilapisi kontras gelap sinematik agar teks putih terbaca sangat jelas dan megah."
                     />
-                  </div>
-                  <div>
-                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Judul Section Doa
-                    </label>
-                    <input
-                      type="text"
-                      value={content.prayer?.title || ''}
-                      onChange={(e) =>
-                        setContent({
-                          ...content,
-                          prayer: { ...content.prayer, title: e.target.value },
-                        })
-                      }
-                      placeholder="Asung Kertha Wara Nugraha"
-                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Teks Sloka / Doa Suci (Sanskerta / Bali / Latin)
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={content.prayer?.arabicOrSanskrit || ''}
-                    onChange={(e) =>
-                      setContent({
-                        ...content,
-                        prayer: { ...content.prayer, arabicOrSanskrit: e.target.value },
-                      })
-                    }
-                    placeholder="Om Ihaiva stam ma vi yaustam, visvam ayur vyasnutam, kridantau putrair naptrbhih modamanau sve grhe."
-                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] leading-relaxed font-serif"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Terjemahan / Makna Sloka
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={content.prayer?.translation || ''}
-                    onChange={(e) =>
-                      setContent({
-                        ...content,
-                        prayer: { ...content.prayer, translation: e.target.value },
-                      })
-                    }
-                    placeholder="Wahai pasangan pengantin, semoga engkau senantiasa tetap bersatu, tidak pernah terpisahkan, mencapai usia hidup yang panjang..."
-                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] leading-relaxed"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Kalimat Doa Restu & Harapan (Doa Bali Hindu)
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={content.prayer?.blessingText || ''}
-                    onChange={(e) =>
-                      setContent({
-                        ...content,
-                        prayer: { ...content.prayer, blessingText: e.target.value },
-                      })
-                    }
-                    placeholder="Om Swastyastu. Atas asung kertha wara nugraha Ida Sang Hyang Widhi Wasa, kami memohon doa restu..."
-                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] leading-relaxed"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Kitab Suci / Sumber Sloka
-                  </label>
-                  <input
-                    type="text"
-                    value={content.prayer?.citation || ''}
-                    onChange={(e) =>
-                      setContent({
-                        ...content,
-                        prayer: { ...content.prayer, citation: e.target.value },
-                      })
-                    }
-                    placeholder="Rg Veda X.85.42"
-                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
-                  />
+                  )}
                 </div>
               </>
             )}
@@ -655,6 +849,49 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
             {/* 4. COUPLE FORM */}
             {activeTab === 'couple' && (
               <>
+                {/* PILIHAN MODE TAMPILAN MEMPELAI */}
+                <div className="bg-stone-50/70 p-4 rounded-xl border border-stone-200/80 space-y-2 mb-4">
+                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 block font-semibold">
+                    Gaya Tampilan Profil Mempelai
+                  </label>
+                  <p className="text-[11px] text-stone-500 mb-2">
+                    Pilih foto latar belakang layar penuh (sinematik) atau potret bingkai lengkung dengan latar belakang putih bersih.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setContent({
+                          ...content,
+                          couple: { ...content.couple, bgMode: 'image' },
+                        })
+                      }
+                      className={`py-2 px-3 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                        (content.couple.bgMode || 'image') === 'image'
+                          ? 'bg-[#0F1B2D] text-white border-[#0F1B2D] shadow-xs font-semibold'
+                          : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
+                      }`}
+                    >
+                      🖼️ Foto Latar Belakang (Sinematik)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setContent({
+                          ...content,
+                          couple: { ...content.couple, bgMode: 'solid' },
+                        })
+                      }
+                      className={`py-2 px-3 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer ${
+                        content.couple.bgMode === 'solid'
+                          ? 'bg-[#0F1B2D] text-white border-[#0F1B2D] shadow-xs font-semibold'
+                          : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'
+                      }`}
+                    >
+                      ⚪ Latar Belakang Putih (Clean Editorial)
+                    </button>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-[#0F1B2D]/10">
                   <div>
                     <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
@@ -2266,6 +2503,22 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
           </button>
         </div>
       )}
+
+      {/* Hero Slideshow Photo Selection Modal */}
+      <HeroSlideshowModal
+        isOpen={isSlideshowModalOpen}
+        onClose={() => setIsSlideshowModalOpen(false)}
+        selectedUrls={content.hero.slideshowImages || []}
+        onApply={(urls) => {
+          setContent({
+            ...content,
+            hero: {
+              ...content.hero,
+              slideshowImages: urls,
+            },
+          });
+        }}
+      />
     </div>
   );
 }

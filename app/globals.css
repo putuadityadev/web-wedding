@@ -43,13 +43,19 @@
   --color-hairline: var(--hairline);
 }
 
-/* Base resets & typography */
 html {
   background-color: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Native hardware-accelerated scroll snapping on mobile touch devices */
+@media (hover: none) and (pointer: coarse) {
+  html {
+    scroll-snap-type: y proximity;
+  }
 }
 
 body {

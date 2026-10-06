@@ -2,12 +2,14 @@
 
 import React, { useEffect, useRef } from 'react';
 import { gsap } from '@/lib/motion/gsap';
+import { useLenisContext } from '@/lib/motion/lenis';
+import { CoupleBackgroundMode } from '@/lib/content/types';
 import { MediaFrame } from './MediaFrame';
 
 export interface CoupleMember {
   name: string;
   childOf: string;
-  bio: string;
+  bio?: string;
   photo?: {
     src?: string;
     alt: string;
@@ -27,275 +29,390 @@ export interface CoupleProps {
   sectionDesc?: string;
   groomLabel?: string;
   brideLabel?: string;
+  bgMode?: CoupleBackgroundMode;
   groom: CoupleMember;
   bride: CoupleMember;
 }
 
+function InstagramIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none">
+      <path
+        d="M3.5 6L8 10.5L12.5 6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function Couple({
-  sectionLabel,
-  sectionTitle,
-  sectionDesc,
   groomLabel = 'MEMPELAI PRIA',
   brideLabel = 'MEMPELAI WANITA',
+  bgMode = 'image',
   groom,
   bride,
 }: CoupleProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const groomCardRef = useRef<HTMLDivElement | null>(null);
-  const brideCardRef = useRef<HTMLDivElement | null>(null);
-  const numeral1Ref = useRef<HTMLSpanElement | null>(null);
-  const numeral2Ref = useRef<HTMLSpanElement | null>(null);
+  const { lenis } = useLenisContext();
+  const groomSectionRef = useRef<HTMLElement | null>(null);
+  const brideSectionRef = useRef<HTMLElement | null>(null);
 
+  const isImageMode = bgMode === 'image';
+
+  // GSAP subtle entrance animations
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const groomSec = groomSectionRef.current;
+    const brideSec = brideSectionRef.current;
+    if (!groomSec || !brideSec) return;
 
     const ctx = gsap.context(() => {
-      gsap.set(container, { perspective: 1200 });
-
-      // 3D Parallax scrub on portraits
-      gsap.to(groomCardRef.current, {
-        y: '-6vh',
-        rotateY: 4,
-        rotateX: -2,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: container,
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1.2,
-        },
-      });
-
-      gsap.to(brideCardRef.current, {
-        y: '6vh',
-        rotateY: -4,
-        rotateX: 2,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: container,
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1.2,
-        },
-      });
-
-      // Floating Roman Numerals with 3D depth
-      gsap.to([numeral1Ref.current, numeral2Ref.current], {
-        y: '-30px',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: container,
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1.5,
-        },
-      });
-
-      // 3D Text Reveal
+      // Groom reveal
       gsap.fromTo(
-        '.couple-text-reveal',
+        groomSec.querySelectorAll('.couple-reveal'),
         {
           opacity: 0,
-          y: 40,
-          rotateX: 20,
+          y: 24,
         },
         {
           opacity: 1,
           y: 0,
-          rotateX: 0,
-          duration: 1.2,
-          stagger: 0.12,
+          duration: 1.1,
+          stagger: 0.1,
           ease: 'power3.out',
           scrollTrigger: {
-            trigger: container,
-            start: 'top 70%',
+            trigger: groomSec,
+            start: 'top 75%',
             once: true,
           },
         }
       );
-    }, containerRef);
+
+      // Bride reveal
+      gsap.fromTo(
+        brideSec.querySelectorAll('.couple-reveal'),
+        {
+          opacity: 0,
+          y: 24,
+        },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1.1,
+          stagger: 0.1,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: brideSec,
+            start: 'top 75%',
+            once: true,
+          },
+        }
+      );
+    });
 
     return () => ctx.revert();
   }, []);
 
+  const handleScrollTo = (targetId: string) => {
+    if (lenis) {
+      lenis.scrollTo(targetId, { duration: 0.95 });
+    } else {
+      const el = document.querySelector(targetId);
+      el?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Helper to format parent names cleanly
+  const getParentsLine = (person: CoupleMember) => {
+    if (person.fatherName && person.motherName) {
+      return `Bapak ${person.fatherName} & Ibu ${person.motherName}`;
+    }
+    if (person.fatherName) return `Bapak ${person.fatherName}`;
+    if (person.motherName) return `Ibu ${person.motherName}`;
+    return null;
+  };
+
+  const groomParents = getParentsLine(groom);
+  const brideParents = getParentsLine(bride);
+
   return (
-    <section
-      ref={containerRef}
-      id="couple"
-      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none overflow-hidden"
-    >
-      <div className="max-w-7xl mx-auto w-full">
-        {/* Optional Editorial Header */}
-        {(sectionLabel || sectionTitle) && (
-          <div className="mb-14 md:mb-20 text-center max-w-2xl mx-auto">
-            {sectionLabel && (
-              <div className="inline-flex items-center gap-2 mb-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-                <span className="label-eyebrow tracking-[0.25em] text-[11px] text-[var(--ink)] opacity-60 uppercase">
-                  {sectionLabel}
-                </span>
-              </div>
-            )}
-            {sectionTitle && (
-              <h2 className="display-l font-serif text-3xl sm:text-4xl text-[var(--ink)] tracking-[-0.01em]">
-                {sectionTitle}
-              </h2>
-            )}
-            {sectionDesc && (
-              <p className="body-base text-[var(--ink)] opacity-70 mt-3 text-sm sm:text-base leading-relaxed">
-                {sectionDesc}
-              </p>
-            )}
+    <>
+      {/* ========================================================
+          CHAPTER I: MEMPELAI PRIA (100% DVH FULL-SCREEN CHAPTER)
+          ======================================================== */}
+      <section
+        ref={groomSectionRef}
+        id="couple"
+        data-snap-section="true"
+        className={`relative w-full h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex flex-col justify-center items-center select-none overflow-hidden snap-start transition-colors px-6 sm:px-12 ${
+          isImageMode
+            ? 'bg-[#0A121E] text-white'
+            : 'bg-[var(--paper)] text-[var(--ink)]'
+        }`}
+        style={{
+          scrollSnapAlign: 'start',
+          scrollSnapStop: 'normal',
+        }}
+      >
+        {/* MODE A: FULL BLEED BACKGROUND PHOTO (Like reference image) */}
+        {isImageMode && groom.photo?.src && (
+          <div className="absolute inset-0 w-full h-full pointer-events-none origin-center">
+            <img
+              src={groom.photo.src}
+              alt={groom.photo.alt || groom.name}
+              className="w-full h-full object-cover object-[center_28%] sm:object-[center_25%] filter brightness-[0.82] contrast-[1.05]"
+            />
+            {/* Cinematic contrast gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/75" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.6)_100%)]" />
           </div>
         )}
 
-        {/* Profiles Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-16 md:gap-8 items-start">
-          {/* PROFILE I: GROOM (Left-top) */}
-          <div
-            ref={groomCardRef}
-            className="md:col-span-5 flex flex-col md:pr-4 transform-gpu origin-center"
-          >
-            <div className="flex items-center gap-4 mb-5">
-              <span
-                ref={numeral1Ref}
-                className="font-serif italic text-3xl sm:text-4xl text-[var(--deep)] inline-block transform-gpu"
-              >
-                I
-              </span>
-              <span className="label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.22em] uppercase">
-                {groomLabel}
-              </span>
-            </div>
-
-            <div className="w-full max-w-sm mb-8 drop-shadow-md">
+        {/* Framing Content Container (Clean, Minimalist, No Clutter) */}
+        <div className="relative z-10 w-full max-w-xl mx-auto flex flex-col items-center text-center my-auto px-4">
+          {/* MODE B ONLY: Elegant Portrait Arch Frame on Paper */}
+          {!isImageMode && (
+            <div className="couple-reveal w-full max-w-[200px] sm:max-w-[230px] aspect-[3/4] max-h-[32vh] drop-shadow-md mx-auto mb-4">
               <MediaFrame
                 src={groom.photo?.src}
                 alt={groom.photo?.alt || groom.name}
-                aspectRatio="4/5"
+                aspectRatio="3/4"
                 arch={true}
                 label={groom.photo?.label || `POTRET ${groom.name.split(' ')[0].toUpperCase()}`}
+                className="shadow-[0_8px_24px_rgba(15,27,45,0.08)] border border-[var(--baby-blue)]/30"
               />
             </div>
+          )}
 
-            <h3 className="couple-text-reveal display-l text-[var(--ink)] font-serif text-3xl sm:text-4xl md:text-5xl mb-3">
-              {groom.name}
-            </h3>
-
-            <p className="couple-text-reveal label-eyebrow text-[var(--ink)] opacity-70 tracking-[0.16em] mb-4">
-              {groom.childOf}
-            </p>
-
-            <p className="couple-text-reveal body-base text-[var(--ink)] opacity-80 leading-relaxed max-w-md">
-              {groom.bio}
-            </p>
-
-            {/* Parents Editorial Card with Small Premium Avatar */}
-            {(groom.fatherName || groom.motherName || groom.parentsAvatarSrc) && (
-              <div className="mt-8 pt-6 border-t border-[var(--ink)]/15 flex items-center gap-4">
-                {groom.parentsAvatarSrc ? (
-                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-[var(--baby-blue)] p-0.5 shrink-0 shadow-xs bg-white/50">
-                    <img
-                      src={groom.parentsAvatarSrc}
-                      alt={groom.parentsTitle || 'Orang Tua Mempelai Pria'}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 rounded-full border border-[var(--deep)]/30 flex items-center justify-center bg-white/60 backdrop-blur-xs shrink-0 text-xs font-serif italic text-[var(--deep)] font-semibold shadow-2xs">
-                    {groom.fatherName?.charAt(0) || 'W'} &amp; {groom.motherName?.charAt(0) || 'M'}
-                  </div>
-                )}
-                <div className="flex flex-col">
-                  <span className="label-eyebrow text-[9.5px] tracking-[0.2em] text-[var(--deep)] font-medium uppercase">
-                    {groom.parentsTitle || 'Putra Pertama Dari Pasangan:'}
-                  </span>
-                  <span className="font-serif text-base sm:text-lg text-[var(--ink)] font-normal mt-0.5 leading-snug">
-                    {groom.fatherName && `${groom.fatherName}`}
-                    {groom.fatherName && groom.motherName && ' & '}
-                    {groom.motherName && `${groom.motherName}`}
-                  </span>
-                  <span className="text-[10px] text-[var(--ink)]/55 font-mono mt-0.5">Keluarga Mempelai Pria</span>
-                </div>
-              </div>
-            )}
+          {/* Chapter Eyebrow */}
+          <div className="couple-reveal inline-flex items-center gap-2 mb-2 sm:mb-3">
+            <span
+              className={`font-serif italic text-base sm:text-lg ${
+                isImageMode ? 'text-white/80' : 'text-[var(--deep)]'
+              }`}
+            >
+              I
+            </span>
+            <span
+              className={`w-1 h-1 rounded-full ${
+                isImageMode ? 'bg-white/60' : 'bg-[var(--baby-blue)]'
+              }`}
+            />
+            <span
+              className={`label-eyebrow text-[10px] sm:text-[11px] tracking-[0.26em] uppercase ${
+                isImageMode ? 'text-white/85 drop-shadow-sm' : 'text-[var(--ink)]/70'
+              }`}
+            >
+              {groomLabel}
+            </span>
           </div>
 
-          {/* Spacer Column in Desktop */}
-          <div className="hidden md:block md:col-span-2" />
-
-          {/* PROFILE II: BRIDE (Right-bottom, offset ~20vh) */}
-          <div
-            ref={brideCardRef}
-            className="md:col-span-5 flex flex-col md:mt-24 lg:mt-32 md:pl-4 transform-gpu origin-center"
+          {/* Stately Full Name */}
+          <h2
+            className={`couple-reveal font-serif text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight mb-2 leading-tight ${
+              isImageMode
+                ? 'text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]'
+                : 'text-[var(--ink)]'
+            }`}
           >
-            <div className="flex items-center gap-4 mb-5">
-              <span
-                ref={numeral2Ref}
-                className="font-serif italic text-3xl sm:text-4xl text-[var(--deep)] inline-block transform-gpu"
-              >
-                II
-              </span>
-              <span className="label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.22em] uppercase">
-                {brideLabel}
-              </span>
-            </div>
+            {groom.name}
+          </h2>
 
-            <div className="w-full max-w-sm mb-8 drop-shadow-md">
+          {/* Child of / Lineage line */}
+          <p
+            className={`couple-reveal text-xs sm:text-sm md:text-base font-light tracking-wide max-w-md mx-auto leading-relaxed ${
+              isImageMode
+                ? 'text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]'
+                : 'text-[var(--ink)]/80'
+            }`}
+          >
+            {groom.childOf || (groomParents ? `Putra dari ${groomParents}` : '')}
+          </p>
+
+          {/* Instagram Handle Chip (Clean, Minimalist) */}
+          {groom.instagram && (
+            <div className="couple-reveal mt-4">
+              <a
+                href={`https://instagram.com/${groom.instagram.replace(/^@/, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono tracking-wider transition-all duration-300 ${
+                  isImageMode
+                    ? 'bg-black/40 hover:bg-black/60 text-white/90 border border-white/20 backdrop-blur-md shadow-sm'
+                    : 'bg-white hover:bg-stone-50 text-[var(--ink)] border border-[var(--ink)]/15 shadow-2xs'
+                }`}
+              >
+                <InstagramIcon className="w-3.5 h-3.5 opacity-80" />
+                <span>@{groom.instagram.replace(/^@/, '')}</span>
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Glide Chevron Button to Mempelai Wanita */}
+        <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 z-10 flex justify-center">
+          <button
+            type="button"
+            onClick={() => handleScrollTo('#bride')}
+            className={`group w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm cursor-pointer shadow-sm hover:scale-105 active:scale-95 ${
+              isImageMode
+                ? 'bg-white/20 hover:bg-white/30 text-white border border-white/25'
+                : 'bg-white/90 hover:bg-white text-[var(--ink)] border border-[var(--ink)]/15'
+            }`}
+            aria-label="Gulir ke Mempelai Wanita"
+          >
+            <ChevronDownIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" />
+          </button>
+        </div>
+      </section>
+
+      {/* ========================================================
+          CHAPTER II: MEMPELAI WANITA (100% DVH FULL-SCREEN CHAPTER)
+          ======================================================== */}
+      <section
+        ref={brideSectionRef}
+        id="bride"
+        data-snap-section="true"
+        className={`relative w-full h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex flex-col justify-center items-center select-none overflow-hidden snap-start transition-colors px-6 sm:px-12 ${
+          isImageMode
+            ? 'bg-[#0A121E] text-white'
+            : 'bg-[var(--paper)] text-[var(--ink)]'
+        }`}
+        style={{
+          scrollSnapAlign: 'start',
+          scrollSnapStop: 'normal',
+        }}
+      >
+        {/* MODE A: FULL BLEED BACKGROUND PHOTO (Like reference image) */}
+        {isImageMode && bride.photo?.src && (
+          <div className="absolute inset-0 w-full h-full pointer-events-none origin-center">
+            <img
+              src={bride.photo.src}
+              alt={bride.photo.alt || bride.name}
+              className="w-full h-full object-cover object-[center_28%] sm:object-[center_25%] filter brightness-[0.82] contrast-[1.05]"
+            />
+            {/* Cinematic contrast gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/75" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.6)_100%)]" />
+          </div>
+        )}
+
+        {/* Framing Content Container (Clean, Minimalist, No Clutter) */}
+        <div className="relative z-10 w-full max-w-xl mx-auto flex flex-col items-center text-center my-auto px-4">
+          {/* MODE B ONLY: Elegant Portrait Arch Frame on Paper */}
+          {!isImageMode && (
+            <div className="couple-reveal w-full max-w-[200px] sm:max-w-[230px] aspect-[3/4] max-h-[32vh] drop-shadow-md mx-auto mb-4">
               <MediaFrame
                 src={bride.photo?.src}
                 alt={bride.photo?.alt || bride.name}
-                aspectRatio="4/5"
+                aspectRatio="3/4"
                 arch={true}
                 label={bride.photo?.label || `POTRET ${bride.name.split(' ')[0].toUpperCase()}`}
+                className="shadow-[0_8px_24px_rgba(15,27,45,0.08)] border border-[var(--baby-blue)]/30"
               />
             </div>
+          )}
 
-            <h3 className="couple-text-reveal display-l text-[var(--ink)] font-serif text-3xl sm:text-4xl md:text-5xl mb-3">
-              {bride.name}
-            </h3>
-
-            <p className="couple-text-reveal label-eyebrow text-[var(--ink)] opacity-70 tracking-[0.16em] mb-4">
-              {bride.childOf}
-            </p>
-
-            <p className="couple-text-reveal body-base text-[var(--ink)] opacity-80 leading-relaxed max-w-md">
-              {bride.bio}
-            </p>
-
-            {/* Parents Editorial Card with Small Premium Avatar */}
-            {(bride.fatherName || bride.motherName || bride.parentsAvatarSrc) && (
-              <div className="mt-8 pt-6 border-t border-[var(--ink)]/15 flex items-center gap-4">
-                {bride.parentsAvatarSrc ? (
-                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-[var(--baby-blue)] p-0.5 shrink-0 shadow-xs bg-white/50">
-                    <img
-                      src={bride.parentsAvatarSrc}
-                      alt={bride.parentsTitle || 'Orang Tua Mempelai Wanita'}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 rounded-full border border-[var(--deep)]/30 flex items-center justify-center bg-white/60 backdrop-blur-xs shrink-0 text-xs font-serif italic text-[var(--deep)] font-semibold shadow-2xs">
-                    {bride.fatherName?.charAt(0) || 'W'} &amp; {bride.motherName?.charAt(0) || 'S'}
-                  </div>
-                )}
-                <div className="flex flex-col">
-                  <span className="label-eyebrow text-[9.5px] tracking-[0.2em] text-[var(--deep)] font-medium uppercase">
-                    {bride.parentsTitle || 'Putri Tercinta Dari Pasangan:'}
-                  </span>
-                  <span className="font-serif text-base sm:text-lg text-[var(--ink)] font-normal mt-0.5 leading-snug">
-                    {bride.fatherName && `${bride.fatherName}`}
-                    {bride.fatherName && bride.motherName && ' & '}
-                    {bride.motherName && `${bride.motherName}`}
-                  </span>
-                  <span className="text-[10px] text-[var(--ink)]/55 font-mono mt-0.5">Keluarga Mempelai Wanita</span>
-                </div>
-              </div>
-            )}
+          {/* Chapter Eyebrow */}
+          <div className="couple-reveal inline-flex items-center gap-2 mb-2 sm:mb-3">
+            <span
+              className={`font-serif italic text-base sm:text-lg ${
+                isImageMode ? 'text-white/80' : 'text-[var(--deep)]'
+              }`}
+            >
+              II
+            </span>
+            <span
+              className={`w-1 h-1 rounded-full ${
+                isImageMode ? 'bg-white/60' : 'bg-[var(--baby-blue)]'
+              }`}
+            />
+            <span
+              className={`label-eyebrow text-[10px] sm:text-[11px] tracking-[0.26em] uppercase ${
+                isImageMode ? 'text-white/85 drop-shadow-sm' : 'text-[var(--ink)]/70'
+              }`}
+            >
+              {brideLabel}
+            </span>
           </div>
+
+          {/* Stately Full Name */}
+          <h2
+            className={`couple-reveal font-serif text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight mb-2 leading-tight ${
+              isImageMode
+                ? 'text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]'
+                : 'text-[var(--ink)]'
+            }`}
+          >
+            {bride.name}
+          </h2>
+
+          {/* Child of / Lineage line */}
+          <p
+            className={`couple-reveal text-xs sm:text-sm md:text-base font-light tracking-wide max-w-md mx-auto leading-relaxed ${
+              isImageMode
+                ? 'text-white/90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]'
+                : 'text-[var(--ink)]/80'
+            }`}
+          >
+            {bride.childOf || (brideParents ? `Putri dari ${brideParents}` : '')}
+          </p>
+
+          {/* Instagram Handle Chip (Clean, Minimalist) */}
+          {bride.instagram && (
+            <div className="couple-reveal mt-4">
+              <a
+                href={`https://instagram.com/${bride.instagram.replace(/^@/, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono tracking-wider transition-all duration-300 ${
+                  isImageMode
+                    ? 'bg-black/40 hover:bg-black/60 text-white/90 border border-white/20 backdrop-blur-md shadow-sm'
+                    : 'bg-white hover:bg-stone-50 text-[var(--ink)] border border-[var(--ink)]/15 shadow-2xs'
+                }`}
+              >
+                <InstagramIcon className="w-3.5 h-3.5 opacity-80" />
+                <span>@{bride.instagram.replace(/^@/, '')}</span>
+              </a>
+            </div>
+          )}
         </div>
-      </div>
-    </section>
+
+        {/* Bottom Glide Chevron Button to Story Section */}
+        <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 z-10 flex justify-center">
+          <button
+            type="button"
+            onClick={() => handleScrollTo('#story')}
+            className={`group w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm cursor-pointer shadow-sm hover:scale-105 active:scale-95 ${
+              isImageMode
+                ? 'bg-white/20 hover:bg-white/30 text-white border border-white/25'
+                : 'bg-white/90 hover:bg-white text-[var(--ink)] border border-[var(--ink)]/15'
+            }`}
+            aria-label="Gulir ke Cerita Perjalanan"
+          >
+            <ChevronDownIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" />
+          </button>
+        </div>
+      </section>
+    </>
   );
 }

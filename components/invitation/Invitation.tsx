@@ -18,8 +18,8 @@ import { Wishes } from './Wishes';
 import { Footer } from './Footer';
 import { SplashCursor } from '@/components/ui/SplashCursor';
 import { SiteContent, DEFAULT_SITE_CONTENT, GalleryItem } from '@/lib/content/types';
-import { Prayer } from './Prayer';
 import { useLenisContext } from '@/lib/motion/lenis';
+import { ScrollSnapSync } from './ScrollSnapSync';
 
 interface InvitationProps {
   guest: GuestView;
@@ -90,13 +90,12 @@ function InvitationContent({
     <div className="relative min-h-screen bg-[var(--paper)] text-[var(--ink)] selection:bg-[var(--baby-blue)] selection:text-[var(--ink)]">
       {/* Cover Screen */}
       <Cover
-        badge={content.cover.badge}
+        headline={content.cover.headline || content.cover.badge}
         groomName={content.cover.groomName || guest.event.groomName}
         brideName={content.cover.brideName || guest.event.brideName}
         dateFormatted={content.cover.dateDisplay || guest.event.dateFormatted}
         guestGreetingLabel={content.cover.guestGreetingLabel}
         openButtonLabel={content.cover.openButtonLabel}
-        tapHintLabel={content.cover.tapHintLabel}
         guestName={guest.name}
         salutation={guest.salutation}
         onOpenInvitation={handleOpenInvitation}
@@ -117,6 +116,9 @@ function InvitationContent({
         isUnlocked={isCoverOpened}
       />
 
+      {/* Synchronized 100% DVH Chapter Snap Engine */}
+      <ScrollSnapSync />
+
       {/* 1. Hero with Real Editorial Portrait & 3D Typography */}
       <Hero
         badge={content.hero.badge}
@@ -125,38 +127,34 @@ function InvitationContent({
         subtitle={content.hero.subtitle}
         dateShort={content.hero.dateShort}
         portraitSrc={content.hero.portraitSrc}
-        videoSrc={content.hero.portraitSrc?.match(/\.(mp4|webm|mov|m4v)(\?.*)?$/i) ? content.hero.portraitSrc : undefined}
+        videoSrc={content.hero.videoSrc || (content.hero.portraitSrc?.match(/\.(mp4|webm|mov|m4v)(\?.*)?$/i) ? content.hero.portraitSrc : undefined)}
         portraitAlt={content.hero.portraitAlt}
         scrollHint={content.hero.scrollHint}
         imageAvif={content.hero.portraitSrc || ASSETS.hero.avifSrc}
         imageWebp={content.hero.portraitSrc || ASSETS.hero.webpSrc}
         imageSrc={content.hero.portraitSrc || ASSETS.hero.fallbackSrc}
+        bgMode={content.hero.bgMode}
+        slideshowSource={content.hero.slideshowSource}
+        slideshowImages={content.hero.slideshowImages}
+        slideshowDuration={content.hero.slideshowDuration}
+        galleryItems={content.gallery?.items}
       />
 
-      {/* 2. Quote */}
+      {/* 2. Quote / Salam & Doa Pembuka */}
       <Quote
         label={content.quote.label}
         text={content.quote.text || guest.copy.openingLine}
         citation={content.quote.citation}
+        bgMode={content.quote.bgMode}
+        bgImage={content.quote.bgImage}
       />
-
-      {/* 2.5 Doa Pernikahan & Berkah */}
-      {content.prayer && (
-        <Prayer
-          sectionLabel={content.prayer.sectionLabel}
-          title={content.prayer.title}
-          arabicOrSanskrit={content.prayer.arabicOrSanskrit}
-          translation={content.prayer.translation}
-          blessingText={content.prayer.blessingText}
-          citation={content.prayer.citation}
-        />
-      )}
 
       {/* 3. Couple */}
       <Couple
         sectionLabel={content.couple.sectionLabel}
         sectionTitle={content.couple.sectionTitle}
         sectionDesc={content.couple.sectionDesc}
+        bgMode={content.couple.bgMode || 'image'}
         groom={{
           ...ASSETS.couple.groom,
           name: content.couple.groom.name,

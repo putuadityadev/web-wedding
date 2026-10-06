@@ -6,10 +6,11 @@ import { useLenisContext } from '@/lib/motion/lenis';
 
 interface CoverProps {
   guestName: string;
-  salutation: string;
-  groomName: string;
-  brideName: string;
-  dateFormatted: string;
+  salutation?: string;
+  groomName?: string;
+  brideName?: string;
+  headline?: string;
+  dateFormatted?: string;
   badge?: string;
   guestGreetingLabel?: string;
   openButtonLabel?: string;
@@ -85,6 +86,7 @@ export function Cover({
   salutation,
   groomName,
   brideName,
+  headline,
   dateFormatted,
   badge,
   guestGreetingLabel,
@@ -108,10 +110,11 @@ export function Cover({
   const openButtonRef = useRef<HTMLButtonElement | null>(null);
   const subtextRef = useRef<HTMLParagraphElement | null>(null);
 
-  // Preloader refs
+  // Cinematic editorial text intro preloader refs
   const loaderRef = useRef<HTMLDivElement | null>(null);
-  const progressTextRef = useRef<HTMLSpanElement | null>(null);
-  const progressBarRef = useRef<HTMLDivElement | null>(null);
+  const introLine1Ref = useRef<HTMLDivElement | null>(null);
+  const introLine2Ref = useRef<HTMLHeadingElement | null>(null);
+  const introLine3Ref = useRef<HTMLDivElement | null>(null);
 
   const sheetsRef = useRef<HTMLImageElement[]>([]);
   const coverImgRef = useRef<HTMLImageElement | null>(null);
@@ -247,63 +250,111 @@ export function Cover({
     }
   }, []);
 
-  // Preload all assets with real progress tracking & smooth exit
+  // Cinematic editorial text intro preloader with asset preloading synchronization
   useEffect(() => {
     const totalAssets = 1 + SPRITE_CONFIG.sheets.length; // 5 assets total
     let loadedAssets = 0;
     const sheets: HTMLImageElement[] = [];
-    const animTracker = { progress: 0 };
+    let isAssetsReady = false;
+    let isIntroAnimDone = false;
 
-    const finishPreloader = () => {
+    const finishIntro = () => {
       if (isLoadedRef.current) return;
       isLoadedRef.current = true;
 
       // Ensure frame 0 is rendered cleanly
       drawFrame(0);
 
-      // Fade out luxury loader screen
+      // Silky dissolve of cinematic intro overlay
       if (loaderRef.current) {
         gsap.to(loaderRef.current, {
           opacity: 0,
-          scale: 1.025,
-          duration: 0.75,
-          ease: 'power3.inOut',
-          delay: 0.2,
+          scale: 1.04,
+          filter: 'blur(8px)',
+          duration: 0.85,
+          ease: 'power2.inOut',
           onComplete: () => {
             if (loaderRef.current) loaderRef.current.style.display = 'none';
           },
         });
       }
 
-      // Start text entrance choreography organically as loader dissolves
+      // Start Cover typography entrance organically as intro dissolves
       setTimeout(() => {
         animateTextEntrance();
       }, 350);
     };
 
-    const updateProgress = () => {
-      loadedAssets++;
-      const targetPercent = Math.min(100, Math.round((loadedAssets / totalAssets) * 100));
+    // GSAP Cinematic Storytelling Text Reveal Timeline
+    const introTl = gsap.timeline({
+      onComplete: () => {
+        isIntroAnimDone = true;
+        if (isAssetsReady) {
+          finishIntro();
+        }
+      },
+    });
 
-      gsap.to(animTracker, {
-        progress: targetPercent,
-        duration: 0.35,
-        ease: 'power1.out',
-        onUpdate: () => {
-          const currentVal = Math.round(animTracker.progress);
-          if (progressTextRef.current) {
-            progressTextRef.current.textContent = `${currentVal}%`;
-          }
-          if (progressBarRef.current) {
-            progressBarRef.current.style.width = `${currentVal}%`;
-          }
+    // Step 1: Smooth reveal "THE WEDDING OF"
+    if (introLine1Ref.current) {
+      introTl.fromTo(
+        introLine1Ref.current,
+        { opacity: 0, y: 16, filter: 'blur(8px)' },
+        {
+          opacity: 0.85,
+          y: 0,
+          filter: 'blur(0px)',
+          duration: 0.95,
+          ease: 'power2.out',
         },
-        onComplete: () => {
-          if (targetPercent >= 100) {
-            finishPreloader();
-          }
+        0.25
+      );
+    }
+
+    // Step 2: Smooth reveal "Dharma & Lutfhy"
+    if (introLine2Ref.current) {
+      introTl.fromTo(
+        introLine2Ref.current,
+        { opacity: 0, y: 22, filter: 'blur(10px)', scale: 0.96 },
+        {
+          opacity: 1,
+          y: 0,
+          filter: 'blur(0px)',
+          scale: 1,
+          duration: 1.15,
+          ease: 'power3.out',
         },
-      });
+        1.05
+      );
+    }
+
+    // Step 3: Smooth reveal Date
+    if (introLine3Ref.current) {
+      introTl.fromTo(
+        introLine3Ref.current,
+        { opacity: 0, y: 14, filter: 'blur(6px)' },
+        {
+          opacity: 0.75,
+          y: 0,
+          filter: 'blur(0px)',
+          duration: 0.9,
+          ease: 'power2.out',
+        },
+        1.85
+      );
+    }
+
+    // Gentle hold for high-end quiet luxury feel (~0.75s)
+    introTl.to({}, { duration: 0.75 });
+
+    const checkAssetsReady = () => {
+      loadedAssets++;
+      if (loadedAssets >= totalAssets) {
+        isAssetsReady = true;
+        if (isIntroAnimDone) {
+          finishIntro();
+        }
+      }
     };
 
     // 1. High-res closed cover
@@ -312,33 +363,35 @@ export function Cover({
     cover.onload = () => {
       coverImgRef.current = cover;
       drawFrame(0);
-      updateProgress();
+      checkAssetsReady();
     };
-    cover.onerror = updateProgress;
+    cover.onerror = checkAssetsReady;
 
     // 2. Sprite sheets
     SPRITE_CONFIG.sheets.forEach((src, idx) => {
       const img = new Image();
       img.src = src;
       img.onload = () => {
-        updateProgress();
+        checkAssetsReady();
       };
-      img.onerror = updateProgress;
+      img.onerror = checkAssetsReady;
       sheets[idx] = img;
     });
 
     sheetsRef.current = sheets;
 
-    // Safety fallback timeout
+    // Safety fallback timeout (5s max)
     const timeout = setTimeout(() => {
-      if (!isLoadedRef.current) {
-        if (progressTextRef.current) progressTextRef.current.textContent = '100%';
-        if (progressBarRef.current) progressBarRef.current.style.width = '100%';
-        finishPreloader();
+      isAssetsReady = true;
+      if (isIntroAnimDone || !isLoadedRef.current) {
+        finishIntro();
       }
-    }, 4000);
+    }, 5000);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      introTl.kill();
+    };
   }, [drawFrame, animateTextEntrance]);
 
   // Canvas resize with devicePixelRatio support
@@ -531,6 +584,9 @@ export function Cover({
     tl.to({}, { duration: 0.05 }, 3.2);
   }, [isOpened, isOpening, onOpenInvitation, unlockScroll, drawFrame]);
 
+  const coupleNames = `${groomName || 'Dharma'} & ${brideName || 'Lutfhy'}`;
+  const displayDate = (dateFormatted || '12 · 12 · 2026').toUpperCase();
+
   return (
     <div
       ref={containerRef}
@@ -548,47 +604,48 @@ export function Cover({
       style={{ height: '100dvh' }}
     >
       {/* ============================================================== */}
-      {/* 0. QUIET LUXURY EDITORIAL PRELOADER (Awwwards Clean Style)    */}
+      {/* 0. CINEMATIC EDITORIAL TEXT INTRO (No Progress Bar)            */}
       {/* ============================================================== */}
       <div
         ref={loaderRef}
-        className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#0F1B2D] text-white pointer-events-auto"
+        className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#070e18] text-white pointer-events-auto overflow-hidden select-none"
       >
-        {/* Soft Ambient Radial Light */}
+        {/* Soft Ambient Cinematic Glow */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'radial-gradient(circle at 50% 48%, rgba(30, 52, 84, 0.4) 0%, rgba(15, 27, 45, 1) 75%)',
+              'radial-gradient(ellipse at 50% 50%, rgba(28, 48, 78, 0.5) 0%, rgba(10, 18, 30, 0.95) 75%, #070e18 100%)',
           }}
         />
 
-        <div className="relative z-10 flex flex-col items-center max-w-xs text-center px-6">
-          {/* Monogram */}
-          <span className="font-serif italic text-4xl sm:text-5xl text-white tracking-widest mb-3.5 font-light opacity-95 drop-shadow-[0_2px_16px_rgba(255,255,255,0.25)]">
-            {groomName.charAt(0)} &amp; {brideName.charAt(0)}
-          </span>
-
-          <span className="label-eyebrow tracking-[0.34em] text-[10px] text-white/60 uppercase mb-7 font-mono">
-            MEMUAT PENGALAMAN
-          </span>
-
-          {/* Hairline White Progress Bar */}
-          <div className="relative w-48 h-[2px] bg-white/15 rounded-full overflow-hidden mb-3.5">
-            <div
-              ref={progressBarRef}
-              className="absolute top-0 bottom-0 left-0 bg-white transition-all duration-150 ease-out shadow-[0_0_8px_rgba(255,255,255,0.85)]"
-              style={{ width: '0%' }}
-            />
+        <div className="relative z-10 flex flex-col items-center max-w-lg text-center px-6">
+          {/* Step 1: THE WEDDING OF */}
+          <div
+            ref={introLine1Ref}
+            style={{ opacity: 0 }}
+            className="label-eyebrow tracking-[0.38em] text-white/75 text-[11px] sm:text-xs font-mono uppercase mb-3 transform-gpu drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+          >
+            THE WEDDING OF
           </div>
 
-          {/* Percentage Counter */}
-          <span
-            ref={progressTextRef}
-            className="font-mono text-[10px] tracking-[0.24em] text-white/70"
+          {/* Step 2: Dharma & Lutfhy */}
+          <h2
+            ref={introLine2Ref}
+            style={{ opacity: 0 }}
+            className="font-serif italic text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-normal tracking-tight my-2 drop-shadow-[0_3px_20px_rgba(255,255,255,0.25)] transform-gpu"
           >
-            0%
-          </span>
+            {coupleNames}
+          </h2>
+
+          {/* Step 3: Date */}
+          <div
+            ref={introLine3Ref}
+            style={{ opacity: 0 }}
+            className="label-eyebrow tracking-[0.28em] text-[#E8EFF8]/70 text-[10px] sm:text-[11px] font-mono uppercase mt-4 transform-gpu drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+          >
+            {displayDate}
+          </div>
         </div>
       </div>
 
@@ -684,16 +741,14 @@ export function Cover({
       {/* 4. EDITORIAL UI TYPOGRAPHY & CTA (STAGGERED SMOOTH ENTRANCE)   */}
       {/* ============================================================== */}
       {(() => {
-        const names = `${(groomName || 'Dharma').toUpperCase()} & ${(brideName || 'Lutfhy').toUpperCase()}`;
-        const displayBadge = badge
-          ? (badge.toUpperCase().includes((groomName || 'Dharma').toUpperCase())
-              ? badge.toUpperCase()
-              : `${badge.toUpperCase()} ${names}`)
-          : `THE WEDDING OF ${names}`;
+        const coupleNames = `${groomName || 'Dharma'} & ${brideName || 'Lutfhy'}`;
+        const displayHeadline = headline || badge || 'We invite you to celebrate our wedding';
 
         const displayGreeting = salutation
-          ? `KEPADA YTH. ${salutation.toUpperCase()}`
-          : (guestGreetingLabel ? guestGreetingLabel.toUpperCase().replace(/:$/, '') : 'KEPADA YTH. BAPAK / IBU / SAUDARA/I');
+          ? (salutation.toUpperCase().startsWith('KEPADA') || salutation.toUpperCase().startsWith('DEAR')
+              ? salutation.toUpperCase()
+              : `KEPADA YTH. ${salutation.toUpperCase()}`)
+          : (guestGreetingLabel ? guestGreetingLabel.toUpperCase().replace(/:$/, '') : 'KEPADA YTH. BAPAK / IBU / TAMU UNDANGAN');
 
         return (
           <div
@@ -704,29 +759,26 @@ export function Cover({
             <header
               ref={headerRef}
               style={{ opacity: 0 }}
-              className="relative z-30 pt-7 sm:pt-9 px-6 sm:px-12 max-w-7xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-4 text-center sm:text-left drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+              className="relative z-30 pt-7 sm:pt-10 px-6 sm:px-12 max-w-4xl mx-auto w-full flex flex-col items-center text-center drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]"
             >
-              <div className="flex items-center gap-2">
-                <span className="label-eyebrow tracking-[0.26em] text-white text-[10px] sm:text-xs font-semibold drop-shadow-sm">
-                  {displayBadge}
-                </span>
-              </div>
-
-              <div className="label-eyebrow tracking-[0.22em] text-white/85 text-[9px] sm:text-[11px] font-mono drop-shadow-sm">
-                {(dateFormatted || 'Sabtu, 12 Desember 2026').toUpperCase()}
-              </div>
+              <span className="label-eyebrow tracking-[0.28em] text-white/80 text-[10px] sm:text-[11px] font-mono uppercase mb-1 drop-shadow-sm">
+                {displayHeadline}
+              </span>
+              <h2 className="font-serif italic text-2xl sm:text-3xl md:text-4xl text-white font-normal tracking-tight drop-shadow-md">
+                {coupleNames}
+              </h2>
             </header>
 
-            {/* BOTTOM RECIPIENT INFO & CTA BUTTON */}
+            {/* BOTTOM RECIPIENT INFO & MINIMALIST CTA BUTTON */}
             <div
               ref={contentRef}
-              className="relative z-30 pb-9 sm:pb-12 px-6 w-full max-w-xl mx-auto flex flex-col items-center text-center mt-auto"
+              className="relative z-30 pb-10 sm:pb-14 px-6 w-full max-w-md mx-auto flex flex-col items-center text-center mt-auto"
             >
               {/* Eyebrow salutation */}
               <span
                 ref={salutationRef}
                 style={{ opacity: 0 }}
-                className="label-eyebrow tracking-[0.28em] text-[#E8EFF8] text-[10px] sm:text-xs font-semibold mb-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+                className="label-eyebrow tracking-[0.24em] text-[#E8EFF8]/85 text-[10px] sm:text-[11px] font-medium mb-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] uppercase"
               >
                 {displayGreeting}
               </span>
@@ -735,25 +787,12 @@ export function Cover({
               <h1
                 ref={nameRef}
                 style={{ opacity: 0 }}
-                className="font-serif text-3xl sm:text-4xl md:text-5xl text-white font-normal tracking-tight mb-2.5 leading-tight drop-shadow-[0_3px_10px_rgba(0,0,0,0.7)]"
+                className="font-serif text-2xl sm:text-3xl md:text-4xl text-white font-normal tracking-tight mb-5 leading-tight drop-shadow-[0_3px_10px_rgba(0,0,0,0.7)]"
               >
                 {guestName}
               </h1>
 
-              {/* Separator */}
-              <div
-                ref={separatorRef}
-                style={{ opacity: 0 }}
-                className="flex items-center gap-3 opacity-75 mb-6 sm:mb-7"
-              >
-                <span className="w-8 h-[1px] bg-white/60" />
-                <span className="text-[9px] sm:text-[10px] label-eyebrow tracking-[0.26em] text-white/90 font-mono">
-                  DI TEMPAT
-                </span>
-                <span className="w-8 h-[1px] bg-white/60" />
-              </div>
-
-              {/* CTA Button */}
+              {/* Minimalist CTA Button */}
               <button
                 ref={openButtonRef}
                 style={{ opacity: 0 }}
@@ -762,10 +801,10 @@ export function Cover({
                   e.stopPropagation();
                   handleOpen();
                 }}
-                className="pointer-events-auto group relative flex items-center gap-3 bg-white/90 hover:bg-white text-[var(--ink)] backdrop-blur-md px-8 sm:px-10 py-3.5 rounded-full text-xs font-semibold tracking-[0.24em] transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.45)] hover:scale-105 active:scale-95"
+                className="pointer-events-auto group relative flex items-center gap-2.5 bg-white/95 hover:bg-white text-[#0F1B2D] px-7 sm:px-8 py-2.5 sm:py-3 rounded-full text-xs font-semibold tracking-[0.2em] uppercase transition-all duration-300 shadow-[0_6px_25px_rgba(0,0,0,0.35)] hover:shadow-[0_10px_35px_rgba(0,0,0,0.45)] hover:scale-105 active:scale-95 cursor-pointer"
                 aria-label="Buka Undangan Pernikahan"
               >
-                <span>{openButtonLabel || 'BUKA UNDANGAN'}</span>
+                <span>{openButtonLabel || 'Buka Undangan'}</span>
                 <svg
                   className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1"
                   viewBox="0 0 16 16"
@@ -779,18 +818,7 @@ export function Cover({
                     strokeLinejoin="round"
                   />
                 </svg>
-
-                {/* Subtle Pulsing Border Glow */}
-                <span className="absolute -inset-0.5 rounded-full border border-white/40 animate-ping opacity-30 pointer-events-none" />
               </button>
-
-              <p
-                ref={subtextRef}
-                style={{ opacity: 0 }}
-                className="label-eyebrow text-[9px] sm:text-[10px] text-white/70 tracking-[0.22em] mt-3.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)] uppercase"
-              >
-                {tapHintLabel || 'SENTUH LAYAR ATAU TOMBOL UNTUK MEMBUKA'}
-              </p>
             </div>
           </div>
         );

@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { gsap } from '@/lib/motion/gsap';
+import { useLenisContext } from '@/lib/motion/lenis';
+import { GalleryItem, HeroBackgroundMode, HeroSlideshowSource } from '@/lib/content/types';
 
 export interface HeroProps {
   badge?: string;
@@ -17,14 +19,20 @@ export interface HeroProps {
   imageSrc?: string;
   videoSrc?: string;
   posterSrc?: string;
+  // Multi-mode Background Options
+  bgMode?: HeroBackgroundMode;
+  slideshowSource?: HeroSlideshowSource;
+  slideshowImages?: string[];
+  slideshowDuration?: number;
+  galleryItems?: GalleryItem[];
 }
 
 export function Hero({
   badge = 'THE WEDDING OF',
   groomName,
   brideName,
-  subtitle = 'DUA GARIS · SATU BENANG PERJALANAN',
-  dateShort = '12 · 12 · 2026',
+  subtitle,
+  dateShort = 'SENIN, 12 OKTOBER 2026',
   portraitSrc,
   portraitAlt,
   scrollHint = 'GULIR',
@@ -33,166 +41,208 @@ export function Hero({
   imageSrc = '/KLK07943.jpg',
   videoSrc,
   posterSrc,
+  bgMode = 'image',
+  slideshowSource = 'gallery',
+  slideshowImages = [],
+  slideshowDuration = 5,
+  galleryItems = [],
 }: HeroProps) {
+  const { lenis } = useLenisContext();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoWrapRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const title1Ref = useRef<HTMLHeadingElement | null>(null);
-  const title2Ref = useRef<HTMLHeadingElement | null>(null);
-  const ampersandRef = useRef<HTMLSpanElement | null>(null);
-  const topBarRef = useRef<HTMLDivElement | null>(null);
+  const headerWrapRef = useRef<HTMLDivElement | null>(null);
   const bottomBarRef = useRef<HTMLDivElement | null>(null);
-  const subtitleRef = useRef<HTMLParagraphElement | null>(null);
 
+  // 1. Entrance & Parallax Motion
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const ctx = gsap.context(() => {
-      // Set 3D perspective on container
-      gsap.set(container, { perspective: 1200 });
-
-      // Entrance sequence on load
+      // Entrance choreography on mount
       const tlEnter = gsap.timeline({ delay: 0.2 });
 
       tlEnter.fromTo(
         videoWrapRef.current,
-        { scale: 1.15, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 1.8, ease: 'power3.out' }
+        { scale: 1.08, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 1.6, ease: 'power3.out' }
       );
 
-      tlEnter.fromTo(
-        topBarRef.current,
-        { opacity: 0, y: -20 },
-        { opacity: 1, y: 0, duration: 1, ease: 'power3.out' },
-        '-=1.2'
-      );
+      if (headerWrapRef.current) {
+        tlEnter.fromTo(
+          headerWrapRef.current,
+          {
+            opacity: 0,
+            y: -24,
+            filter: 'blur(6px)',
+          },
+          {
+            opacity: 1,
+            y: 0,
+            filter: 'blur(0px)',
+            duration: 1.3,
+            ease: 'power3.out',
+          },
+          '-=1.1'
+        );
+      }
 
-      tlEnter.fromTo(
-        [title1Ref.current, title2Ref.current],
-        {
-          opacity: 0,
-          y: 70,
-          rotateX: 25,
-          filter: 'blur(8px)',
-        },
-        {
-          opacity: 1,
-          y: 0,
-          rotateX: 0,
-          filter: 'blur(0px)',
-          duration: 1.4,
-          stagger: 0.18,
-          ease: 'power4.out',
-        },
-        '-=1.0'
-      );
+      if (bottomBarRef.current) {
+        tlEnter.fromTo(
+          bottomBarRef.current,
+          { opacity: 0, y: 15 },
+          { opacity: 1, y: 0, duration: 1, ease: 'power3.out' },
+          '-=0.8'
+        );
+      }
 
-      tlEnter.fromTo(
-        subtitleRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 1, ease: 'power3.out' },
-        '-=0.8'
-      );
-
-      tlEnter.fromTo(
-        bottomBarRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 1, ease: 'power3.out' },
-        '-=0.8'
-      );
-
-      // Awwwards-style 3D ScrollTrigger Scrub
+      // High-end ScrollTrigger Parallax & Fade
       const scrollTl = gsap.timeline({
         scrollTrigger: {
           trigger: container,
           start: 'top top',
           end: 'bottom top',
-          scrub: 1.2,
+          scrub: 1.0,
         },
       });
 
-      // Background video slow cinematic zoom & gentle blur
-      scrollTl.to(
-        videoWrapRef.current,
-        {
-          scale: 1.18,
-          y: '8vh',
-          filter: 'blur(6px)',
-          ease: 'none',
-        },
-        0
-      );
-
-      // Title 1 slides left with subtle 3D rotation
-      scrollTl.to(
-        title1Ref.current,
-        {
-          x: '-12vw',
-          rotateY: -8,
-          opacity: 0.25,
-          ease: 'none',
-        },
-        0
-      );
-
-      // Title 2 slides right with subtle 3D rotation
-      scrollTl.to(
-        title2Ref.current,
-        {
-          x: '12vw',
-          rotateY: 8,
-          opacity: 0.25,
-          ease: 'none',
-        },
-        0
-      );
-
-      // Ampersand subtle spin & depth recession
-      if (ampersandRef.current) {
+      if (videoWrapRef.current) {
         scrollTl.to(
-          ampersandRef.current,
+          videoWrapRef.current,
           {
-            rotate: 25,
-            scale: 0.8,
+            scale: 1.12,
+            y: '6vh',
             ease: 'none',
           },
           0
         );
       }
 
-      // Subtitle fade
-      scrollTl.to(
-        subtitleRef.current,
-        {
-          opacity: 0,
-          y: -30,
-          ease: 'none',
-        },
-        0
-      );
+      if (headerWrapRef.current) {
+        scrollTl.to(
+          headerWrapRef.current,
+          {
+            y: -40,
+            opacity: 0,
+            filter: 'blur(4px)',
+            ease: 'none',
+          },
+          0
+        );
+      }
+
+      if (bottomBarRef.current) {
+        scrollTl.to(
+          bottomBarRef.current,
+          {
+            opacity: 0,
+            y: 20,
+            ease: 'none',
+          },
+          0
+        );
+      }
     }, containerRef);
 
     return () => ctx.revert();
   }, []);
 
-  const isVideo =
+  // 2. Video Detection
+  const isVideoMode =
+    bgMode === 'video' ||
     Boolean(videoSrc) ||
     Boolean(portraitSrc && /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(portraitSrc));
-  const activeVideoSrc = videoSrc || (isVideo ? portraitSrc : undefined);
+  const activeVideoSrc = videoSrc || (isVideoMode ? portraitSrc : undefined);
+
+  // 3. Slideshow Images Resolution (Custom selection or Auto-shuffle gallery)
+  const isSlideshowMode = bgMode === 'slideshow';
+
+  const slides = useMemo(() => {
+    if (!isSlideshowMode) return [];
+
+    if (slideshowSource === 'custom' && slideshowImages && slideshowImages.length > 0) {
+      return slideshowImages;
+    }
+
+    // Auto-shuffle from gallery items
+    const photoUrls = (galleryItems || [])
+      .filter((it) => it.mediaType !== 'video' && !it.videoSrc && Boolean(it.src))
+      .map((it) => it.src);
+
+    if (photoUrls.length > 0) {
+      return photoUrls;
+    }
+
+    // Fallback to single portrait
+    return [portraitSrc || imageSrc || '/KLK07943.jpg'];
+  }, [isSlideshowMode, slideshowSource, slideshowImages, galleryItems, portraitSrc, imageSrc]);
+
+  // 4. Cinematic Morphing Slideshow Engine
+  const [slideIndex, setSlideIndex] = useState(0);
+  const durationSec = Math.max(2, Math.min(20, slideshowDuration || 5));
+
+  useEffect(() => {
+    if (!isSlideshowMode || slides.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % slides.length);
+    }, durationSec * 1000);
+
+    return () => clearInterval(interval);
+  }, [isSlideshowMode, slides.length, durationSec]);
+
+  const coupleNames = `${groomName || 'Dharma'} & ${brideName || 'Lutfhy'}`;
 
   return (
     <section
       ref={containerRef}
       id="hero"
-      className="relative min-h-[100svh] w-full flex flex-col justify-between overflow-hidden select-none bg-[var(--ink)] text-white"
+      data-snap-section="true"
+      className="relative h-[100dvh] min-h-[100dvh] w-full flex flex-col justify-between overflow-hidden select-none bg-[var(--ink)] text-white snap-start"
+      style={{
+        scrollSnapAlign: 'start',
+        scrollSnapStop: 'normal',
+      }}
     >
-      {/* 1. Cinematic Background Media Layer: Ultra-Crisp Editorial AVIF */}
+      {/* 1. Cinematic Background Media Layer with Lightroom-style Soft Fog / White Mist */}
       <div
         ref={videoWrapRef}
         className="absolute inset-0 w-full h-full pointer-events-none origin-center transform-gpu"
       >
-        {activeVideoSrc ? (
+        {/* MODE A: VIDEO BACKGROUND */}
+        {isSlideshowMode ? (
+          /* MODE B: CINEMATIC MORPHING SLIDESHOW */
+          <div className="relative w-full h-full overflow-hidden">
+            {slides.map((slideUrl, idx) => {
+              const isActive = idx === slideIndex;
+
+              return (
+                <div
+                  key={`${slideUrl}-${idx}`}
+                  className="absolute inset-0 w-full h-full transform-gpu transition-opacity pointer-events-none"
+                  style={{
+                    opacity: isActive ? 1 : 0,
+                    zIndex: isActive ? 2 : 1,
+                    transitionDuration: '1800ms',
+                    transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  <img
+                    src={slideUrl}
+                    alt={`${coupleNames} - Momen ${idx + 1}`}
+                    className={`w-full h-full object-cover object-[center_35%] sm:object-[center_30%] filter brightness-[0.88] contrast-[1.04] select-none transform-gpu transition-transform ease-out ${
+                      isActive ? 'scale-105' : 'scale-100'
+                    }`}
+                    style={{
+                      transitionDuration: `${durationSec + 1.8}s`,
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : activeVideoSrc ? (
           <video
             ref={videoRef}
             src={activeVideoSrc}
@@ -201,93 +251,96 @@ export function Hero({
             muted
             loop
             playsInline
-            className="w-full h-full object-cover object-center filter brightness-[0.78] contrast-[1.08] saturate-[0.9]"
+            className="w-full h-full object-cover object-center filter brightness-[0.88] contrast-[1.04]"
           />
         ) : (
+          /* MODE C: SINGLE PORTRAIT PHOTO */
           <picture className="block w-full h-full">
             {!portraitSrc && imageAvif && <source srcSet={imageAvif} type="image/avif" />}
             {!portraitSrc && imageWebp && <source srcSet={imageWebp} type="image/webp" />}
             <img
               src={portraitSrc || imageSrc}
-              alt={portraitAlt || `${groomName} & ${brideName}`}
-              className="w-full h-full object-cover object-[center_28%] sm:object-[center_32%] filter brightness-[0.84] contrast-[1.05] select-none"
+              alt={portraitAlt || coupleNames}
+              className="w-full h-full object-cover object-[center_35%] sm:object-[center_30%] filter brightness-[0.88] contrast-[1.04] select-none"
             />
           </picture>
         )}
 
-        {/* Quiet Luxury Overlays: Soft vignette & subtle gradient for unmatched typography contrast */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/75" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(15,27,45,0.5)_100%)]" />
-      </div>
+        {/* Base contrast gradient for crisp text legibility over any background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/10 to-black/50" />
 
-      {/* 2. Top Eyebrow Bar (Elevated high with no fixed buttons obstructing) */}
-      <div
-        ref={topBarRef}
-        className="relative z-10 w-full pt-8 sm:pt-10 md:pt-12 px-[var(--gutter)] max-w-7xl mx-auto flex items-center justify-between pointer-events-none"
-      >
-        <div className="flex items-center gap-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-          <span className="label-eyebrow tracking-[0.28em] text-white/85 text-[11px] sm:text-xs uppercase">
-            {badge}
-          </span>
-        </div>
-
-        <div className="label-eyebrow tracking-[0.25em] text-white/75 text-[11px] sm:text-xs font-mono">
-          {dateShort}
-        </div>
-      </div>
-
-      {/* 3. Center Pure Editorial Titles (No container image box - clean, grand, poezabride aesthetic) */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-[var(--gutter)] my-auto py-12 flex flex-col justify-center">
-        {/* Dharma */}
-        <div className="overflow-visible">
-          <h1
-            ref={title1Ref}
-            className="display-xl font-serif text-white tracking-[-0.02em] leading-[0.88] text-left transform-gpu origin-left drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
-          >
-            {groomName}
-          </h1>
-        </div>
-
-        {/* Delicate poetic middle line */}
+        {/* 
+          Lightroom-style cinematic gradient: 
+          Soft white mist / ethereal sunlit fog bloom across the upper screen
+        */}
         <div
-          ref={subtitleRef}
-          className="py-4 sm:py-6 pl-2 sm:pl-6 flex items-center gap-4 text-white/75"
-        >
-          <div className="w-12 sm:w-20 h-[1px] bg-white/40" />
-          <span className="label-eyebrow tracking-[0.28em] text-[10px] sm:text-[11px] text-[var(--baby-blue)] uppercase">
-            {subtitle}
-          </span>
-        </div>
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse 90% 48% at 50% 0%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%)',
+          }}
+        />
 
-        {/* & Lutfhy */}
-        <div className="overflow-visible flex items-baseline justify-end sm:justify-start sm:pl-24 md:pl-48">
-          <h2
-            ref={title2Ref}
-            className="display-xl font-serif text-white tracking-[-0.02em] leading-[0.88] transform-gpu origin-right drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)] flex items-baseline gap-3 sm:gap-6"
-          >
-            <span
-              ref={ampersandRef}
-              className="font-serif italic text-[var(--baby-blue)] inline-block transform-gpu"
-            >
-              &amp;
-            </span>
-            <span>{brideName}</span>
-          </h2>
-        </div>
+        {/* Subtle atmospheric vignette */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(15,27,45,0.4)_100%)]" />
       </div>
 
-      {/* 4. Bottom Scroll Prompt Only (Ultra Clean & Minimalist) */}
+      {/* 
+        2. Editorial Centered Minimalist Typography at the Top
+        Matches reference photo layout (Mobile & Desktop perfectly centered)
+      */}
+      <div
+        ref={headerWrapRef}
+        className="relative z-10 w-full pt-10 sm:pt-14 md:pt-16 px-6 max-w-4xl mx-auto flex flex-col items-center text-center pointer-events-none"
+      >
+        {/* Eyebrow: THE WEDDING OF */}
+        <span className="label-eyebrow tracking-[0.32em] text-white/90 text-[10px] sm:text-[11px] md:text-xs font-mono uppercase mb-2 sm:mb-2.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
+          {badge || 'THE WEDDING OF'}
+        </span>
+
+        {/* Couple Names: Yoga & Putri / Dharma & Lutfhy */}
+        <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white font-normal tracking-tight my-1 sm:my-2 leading-[1.1] drop-shadow-[0_3px_14px_rgba(0,0,0,0.7)]">
+          {coupleNames}
+        </h1>
+
+        {/* Date: SENIN, 12 OKTOBER 2026 */}
+        <span className="label-eyebrow tracking-[0.26em] text-white/85 text-[10px] sm:text-[11px] font-mono uppercase mt-2 sm:mt-2.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
+          {dateShort || 'SENIN, 12 OKTOBER 2026'}
+        </span>
+      </div>
+
+      {/* 3. Bottom Scroll Indicator (Minimalist circular chevron button, reference layout) */}
       <div
         ref={bottomBarRef}
-        className="relative z-10 w-full pb-8 sm:pb-10 px-[var(--gutter)] max-w-7xl mx-auto flex items-center justify-center pointer-events-none"
+        className="relative z-10 w-full pb-8 sm:pb-12 px-6 flex flex-col items-center justify-center"
       >
-        <div className="flex items-center gap-3 label-eyebrow tracking-[0.28em] text-white/75 text-[10px] sm:text-xs">
-          <span>{scrollHint}</span>
-          <div className="w-8 sm:w-12 h-[1px] bg-white/30 relative overflow-hidden">
-            <div className="w-full h-full bg-[var(--baby-blue)] animate-pulse" />
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (lenis) {
+              lenis.scrollTo('#quote', { duration: 1.0 });
+            } else {
+              const target = document.getElementById('quote');
+              target?.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          className="group w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/90 hover:bg-white text-[#0F1B2D] flex items-center justify-center shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.45)] hover:scale-105 active:scale-95 transition-all duration-300 backdrop-blur-sm cursor-pointer"
+          aria-label="Gulir ke konten undangan"
+        >
+          <svg
+            className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5"
+            viewBox="0 0 16 16"
+            fill="none"
+          >
+            <path
+              d="M3.5 6L8 10.5L12.5 6"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
     </section>
   );

@@ -84,7 +84,7 @@ export function PersistentBar({ audioSrc, isUnlocked }: PersistentBarProps) {
   const handleNavClick = (href: string) => {
     setIsMenuOpen(false);
     if (lenis) {
-      lenis.scrollTo(href, { offset: -32, duration: 1.2 });
+      lenis.scrollTo(href, { offset: 0, duration: 1.2 });
     } else {
       const el = document.querySelector(href);
       el?.scrollIntoView({ behavior: 'smooth' });
