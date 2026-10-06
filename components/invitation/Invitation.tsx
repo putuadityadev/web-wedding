@@ -125,6 +125,7 @@ function InvitationContent({
         subtitle={content.hero.subtitle}
         dateShort={content.hero.dateShort}
         portraitSrc={content.hero.portraitSrc}
+        videoSrc={content.hero.portraitSrc?.match(/\.(mp4|webm|mov|m4v)(\?.*)?$/i) ? content.hero.portraitSrc : undefined}
         portraitAlt={content.hero.portraitAlt}
         scrollHint={content.hero.scrollHint}
         imageAvif={content.hero.portraitSrc || ASSETS.hero.avifSrc}

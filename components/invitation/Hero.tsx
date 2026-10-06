@@ -176,6 +176,11 @@ export function Hero({
     return () => ctx.revert();
   }, []);
 
+  const isVideo =
+    Boolean(videoSrc) ||
+    Boolean(portraitSrc && /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(portraitSrc));
+  const activeVideoSrc = videoSrc || (isVideo ? portraitSrc : undefined);
+
   return (
     <section
       ref={containerRef}
@@ -187,10 +192,10 @@ export function Hero({
         ref={videoWrapRef}
         className="absolute inset-0 w-full h-full pointer-events-none origin-center transform-gpu"
       >
-        {videoSrc ? (
+        {activeVideoSrc ? (
           <video
             ref={videoRef}
-            src={videoSrc}
+            src={activeVideoSrc}
             poster={posterSrc || imageAvif}
             autoPlay
             muted

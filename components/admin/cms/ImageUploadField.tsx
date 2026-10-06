@@ -25,6 +25,7 @@ export function ImageUploadField({
   mediaType = 'image',
 }: ImageUploadFieldProps) {
   const [uploading, setUploading] = useState(false);
+  const [justUploaded, setJustUploaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [manualUrl, setManualUrl] = useState('');
@@ -32,15 +33,19 @@ export function ImageUploadField({
 
   const isVideo =
     mediaType === 'video' ||
-    (value && (value.endsWith('.mp4') || value.endsWith('.webm') || value.endsWith('.mov')));
+    (value && (value.endsWith('.mp4') || value.endsWith('.webm') || value.endsWith('.mov') || value.endsWith('.m4v')));
+
+  const isAudio =
+    (accept && accept.includes('audio')) ||
+    (value && (value.endsWith('.mp3') || value.endsWith('.wav') || value.endsWith('.m4a') || value.endsWith('.ogg')));
 
   const resolvedAccept =
     accept ||
     (mediaType === 'video'
       ? 'video/mp4,video/webm,video/quicktime'
       : mediaType === 'any'
-      ? 'image/*,video/mp4,video/webm,video/quicktime'
-      : 'image/jpeg,image/png,image/webp,image/avif');
+      ? 'image/*,video/mp4,video/webm,video/quicktime,audio/mpeg,audio/mp3,audio/wav,audio/m4a,audio/*'
+      : 'image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic');
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,6 +53,7 @@ export function ImageUploadField({
 
     setUploading(true);
     setError(null);
+    setJustUploaded(false);
 
     try {
       const formData = new FormData();
@@ -65,6 +71,8 @@ export function ImageUploadField({
       }
 
       onChange(data.url);
+      setJustUploaded(true);
+      setTimeout(() => setJustUploaded(false), 8000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal mengunggah file';
       setError(msg);
@@ -105,6 +113,15 @@ export function ImageUploadField({
         </div>
       )}
 
+      {justUploaded && (
+        <div className="p-2.5 rounded bg-emerald-50 text-emerald-800 text-[11px] border border-emerald-200 flex items-center gap-2 font-medium">
+          <span className="text-emerald-600 font-bold">✓</span>
+          <span>
+            File berhasil diunggah! Pastikan klik tombol <strong>&ldquo;Simpan Perubahan&rdquo;</strong> agar tampil di landing page.
+          </span>
+        </div>
+      )}
+
       {showUrlInput ? (
         <div className="flex gap-2">
           <input
@@ -139,6 +156,11 @@ export function ImageUploadField({
                   playsInline
                   className="w-full h-full object-cover"
                 />
+              ) : isAudio ? (
+                <div className="w-full h-full bg-[#0F1B2D]/10 flex flex-col items-center justify-center p-2 text-center text-[#0F1B2D]">
+                  <span className="text-xl">🎵</span>
+                  <span className="text-[9px] font-mono mt-1 font-semibold uppercase">AUDIO</span>
+                </div>
               ) : (
                 <Image
                   src={value}
@@ -151,7 +173,7 @@ export function ImageUploadField({
             </div>
           ) : (
             <div className="w-20 h-24 rounded bg-stone-200/50 flex items-center justify-center text-[10px] text-stone-400 font-mono shrink-0">
-              {isVideo ? 'NO VIDEO' : 'KOSONG'}
+              {isVideo ? 'NO VIDEO' : isAudio ? 'NO AUDIO' : 'KOSONG'}
             </div>
           )}
 

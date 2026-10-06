@@ -69,7 +69,9 @@ export function Event({
 
   // Calculate Countdown
   useEffect(() => {
+    if (!startsAt) return;
     const target = new Date(startsAt).getTime();
+    if (isNaN(target)) return;
 
     const updateCountdown = () => {
       const now = new Date().getTime();

@@ -27,10 +27,14 @@ const TABS: { id: keyof SiteContent; label: string; icon: string }[] = [
 export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
   const router = useRouter();
   const [content, setContent] = useState<SiteContent>(initialContent);
+  const [savedContent, setSavedContent] = useState<SiteContent>(initialContent);
   const [activeTab, setActiveTab] = useState<keyof SiteContent>('cover');
   const [mobileMode, setMobileMode] = useState<'editor' | 'preview'>('editor');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const isSectionDirty =
+    JSON.stringify(content[activeTab]) !== JSON.stringify(savedContent[activeTab]);
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
@@ -54,6 +58,10 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
         throw new Error(result.error || 'Gagal menyimpan perubahan');
       }
 
+      setSavedContent((prev) => ({
+        ...prev,
+        [activeTab]: JSON.parse(JSON.stringify(content[activeTab])),
+      }));
       router.refresh();
       showToast('success', `Perubahan pada section "${activeTab.toUpperCase()}" berhasil disimpan!`);
     } catch (err: unknown) {
@@ -95,6 +103,8 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
         <div className="flex items-center gap-1.5 min-w-max">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
+            const isTabDirty =
+              JSON.stringify(content[tab.id]) !== JSON.stringify(savedContent[tab.id]);
             return (
               <button
                 key={tab.id}
@@ -103,7 +113,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                   setActiveTab(tab.id);
                   setMobileMode('editor');
                 }}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-[var(--radius-sm)] text-xs font-medium transition-all ${
+                className={`relative flex items-center gap-2 px-3.5 py-2 rounded-[var(--radius-sm)] text-xs font-medium transition-all ${
                   isActive
                     ? 'bg-[#0F1B2D] text-white shadow-xs font-semibold'
                     : 'text-[#0F1B2D]/70 hover:bg-[#0F1B2D]/5 hover:text-[#0F1B2D]'
@@ -111,6 +121,14 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
               >
                 <span>{tab.icon}</span>
                 <span>{tab.label}</span>
+                {isTabDirty && (
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      isActive ? 'bg-amber-400' : 'bg-amber-500'
+                    }`}
+                    title="Ada perubahan belum disimpan"
+                  />
+                )}
               </button>
             );
           })}
@@ -173,9 +191,14 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                 type="button"
                 onClick={handleSaveActiveSection}
                 disabled={saving}
-                className="px-4 py-2 rounded bg-[#0F1B2D] text-white hover:bg-[#1E293B] text-xs font-medium tracking-wide shadow-xs disabled:opacity-50 cursor-pointer"
+                className={`px-4 py-2 rounded text-xs font-medium tracking-wide shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5 transition-all ${
+                  isSectionDirty
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white ring-2 ring-emerald-400/40 font-semibold'
+                    : 'bg-[#0F1B2D] text-white hover:bg-[#1E293B]'
+                }`}
               >
-                {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                {isSectionDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping" />}
+                <span>{saving ? 'Menyimpan...' : isSectionDirty ? 'Simpan Perubahan ●' : 'Simpan Perubahan'}</span>
               </button>
             </div>
           </div>
@@ -1181,78 +1204,220 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
               </div>
             )}
 
-            {/* 6. EVENT FORM */}
+                       {/* 6. EVENT FORM */}
             {activeTab === 'event' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Nama Hari
-                    </label>
-                    <input
-                      type="text"
-                      value={content.event.dayFormatted}
-                      onChange={(e) =>
-                        setContent({
-                          ...content,
-                          event: { ...content.event, dayFormatted: e.target.value },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20"
-                    />
+              <div className="space-y-5">
+
+                {/* ─── PRIMARY: Tanggal & Waktu Resepsi (Calendar Picker) ─── */}
+                <div className="p-4 rounded-lg bg-[#0F1B2D]/5 border border-[#0F1B2D]/15 space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm">📅</span>
+                    <span className="text-xs font-mono uppercase font-bold text-[#0F1B2D]/80 tracking-widest">
+                      Tanggal &amp; Waktu Resepsi
+                    </span>
                   </div>
-                  <div>
-                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Angka Tanggal (Besar)
-                    </label>
-                    <input
-                      type="text"
-                      value={content.event.dateNumeral}
-                      onChange={(e) =>
-                        setContent({
-                          ...content,
-                          event: { ...content.event, dateNumeral: e.target.value },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20"
-                    />
+                  <p className="text-[11px] text-[#0F1B2D]/55 -mt-2 leading-relaxed">
+                    Atur tanggal &amp; jam mulai resepsi. Semua tampilan tanggal dan <strong>penghitung mundur hari</strong> akan otomatis terperbarui.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                        Waktu Mulai Resepsi
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={content.event.startsAt
+                          ? (() => {
+                              const d = new Date(content.event.startsAt);
+                              const pad = (n: number) => String(n).padStart(2, '0');
+                              return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                            })()
+                          : ''}
+                        onChange={(e) => {
+                          if (!e.target.value) return;
+                          const d = new Date(e.target.value);
+                          const DAYS_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+                          const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                          const MONTHS_ID_UP = MONTHS_ID.map(m => m.toUpperCase());
+                          const dayName = DAYS_ID[d.getDay()];
+                          const dateNum = String(d.getDate());
+                          const monthYear = `${MONTHS_ID_UP[d.getMonth()]} ${d.getFullYear()}`;
+                          const dateFullStr = `${dayName}, ${d.getDate()} ${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`;
+                          const padH = (n: number) => String(n).padStart(2, '0');
+                          // Derive endsAt from current duration or default +3h
+                          const existingEnd = content.event.endsAt ? new Date(content.event.endsAt) : null;
+                          const existingStart = content.event.startsAt ? new Date(content.event.startsAt) : null;
+                          let durationMs = 3 * 60 * 60 * 1000; // default 3h
+                          if (existingEnd && existingStart) {
+                            durationMs = existingEnd.getTime() - existingStart.getTime();
+                            if (durationMs <= 0) durationMs = 3 * 60 * 60 * 1000;
+                          }
+                          const newEnd = new Date(d.getTime() + durationMs);
+                          const timeStr = `${padH(d.getHours())}.${padH(d.getMinutes())} – ${padH(newEnd.getHours())}.${padH(newEnd.getMinutes())} WITA`;
+                          setContent({
+                            ...content,
+                            event: {
+                              ...content.event,
+                              startsAt: d.toISOString(),
+                              endsAt: newEnd.toISOString(),
+                              dayFormatted: dayName.toUpperCase(),
+                              dateNumeral: dateNum,
+                              monthYearFormatted: monthYear,
+                              dateFormatted: dateFullStr,
+                              timeFormatted: timeStr,
+                            },
+                          });
+                        }}
+                        className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                      />
+                      <p className="text-[10px] text-[#0F1B2D]/45 mt-1 font-mono">
+                        ISO: {content.event.startsAt || '—'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                        Waktu Selesai Resepsi
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={content.event.endsAt
+                          ? (() => {
+                              const d = new Date(content.event.endsAt);
+                              const pad = (n: number) => String(n).padStart(2, '0');
+                              return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                            })()
+                          : ''}
+                        onChange={(e) => {
+                          if (!e.target.value) return;
+                          const dEnd = new Date(e.target.value);
+                          const dStart = content.event.startsAt ? new Date(content.event.startsAt) : dEnd;
+                          const padH = (n: number) => String(n).padStart(2, '0');
+                          const timeStr = `${padH(dStart.getHours())}.${padH(dStart.getMinutes())} – ${padH(dEnd.getHours())}.${padH(dEnd.getMinutes())} WITA`;
+                          setContent({
+                            ...content,
+                            event: {
+                              ...content.event,
+                              endsAt: dEnd.toISOString(),
+                              timeFormatted: timeStr,
+                            },
+                          });
+                        }}
+                        className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                      />
+                      <p className="text-[10px] text-[#0F1B2D]/45 mt-1 font-mono">
+                        ISO: {content.event.endsAt || '—'}
+                      </p>
+                    </div>
                   </div>
+
+                  {/* Live preview of generated display fields */}
+                  {content.event.startsAt && (
+                    <div className="space-y-3 pt-2 border-t border-[#0F1B2D]/10">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {[
+                          { label: 'Hari', val: content.event.dayFormatted },
+                          { label: 'Tanggal', val: content.event.dateNumeral },
+                          { label: 'Bulan Tahun', val: content.event.monthYearFormatted },
+                          { label: 'Jam', val: content.event.timeFormatted },
+                        ].map(({ label, val }) => (
+                          <div key={label} className="bg-white rounded p-2 border border-[#0F1B2D]/10">
+                            <span className="text-[9px] font-mono uppercase text-[#0F1B2D]/50 block">{label}</span>
+                            <span className="text-[11px] font-mono text-[#0F1B2D] font-medium">{val}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Live Countdown status preview */}
+                      {(() => {
+                        const target = new Date(content.event.startsAt).getTime();
+                        const now = Date.now();
+                        const diff = target - now;
+                        const days = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+                        const hours = Math.max(0, Math.floor((diff / (1000 * 60 * 60)) % 24));
+                        const minutes = Math.max(0, Math.floor((diff / 1000 / 60) % 60));
+                        return (
+                          <div className="p-3 rounded-lg bg-[#0F1B2D]/5 border border-[#0F1B2D]/15 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                              <span className="text-base">⏳</span>
+                              <div>
+                                <span className="text-[10px] font-mono uppercase tracking-wider text-[#0F1B2D]/60 block font-semibold">
+                                  Pratinjau Hitung Mundur Hari (Landing Page)
+                                </span>
+                                <span className="text-xs font-serif font-bold text-[#0F1B2D]">
+                                  {diff > 0
+                                    ? `${days} Hari · ${hours} Jam · ${minutes} Menit menuju resepsi`
+                                    : 'Waktu resepsi telah tiba / terlewati'}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-medium">
+                              ✓ Otomatis Tersinkron
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Bulan & Tahun
-                    </label>
-                    <input
-                      type="text"
-                      value={content.event.monthYearFormatted}
-                      onChange={(e) =>
-                        setContent({
-                          ...content,
-                          event: { ...content.event, monthYearFormatted: e.target.value },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20"
-                    />
+                {/* ─── Manual overrides (display text) ─── */}
+                <details className="group">
+                  <summary className="cursor-pointer text-xs font-mono uppercase text-[#0F1B2D]/60 hover:text-[#0F1B2D] select-none list-none flex items-center gap-2">
+                    <span className="group-open:rotate-90 transition-transform inline-block">▶</span>
+                    Override Teks Tampilan (Opsional)
+                  </summary>
+                  <div className="mt-3 space-y-4 pl-4 border-l-2 border-[#0F1B2D]/10">
+                    <p className="text-[10px] text-[#0F1B2D]/45">Ubah manual jika format tampilan perlu disesuaikan (misal pakai bahasa/dialek berbeda).</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">Nama Hari</label>
+                        <input
+                          type="text"
+                          value={content.event.dayFormatted}
+                          onChange={(e) =>
+                            setContent({ ...content, event: { ...content.event, dayFormatted: e.target.value } })
+                          }
+                          className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">Angka Tanggal Besar</label>
+                        <input
+                          type="text"
+                          value={content.event.dateNumeral}
+                          onChange={(e) =>
+                            setContent({ ...content, event: { ...content.event, dateNumeral: e.target.value } })
+                          }
+                          className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">Bulan &amp; Tahun</label>
+                        <input
+                          type="text"
+                          value={content.event.monthYearFormatted}
+                          onChange={(e) =>
+                            setContent({ ...content, event: { ...content.event, monthYearFormatted: e.target.value } })
+                          }
+                          className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">Rentang Jam Acara</label>
+                        <input
+                          type="text"
+                          value={content.event.timeFormatted}
+                          onChange={(e) =>
+                            setContent({ ...content, event: { ...content.event, timeFormatted: e.target.value } })
+                          }
+                          className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                      Rentang Jam Acara
-                    </label>
-                    <input
-                      type="text"
-                      value={content.event.timeFormatted}
-                      onChange={(e) =>
-                        setContent({
-                          ...content,
-                          event: { ...content.event, timeFormatted: e.target.value },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20"
-                    />
-                  </div>
-                </div>
+                </details>
 
                 <div>
                   <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
@@ -1962,7 +2127,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
 
             {/* 10. AUDIO FORM */}
             {activeTab === 'audio' && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
                   <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
                     Judul Musik Latar
@@ -1979,9 +2144,27 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                     className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20"
                   />
                 </div>
+
+                {/* Upload File Audio Langsung */}
+                <ImageUploadField
+                  label="Unggah File Musik (MP3)"
+                  value={content.audio.musicUrl}
+                  folder="audio"
+                  mediaType="any"
+                  accept="audio/mpeg,audio/mp3"
+                  hint="Upload file MP3 langsung ke Supabase Storage. Maks 15MB. Perubahan otomatis tersimpan ke URL di bawah."
+                  onChange={(url) =>
+                    setContent({
+                      ...content,
+                      audio: { ...content.audio, musicUrl: url },
+                    })
+                  }
+                />
+
+                {/* Manual URL override */}
                 <div>
                   <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    URL File Audio MP3
+                    URL File Audio MP3 (Manual / CDN)
                   </label>
                   <input
                     type="text"
@@ -1993,11 +2176,26 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                       })
                     }
                     className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 font-mono text-[11px]"
+                    placeholder="https://... (atau langsung upload file di atas)"
                   />
                   <p className="text-[10px] text-[#0F1B2D]/50 mt-1">
-                    Format file MP3 direct link (dari Supabase Storage atau CDN audio).
+                    Format MP3 direct link. Hasil upload otomatis mengisi field ini.
                   </p>
                 </div>
+
+                {/* Preview */}
+                {content.audio.musicUrl && (
+                  <div className="p-3 rounded border border-[#0F1B2D]/15 bg-[#F9FAFB]">
+                    <p className="text-[11px] font-mono text-[#0F1B2D]/60 mb-2">🎵 Preview Musik:</p>
+                    <audio
+                      key={content.audio.musicUrl}
+                      controls
+                      src={content.audio.musicUrl}
+                      className="w-full h-8"
+                      style={{ height: '36px' }}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2011,9 +2209,14 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
               type="button"
               onClick={handleSaveActiveSection}
               disabled={saving}
-              className="px-5 py-2.5 rounded bg-[#0F1B2D] text-white hover:bg-[#1E293B] text-xs font-medium tracking-wide shadow-md disabled:opacity-50 cursor-pointer"
+              className={`px-5 py-2.5 rounded text-xs font-medium tracking-wide shadow-md disabled:opacity-50 cursor-pointer flex items-center gap-2 transition-all ${
+                isSectionDirty
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white ring-2 ring-emerald-400/50 font-semibold'
+                  : 'bg-[#0F1B2D] text-white hover:bg-[#1E293B]'
+              }`}
             >
-              {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+              {isSectionDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping" />}
+              <span>{saving ? 'Menyimpan...' : isSectionDirty ? 'Simpan Perubahan ●' : 'Simpan Perubahan'}</span>
             </button>
           </div>
         </div>
@@ -2027,6 +2230,26 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
           <CmsSectionPreview section={activeTab} content={content} />
         </div>
       </div>
+
+      {/* Floating Unsaved Changes Alert Bar */}
+      {isSectionDirty && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#0F1B2D] text-white px-5 py-3 rounded-full shadow-2xl border border-amber-400/40 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-3 backdrop-blur-md max-w-lg w-[90%] sm:w-auto justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            <span className="text-xs font-mono font-medium text-amber-200 truncate">
+              Ada perubahan di &ldquo;{TABS.find((t) => t.id === activeTab)?.label}&rdquo; belum disimpan!
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveActiveSection}
+            disabled={saving}
+            className="px-4 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold tracking-wide transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer whitespace-nowrap shrink-0"
+          >
+            {saving ? 'Menyimpan...' : 'Simpan Sekarang ↗'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

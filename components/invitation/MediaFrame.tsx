@@ -29,7 +29,10 @@ export function MediaFrame({
   className = '',
 }: MediaFrameProps) {
   const [isLoaded, setIsLoaded] = useState(false);
-  const isVideo = mediaType === 'video' || Boolean(videoSrc);
+  const isVideo =
+    mediaType === 'video' ||
+    Boolean(videoSrc) ||
+    Boolean(src && /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(src));
 
   return (
     <div
@@ -64,6 +67,7 @@ export function MediaFrame({
             alt={alt}
             fill
             priority={priority}
+            unoptimized={Boolean(src?.startsWith('http'))}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             onLoad={() => setIsLoaded(true)}
             className={`object-cover transition-all duration-1000 ease-[var(--ease-out)] group-hover:scale-105 ${

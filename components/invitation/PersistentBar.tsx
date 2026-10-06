@@ -58,6 +58,7 @@ export function PersistentBar({ audioSrc, isUnlocked }: PersistentBarProps) {
   // Audio initialization when cover unlocks
   useEffect(() => {
     if (isUnlocked && audioSrc && audioRef.current) {
+      audioRef.current.load();
       audioRef.current.play().then(() => {
         setIsPlaying(true);
       }).catch(() => {

@@ -41,6 +41,7 @@ export async function PUT(request: Request) {
     // Immediately revalidate public and preview pages so edits reflect seamlessly
     try {
       const { revalidatePath } = await import('next/cache');
+      revalidatePath('/', 'layout'); // Purges cache across entire site including sub-routes & layouts
       revalidatePath('/', 'page');
       revalidatePath('/u/[token]', 'page');
       revalidatePath('/preview', 'page');
