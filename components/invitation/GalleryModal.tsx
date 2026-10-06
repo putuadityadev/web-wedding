@@ -30,13 +30,21 @@ export function GalleryModal({
   const [filter, setFilter] = useState<'all' | 'photo' | 'video'>('all');
   const [activeLightboxIndex, setActiveLightboxIndex] = useState<number | null>(null);
   const [origin, setOrigin] = useState<'landing' | 'gallery'>(entryOrigin);
+  const [visibleCount, setVisibleCount] = useState(24);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Sync origin whenever modal opens with a new entryOrigin
+  // Sync origin and reset visibleCount whenever modal opens
   useEffect(() => {
     if (isOpen) {
       setOrigin(entryOrigin);
+      setVisibleCount(24);
     }
   }, [isOpen, entryOrigin]);
+
+  // Reset pagination when tab filter changes
+  useEffect(() => {
+    setVisibleCount(24);
+  }, [filter]);
 
   // Swipe detection coordinates for mobile touch gestures
   const touchStartX = useRef<number | null>(null);
@@ -55,6 +63,39 @@ export function GalleryModal({
 
   const photoCount = useMemo(() => items.filter((it) => it.mediaType !== 'video').length, [items]);
   const videoCount = useMemo(() => items.filter((it) => it.mediaType === 'video').length, [items]);
+
+  // Progressive slice for 60fps smooth Pinterest-style masonry rendering
+  const displayedItems = useMemo(() => {
+    return filteredItems.slice(0, visibleCount);
+  }, [filteredItems, visibleCount]);
+
+  // IntersectionObserver to auto-load next batches as user scrolls down
+  useEffect(() => {
+    if (!isOpen || visibleCount >= filteredItems.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + 18, filteredItems.length));
+        }
+      },
+      { rootMargin: '400px' }
+    );
+
+    const el = sentinelRef.current;
+    if (el) observer.observe(el);
+
+    return () => {
+      if (el) observer.unobserve(el);
+    };
+  }, [isOpen, visibleCount, filteredItems.length]);
+
+  // Expand visible count if lightbox navigates near the end
+  useEffect(() => {
+    if (activeLightboxIndex !== null && activeLightboxIndex >= visibleCount - 3) {
+      setVisibleCount((prev) => Math.min(prev + 18, filteredItems.length));
+    }
+  }, [activeLightboxIndex, visibleCount, filteredItems.length]);
 
   // Open specific item in lightbox if initialSelectedId is passed
   useEffect(() => {
@@ -300,86 +341,103 @@ export function GalleryModal({
               Belum ada media di kategori ini.
             </div>
           ) : (
-            <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-6 space-y-4 sm:space-y-6">
-              {filteredItems.map((item, idx) => {
-                const isVideo = item.mediaType === 'video' || Boolean(item.videoSrc);
+            <>
+              <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-6 space-y-4 sm:space-y-6">
+                {displayedItems.map((item, idx) => {
+                  const isVideo = item.mediaType === 'video' || Boolean(item.videoSrc);
 
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      setOrigin('gallery');
-                      setActiveLightboxIndex(idx);
-                    }}
-                    className="break-inside-avoid group relative rounded-[var(--radius-sm)] overflow-hidden bg-black/30 border border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl"
-                  >
-                    {/* Media Container */}
-                    <div className="relative w-full overflow-hidden">
-                      {isVideo ? (
-                        <div className="relative w-full aspect-video bg-black/60 flex items-center justify-center">
-                          <video
-                            src={item.videoSrc || item.src}
-                            poster={item.posterSrc || item.src}
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                          {/* Video Play Badge */}
-                          <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs border border-white/20 text-[9px] font-mono tracking-widest uppercase text-white flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                            <span>VIDEO</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          className="relative w-full"
-                          style={{
-                            aspectRatio:
-                              item.aspectRatio === '16/10' || item.aspectRatio === '16/9'
-                                ? '16/10'
-                                : item.aspectRatio === '3/2'
-                                ? '3/2'
-                                : '3/4',
-                          }}
-                        >
-                          {item.src ? (
-                            <Image
-                              src={item.src}
-                              alt={item.title || 'Momen'}
-                              fill
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                              className="object-cover group-hover:scale-105 transition-transform duration-500"
-                              unoptimized={item.src.startsWith('http')}
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        setOrigin('gallery');
+                        setActiveLightboxIndex(idx);
+                      }}
+                      className="break-inside-avoid group relative rounded-[var(--radius-sm)] overflow-hidden bg-black/30 border border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl"
+                    >
+                      {/* Media Container */}
+                      <div className="relative w-full overflow-hidden">
+                        {isVideo ? (
+                          <div className="relative w-full aspect-video bg-black/60 flex items-center justify-center">
+                            <video
+                              src={item.videoSrc || item.src}
+                              poster={item.posterSrc || item.src}
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
-                          ) : (
-                            <div className="w-full h-48 bg-white/5 flex items-center justify-center text-white/30 text-xs font-mono">
-                              (Foto)
+                            {/* Video Play Badge */}
+                            <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs border border-white/20 text-[9px] font-mono tracking-widest uppercase text-white flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                              <span>VIDEO</span>
                             </div>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        ) : (
+                          <div
+                            className="relative w-full"
+                            style={{
+                              aspectRatio:
+                                item.aspectRatio === '16/10' || item.aspectRatio === '16/9'
+                                  ? '16/10'
+                                  : item.aspectRatio === '3/2'
+                                  ? '3/2'
+                                  : '3/4',
+                            }}
+                          >
+                            {item.src ? (
+                              <Image
+                                src={item.src}
+                                alt={item.title || 'Momen'}
+                                fill
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                unoptimized={item.src.startsWith('http')}
+                              />
+                            ) : (
+                              <div className="w-full h-48 bg-white/5 flex items-center justify-center text-white/30 text-xs font-mono">
+                                (Foto)
+                              </div>
+                            )}
+                          </div>
+                        )}
 
-                      {/* Hover Overlay with Vignette & Title */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-95 transition-opacity flex flex-col justify-end p-3.5 sm:p-4">
-                        <div className="flex items-center justify-between text-[10px] font-mono text-white/70 mb-1">
-                          <span>{item.label}</span>
-                          {item.isPrimary && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 border border-white/15">
-                              ★ Utama
-                            </span>
-                          )}
+                        {/* Hover Overlay with Vignette & Title */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-95 transition-opacity flex flex-col justify-end p-3.5 sm:p-4">
+                          <div className="flex items-center justify-between text-[10px] font-mono text-white/70 mb-1">
+                            <span>{item.label}</span>
+                            {item.isPrimary && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 border border-white/15">
+                                ★ Utama
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="font-serif italic text-base sm:text-lg text-white drop-shadow-sm truncate">
+                            {item.title}
+                          </h4>
                         </div>
-                        <h4 className="font-serif italic text-base sm:text-lg text-white drop-shadow-sm truncate">
-                          {item.title}
-                        </h4>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {/* Sentinel indicator for smooth infinite scroll */}
+              {visibleCount < filteredItems.length && (
+                <div
+                  ref={sentinelRef}
+                  className="py-8 flex items-center justify-center text-white/50 text-xs font-mono"
+                >
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-xs border border-white/10">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span>
+                      Memuat lebih banyak momen ({displayedItems.length} dari {filteredItems.length})...
+                    </span>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

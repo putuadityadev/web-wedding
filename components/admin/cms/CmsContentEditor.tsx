@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SiteContent, DEFAULT_SITE_CONTENT } from '@/lib/content/types';
 import { CmsSectionPreview } from './CmsSectionPreview';
@@ -1631,6 +1632,13 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                       >
                         <span>+ Tambah Video</span>
                       </button>
+
+                      <Link
+                        href="/admin/gallery"
+                        className="text-xs px-3 py-1.5 rounded bg-[#0F1B2D] text-white hover:bg-[#0F1B2D]/90 font-medium tracking-wide transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <span>🖼️ Buka Menu Galeri Terpusat</span>
+                      </Link>
                     </div>
                   </div>
 
@@ -1814,11 +1822,12 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                           <div className="space-y-4 p-3 rounded border border-emerald-900/15 bg-emerald-50/20">
                             {/* Video File Field */}
                             <ImageUploadField
-                              label="File Video (MP4 / WebM / QuickTime)"
+                              label="File Video (WebM / MP4 / QuickTime)"
                               value={item.videoSrc || item.src || ''}
                               folder="gallery/videos"
                               mediaType="video"
-                              hint="Unggah file video (maks 50MB) yang tersimpan otomatis di Supabase Storage."
+                              accept="video/*"
+                              hint="Unggah file video WebM, MP4, atau MOV (hingga 300MB). Tersimpan langsung ke Supabase Storage."
                               onChange={(url) => {
                                 const updated = [...content.gallery.items];
                                 updated[idx].videoSrc = url;
@@ -1851,12 +1860,12 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                           </div>
                         ) : (
                           <ImageUploadField
-                            label="File Foto (JPG / PNG / WebP)"
+                            label="File Foto Galeri (Format Bebas)"
                             value={item.src || ''}
                             folder="gallery"
                             mediaType="image"
                             aspectRatio={item.aspectRatio || '4/5'}
-                            hint="Disimpan otomatis ke Supabase Storage pada folder 'gallery'."
+                            hint="Format foto bebas (AVIF, HEIC, JPG, PNG, WebP) otomatis dioptimasi ke WebP dan disimpan ke Supabase Storage."
                             onChange={(url) => {
                               const updated = [...content.gallery.items];
                               updated[idx].src = url;
@@ -2154,12 +2163,12 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
 
                 {/* Upload File Audio Langsung */}
                 <ImageUploadField
-                  label="Unggah File Musik (MP3)"
+                  label="Unggah File Lagu / Musik Latar"
                   value={content.audio.musicUrl}
                   folder="audio"
-                  mediaType="any"
-                  accept="audio/mpeg,audio/mp3"
-                  hint="Upload file MP3 langsung ke Supabase Storage. Maks 15MB. Perubahan otomatis tersimpan ke URL di bawah."
+                  mediaType="audio"
+                  accept="audio/*"
+                  hint="Unggah file lagu latar langsung ke Supabase Storage (hingga 100MB). Mendukung MP3, WAV, M4A, AAC, OGG. Perubahan otomatis tersimpan ke URL di bawah."
                   onChange={(url) =>
                     setContent({
                       ...content,

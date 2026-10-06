@@ -7,6 +7,7 @@ import {
   formatBytes,
   OptimizeResult,
 } from '@/lib/media/clientImageOptimizer';
+import { MediaLibraryModal } from './MediaLibraryModal';
 
 interface ImageUploadFieldProps {
   label: string;
@@ -16,7 +17,7 @@ interface ImageUploadFieldProps {
   hint?: string;
   aspectRatio?: string;
   accept?: string;
-  mediaType?: 'image' | 'video' | 'any';
+  mediaType?: 'image' | 'video' | 'audio' | 'any';
 }
 
 export function ImageUploadField({
@@ -30,6 +31,7 @@ export function ImageUploadField({
   mediaType = 'image',
 }: ImageUploadFieldProps) {
   const [stage, setStage] = useState<'idle' | 'optimizing' | 'uploading'>('idle');
+  const [showGalleryPicker, setShowGalleryPicker] = useState(false);
   const [justUploadedInfo, setJustUploadedInfo] = useState<{
     message: string;
     stats?: string;
@@ -49,12 +51,14 @@ export function ImageUploadField({
         value.endsWith('.mkv')));
 
   const isAudio =
+    mediaType === 'audio' ||
     (accept && accept.includes('audio')) ||
     (value &&
       (value.endsWith('.mp3') ||
         value.endsWith('.wav') ||
         value.endsWith('.m4a') ||
         value.endsWith('.ogg') ||
+        value.endsWith('.aac') ||
         value.endsWith('.flac')));
 
   // Format accept yang ramah & tidak membatasi perangkat kamera / smartphone
@@ -62,6 +66,8 @@ export function ImageUploadField({
     accept ||
     (mediaType === 'video'
       ? 'video/*,video/mp4,video/webm,video/quicktime'
+      : mediaType === 'audio'
+      ? 'audio/*,audio/mpeg,audio/mp3,audio/wav,audio/m4a,audio/aac,audio/ogg'
       : mediaType === 'any'
       ? 'image/*,video/*,audio/*'
       : 'image/*'); // Mendukung AVIF, HEIC, JPEG, PNG, WebP dari kamera manapun
@@ -294,11 +300,25 @@ export function ImageUploadField({
                 )}
               </button>
 
+              {/* Button: Pilih dari Galeri (Media Library Picker) */}
+              {mediaType !== 'audio' && (
+                <button
+                  type="button"
+                  onClick={() => setShowGalleryPicker(true)}
+                  disabled={isBusy}
+                  className="px-3 py-1.5 rounded bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-700/20 text-emerald-900 text-xs font-medium tracking-wide shadow-2xs transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                  title="Pilih foto/video dari koleksi galeri tanpa perlu upload ulang"
+                >
+                  <span>🖼️</span>
+                  <span>Pilih dari Galeri</span>
+                </button>
+              )}
+
               {value && !isBusy && (
                 <button
                   type="button"
                   onClick={() => onChange('')}
-                  className="px-2.5 py-1.5 rounded text-red-600 hover:bg-red-50 text-xs transition-colors"
+                  className="px-2.5 py-1.5 rounded text-red-600 hover:bg-red-50 text-xs transition-colors cursor-pointer"
                 >
                   Hapus
                 </button>
@@ -309,14 +329,30 @@ export function ImageUploadField({
               {value
                 ? value
                 : isVideo
-                ? 'Format video bebas (MP4, WebM, MOV, dsb.)'
+                ? 'Format video WebM, MP4, MOV (hingga 300MB)'
                 : isAudio
-                ? 'Format audio MP3, WAV, M4A, dsb.'
+                ? 'Format lagu/audio MP3, WAV, M4A, OGG (hingga 100MB)'
                 : 'Format foto bebas (AVIF, HEIC, JPG, PNG, WebP otomatis dioptimasi)'}
             </p>
           </div>
         </div>
       )}
+
+      {/* Modal Media Library Picker */}
+      <MediaLibraryModal
+        isOpen={showGalleryPicker}
+        onClose={() => setShowGalleryPicker(false)}
+        onSelect={(url) => {
+          onChange(url);
+          setJustUploadedInfo({
+            message: 'Media berhasil dipilih dari galeri!',
+          });
+          setTimeout(() => setJustUploadedInfo(null), 8000);
+        }}
+        mediaType={mediaType === 'video' ? 'video' : 'image'}
+        currentValue={value}
+        title={`Pilih Media untuk ${label}`}
+      />
     </div>
   );
 }

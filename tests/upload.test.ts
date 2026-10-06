@@ -15,6 +15,11 @@ describe('Media & Image Optimizer Utility', () => {
     const res = await optimizeImageForUpload(fakeVideoFile);
     assert.equal(res.optimized, false);
     assert.equal(res.file.name, 'test.mp4');
+
+    const fakeWebm = new File(['fake-webm-content'], 'background_cinematic.webm', { type: 'video/webm' });
+    const resWebm = await optimizeImageForUpload(fakeWebm);
+    assert.equal(resWebm.optimized, false);
+    assert.equal(resWebm.file.name, 'background_cinematic.webm');
   });
 
   it('passes through audio files without conversion', async () => {
@@ -22,6 +27,11 @@ describe('Media & Image Optimizer Utility', () => {
     const res = await optimizeImageForUpload(fakeAudioFile);
     assert.equal(res.optimized, false);
     assert.equal(res.file.name, 'music.mp3');
+
+    const fakeM4a = new File(['m4a-data'], 'lagu_pernikahan.m4a', { type: 'audio/m4a' });
+    const resM4a = await optimizeImageForUpload(fakeM4a);
+    assert.equal(resM4a.optimized, false);
+    assert.equal(resM4a.file.name, 'lagu_pernikahan.m4a');
   });
 
   it('passes through animated gif and svg without rasterizing', async () => {

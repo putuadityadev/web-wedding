@@ -39,8 +39,8 @@ const EXTENSION_TO_MIME: Record<string, string> = {
 };
 
 const MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50 MB
-const MAX_VIDEO_SIZE = 150 * 1024 * 1024; // 150 MB
-const MAX_AUDIO_SIZE = 50 * 1024 * 1024; // 50 MB
+const MAX_VIDEO_SIZE = 300 * 1024 * 1024; // 300 MB (WebM, MP4, MOV)
+const MAX_AUDIO_SIZE = 100 * 1024 * 1024; // 100 MB (MP3, WAV, M4A, OGG, dsb.)
 
 export async function POST(request: Request) {
   try {
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       ? MAX_AUDIO_SIZE
       : MAX_IMAGE_SIZE;
 
-    const maxSizeMb = isVideo ? '150MB' : '50MB';
+    const maxSizeMb = isVideo ? '300MB' : isAudio ? '100MB' : '50MB';
     if (file.size > maxSize) {
       return NextResponse.json(
         {
