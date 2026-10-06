@@ -98,17 +98,24 @@ export default function AdminImportPage() {
         }),
       });
 
-      const json = await res.json();
-      if (!json.ok) {
-        throw new Error(json.error || 'Terjadi kesalahan saat memproses import');
+      const responseText = await res.text();
+      let json: { ok?: boolean; error?: string; batchId?: string; createdCount?: number; updatedCount?: number; skippedCount?: number; totalProcessed?: number } = {};
+      try {
+        json = JSON.parse(responseText);
+      } catch {
+        throw new Error(`Respon server tidak valid (${res.status}): ${responseText.slice(0, 100) || 'Gagal memproses import'}`);
+      }
+
+      if (!res.ok || !json.ok) {
+        throw new Error(json.error || `Terjadi kesalahan saat memproses import (${res.status})`);
       }
 
       setSummary({
-        batchId: json.batchId,
-        createdCount: json.createdCount,
-        updatedCount: json.updatedCount,
-        skippedCount: json.skippedCount,
-        totalProcessed: json.totalProcessed,
+        batchId: json.batchId || '',
+        createdCount: json.createdCount ?? 0,
+        updatedCount: json.updatedCount ?? 0,
+        skippedCount: json.skippedCount ?? 0,
+        totalProcessed: json.totalProcessed ?? 0,
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal mengimpor tamu ke database';

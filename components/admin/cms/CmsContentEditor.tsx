@@ -53,9 +53,16 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
         }),
       });
 
-      const result = await res.json();
-      if (!result.ok) {
-        throw new Error(result.error || 'Gagal menyimpan perubahan');
+      const responseText = await res.text();
+      let result: { ok?: boolean; error?: string } = {};
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        throw new Error(`Respon server tidak valid (${res.status}): ${responseText.slice(0, 100) || 'Gagal menyimpan perubahan'}`);
+      }
+
+      if (!res.ok || !result.ok) {
+        throw new Error(result.error || `Gagal menyimpan perubahan (${res.status})`);
       }
 
       setSavedContent((prev) => ({

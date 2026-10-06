@@ -2,6 +2,11 @@
 
 import React, { useRef, useState } from 'react';
 import Image from 'next/image';
+import {
+  optimizeImageForUpload,
+  formatBytes,
+  OptimizeResult,
+} from '@/lib/media/clientImageOptimizer';
 
 interface ImageUploadFieldProps {
   label: string;
@@ -24,8 +29,11 @@ export function ImageUploadField({
   accept,
   mediaType = 'image',
 }: ImageUploadFieldProps) {
-  const [uploading, setUploading] = useState(false);
-  const [justUploaded, setJustUploaded] = useState(false);
+  const [stage, setStage] = useState<'idle' | 'optimizing' | 'uploading'>('idle');
+  const [justUploadedInfo, setJustUploadedInfo] = useState<{
+    message: string;
+    stats?: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [manualUrl, setManualUrl] = useState('');
@@ -33,31 +41,67 @@ export function ImageUploadField({
 
   const isVideo =
     mediaType === 'video' ||
-    (value && (value.endsWith('.mp4') || value.endsWith('.webm') || value.endsWith('.mov') || value.endsWith('.m4v')));
+    (value &&
+      (value.endsWith('.mp4') ||
+        value.endsWith('.webm') ||
+        value.endsWith('.mov') ||
+        value.endsWith('.m4v') ||
+        value.endsWith('.mkv')));
 
   const isAudio =
     (accept && accept.includes('audio')) ||
-    (value && (value.endsWith('.mp3') || value.endsWith('.wav') || value.endsWith('.m4a') || value.endsWith('.ogg')));
+    (value &&
+      (value.endsWith('.mp3') ||
+        value.endsWith('.wav') ||
+        value.endsWith('.m4a') ||
+        value.endsWith('.ogg') ||
+        value.endsWith('.flac')));
 
+  // Format accept yang ramah & tidak membatasi perangkat kamera / smartphone
   const resolvedAccept =
     accept ||
     (mediaType === 'video'
-      ? 'video/mp4,video/webm,video/quicktime'
+      ? 'video/*,video/mp4,video/webm,video/quicktime'
       : mediaType === 'any'
-      ? 'image/*,video/mp4,video/webm,video/quicktime,audio/mpeg,audio/mp3,audio/wav,audio/m4a,audio/*'
-      : 'image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic');
+      ? 'image/*,video/*,audio/*'
+      : 'image/*'); // Mendukung AVIF, HEIC, JPEG, PNG, WebP dari kamera manapun
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
 
-    setUploading(true);
     setError(null);
-    setJustUploaded(false);
+    setJustUploadedInfo(null);
 
     try {
+      let fileToUpload = rawFile;
+      let optInfo: OptimizeResult | null = null;
+
+      // 1. Optimasi & konversi foto ke WebP secara otomatis di sisi browser
+      const isImg =
+        rawFile.type.startsWith('image/') ||
+        mediaType === 'image' ||
+        /\.(jpe?g|png|webp|avif|heic|heif|bmp|tiff)$/i.test(rawFile.name);
+
+      if (isImg && !rawFile.type.startsWith('video/') && !rawFile.type.startsWith('audio/')) {
+        setStage('optimizing');
+        try {
+          optInfo = await optimizeImageForUpload(rawFile, {
+            maxDimension: 2560,
+            quality: 0.85,
+          });
+          if (optInfo && optInfo.file) {
+            fileToUpload = optInfo.file;
+          }
+        } catch (optErr) {
+          console.warn('[ImageUpload] Optimasi client dilewati, mengunggah file asli:', optErr);
+        }
+      }
+
+      // 2. Unggah ke endpoint server
+      setStage('uploading');
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       formData.append('folder', folder);
 
       const res = await fetch('/api/admin/upload', {
@@ -65,19 +109,45 @@ export function ImageUploadField({
         body: formData,
       });
 
-      const data = await res.json();
-      if (!data.ok) {
-        throw new Error(data.error || 'Upload gagal');
+      // Parsing respon secara aman — anti-crash syntax error
+      const responseText = await res.text();
+      let data: { ok?: boolean; url?: string; error?: string } = {};
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        if (res.status === 413) {
+          throw new Error('Ukuran file terlalu besar untuk server. Gunakan file yang lebih kecil atau kurangi resolusi.');
+        }
+        if (res.status === 401 || res.status === 403) {
+          throw new Error('Sesi admin berakhir. Silakan login kembali di tab baru lalu coba unggah lagi.');
+        }
+        throw new Error(`Respon server tidak valid (${res.status}): ${responseText.slice(0, 100) || 'Gagal memproses unggahan'}`);
       }
 
+      if (!res.ok || !data.ok || !data.url) {
+        throw new Error(data.error || `Upload gagal dengan kode status ${res.status}`);
+      }
+
+      // 3. Terapkan URL baru ke state CMS
       onChange(data.url);
-      setJustUploaded(true);
-      setTimeout(() => setJustUploaded(false), 8000);
+
+      const statsText =
+        optInfo && optInfo.optimized && optInfo.savedPercent && optInfo.savedPercent > 0
+          ? `(dioptimasi ${formatBytes(optInfo.originalSize)} → ${formatBytes(optInfo.newSize)} WebP, hemat ${optInfo.savedPercent}%)`
+          : undefined;
+
+      setJustUploadedInfo({
+        message: 'File berhasil diunggah!',
+        stats: statsText,
+      });
+
+      setTimeout(() => setJustUploadedInfo(null), 10000);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal mengunggah file';
       setError(msg);
     } finally {
-      setUploading(false);
+      setStage('idle');
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -89,6 +159,8 @@ export function ImageUploadField({
       setShowUrlInput(false);
     }
   };
+
+  const isBusy = stage !== 'idle';
 
   return (
     <div className="space-y-2">
@@ -108,17 +180,27 @@ export function ImageUploadField({
       {hint && <p className="text-[10px] text-[#0F1B2D]/50">{hint}</p>}
 
       {error && (
-        <div className="p-2 rounded bg-red-50 text-red-700 text-[11px] border border-red-200">
-          {error}
+        <div className="p-2.5 rounded bg-red-50 text-red-700 text-[11px] border border-red-200 flex items-start justify-between gap-2">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="text-red-500 hover:text-red-800 font-bold text-xs"
+          >
+            ✕
+          </button>
         </div>
       )}
 
-      {justUploaded && (
-        <div className="p-2.5 rounded bg-emerald-50 text-emerald-800 text-[11px] border border-emerald-200 flex items-center gap-2 font-medium">
-          <span className="text-emerald-600 font-bold">✓</span>
-          <span>
-            File berhasil diunggah! Pastikan klik tombol <strong>&ldquo;Simpan Perubahan&rdquo;</strong> agar tampil di landing page.
-          </span>
+      {justUploadedInfo && (
+        <div className="p-2.5 rounded bg-emerald-50 text-emerald-800 text-[11px] border border-emerald-200 flex items-start gap-2 font-medium">
+          <span className="text-emerald-600 font-bold shrink-0 mt-0.5">✓</span>
+          <div className="flex-1">
+            <span>
+              {justUploadedInfo.message} {justUploadedInfo.stats && <span className="text-emerald-700 font-normal">{justUploadedInfo.stats}</span>}{' '}
+              Pastikan klik tombol <strong>&ldquo;Simpan Perubahan&rdquo;</strong> di pojok kanan atas agar tersimpan ke database.
+            </span>
+          </div>
         </div>
       )}
 
@@ -167,7 +249,7 @@ export function ImageUploadField({
                   alt={label}
                   fill
                   className="object-cover"
-                  unoptimized={value.startsWith('http')}
+                  unoptimized={true}
                 />
               )}
             </div>
@@ -184,28 +266,35 @@ export function ImageUploadField({
               type="file"
               accept={resolvedAccept}
               onChange={handleFileChange}
+              disabled={isBusy}
               className="hidden"
             />
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="px-3 py-1.5 rounded bg-white hover:bg-stone-50 border border-[#0F1B2D]/15 text-[#0F1B2D] text-xs font-medium tracking-wide shadow-2xs transition-all disabled:opacity-50"
+                disabled={isBusy}
+                className="px-3 py-1.5 rounded bg-white hover:bg-stone-50 border border-[#0F1B2D]/15 text-[#0F1B2D] text-xs font-medium tracking-wide shadow-2xs transition-all disabled:opacity-50 flex items-center gap-1.5"
               >
-                {uploading
-                  ? 'Mengunggah...'
-                  : value
-                  ? isVideo
-                    ? 'Ganti Video'
-                    : 'Ganti Foto'
-                  : isVideo
-                  ? 'Unggah Video'
-                  : 'Unggah Foto'}
+                {stage === 'optimizing' ? (
+                  <>
+                    <span className="inline-block animate-spin">⚡</span>
+                    <span>Mengompres Foto...</span>
+                  </>
+                ) : stage === 'uploading' ? (
+                  <>
+                    <span className="inline-block animate-spin">⏳</span>
+                    <span>Mengunggah...</span>
+                  </>
+                ) : value ? (
+                  isVideo ? 'Ganti Video' : isAudio ? 'Ganti Audio' : 'Ganti Foto'
+                ) : (
+                  isVideo ? 'Unggah Video' : isAudio ? 'Unggah Audio' : 'Unggah Foto'
+                )}
               </button>
 
-              {value && (
+              {value && !isBusy && (
                 <button
                   type="button"
                   onClick={() => onChange('')}
@@ -216,12 +305,14 @@ export function ImageUploadField({
               )}
             </div>
 
-            <p className="text-[10px] text-[#0F1B2D]/45 font-mono truncate max-w-xs" title={value}>
+            <p className="text-[10px] text-[#0F1B2D]/50 font-mono truncate max-w-xs" title={value}>
               {value
                 ? value
                 : isVideo
-                ? 'Format MP4, WebM, MOV (maks 50MB)'
-                : 'Format JPG, PNG, WEBP, atau AVIF (maks 15MB)'}
+                ? 'Format video bebas (MP4, WebM, MOV, dsb.)'
+                : isAudio
+                ? 'Format audio MP3, WAV, M4A, dsb.'
+                : 'Format foto bebas (AVIF, HEIC, JPG, PNG, WebP otomatis dioptimasi)'}
             </p>
           </div>
         </div>
