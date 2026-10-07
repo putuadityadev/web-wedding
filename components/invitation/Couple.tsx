@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from '@/lib/motion/gsap';
 import { useLenisContext } from '@/lib/motion/lenis';
 import { CoupleBackgroundMode } from '@/lib/content/types';
 import { MediaFrame } from './MediaFrame';
+import { ProfileModal } from './ProfileModal';
 
 export interface CoupleMember {
   name: string;
@@ -21,6 +22,9 @@ export interface CoupleMember {
   motherName?: string;
   parentsTitle?: string;
   parentsAvatarSrc?: string;
+  fatherPhotoSrc?: string;
+  motherPhotoSrc?: string;
+  parentsBio?: string;
 }
 
 export interface CoupleProps {
@@ -66,6 +70,20 @@ function ChevronDownIcon({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
+function ArrowUpIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none">
+      <path
+        d="M8 12.5V3.5M8 3.5L4 7.5M8 3.5L12 7.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function Couple({
   groomLabel = 'MEMPELAI PRIA',
   brideLabel = 'MEMPELAI WANITA',
@@ -76,6 +94,14 @@ export function Couple({
   const { lenis } = useLenisContext();
   const groomSectionRef = useRef<HTMLElement | null>(null);
   const brideSectionRef = useRef<HTMLElement | null>(null);
+
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [modalPerson, setModalPerson] = useState<'groom' | 'bride'>('groom');
+
+  const handleOpenProfile = (person: 'groom' | 'bride') => {
+    setModalPerson(person);
+    setIsProfileModalOpen(true);
+  };
 
   const isImageMode = bgMode === 'image';
 
@@ -243,14 +269,14 @@ export function Couple({
             {groom.childOf || (groomParents ? `Putra dari ${groomParents}` : '')}
           </p>
 
-          {/* Instagram Handle Chip (Clean, Minimalist) */}
-          {groom.instagram && (
-            <div className="couple-reveal mt-4">
+          {/* Action Buttons: Instagram & Detail Profil */}
+          <div className="couple-reveal mt-4 flex items-center justify-center gap-2 flex-wrap">
+            {groom.instagram && (
               <a
                 href={`https://instagram.com/${groom.instagram.replace(/^@/, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono tracking-wider transition-all duration-300 ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono tracking-wider transition-all duration-300 active:scale-95 ${
                   isImageMode
                     ? 'bg-black/40 hover:bg-black/60 text-white/90 border border-white/20 backdrop-blur-md shadow-sm'
                     : 'bg-white hover:bg-stone-50 text-[var(--ink)] border border-[var(--ink)]/15 shadow-2xs'
@@ -259,8 +285,22 @@ export function Couple({
                 <InstagramIcon className="w-3.5 h-3.5 opacity-80" />
                 <span>@{groom.instagram.replace(/^@/, '')}</span>
               </a>
-            </div>
-          )}
+            )}
+
+            <button
+              type="button"
+              onClick={() => handleOpenProfile('groom')}
+              className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono tracking-wider transition-all duration-300 cursor-pointer active:scale-95 ${
+                isImageMode
+                  ? 'bg-black/40 hover:bg-black/60 text-white/90 border border-white/20 backdrop-blur-md shadow-sm hover:border-white/40'
+                  : 'bg-white hover:bg-stone-50 text-[var(--ink)] border border-[var(--ink)]/15 shadow-2xs hover:border-[var(--ink)]/30'
+              }`}
+              aria-label={`Buka detail profil ${groom.name}`}
+            >
+              <ArrowUpIcon className="w-3.5 h-3.5 opacity-80 transition-transform duration-300 group-hover:-translate-y-0.5" />
+              <span>Detail Profil</span>
+            </button>
+          </div>
         </div>
 
         {/* Bottom Glide Chevron Button to Mempelai Wanita */}
@@ -367,14 +407,14 @@ export function Couple({
             {bride.childOf || (brideParents ? `Putri dari ${brideParents}` : '')}
           </p>
 
-          {/* Instagram Handle Chip (Clean, Minimalist) */}
-          {bride.instagram && (
-            <div className="couple-reveal mt-4">
+          {/* Action Buttons: Instagram & Detail Profil */}
+          <div className="couple-reveal mt-4 flex items-center justify-center gap-2 flex-wrap">
+            {bride.instagram && (
               <a
                 href={`https://instagram.com/${bride.instagram.replace(/^@/, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono tracking-wider transition-all duration-300 ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono tracking-wider transition-all duration-300 active:scale-95 ${
                   isImageMode
                     ? 'bg-black/40 hover:bg-black/60 text-white/90 border border-white/20 backdrop-blur-md shadow-sm'
                     : 'bg-white hover:bg-stone-50 text-[var(--ink)] border border-[var(--ink)]/15 shadow-2xs'
@@ -383,8 +423,22 @@ export function Couple({
                 <InstagramIcon className="w-3.5 h-3.5 opacity-80" />
                 <span>@{bride.instagram.replace(/^@/, '')}</span>
               </a>
-            </div>
-          )}
+            )}
+
+            <button
+              type="button"
+              onClick={() => handleOpenProfile('bride')}
+              className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono tracking-wider transition-all duration-300 cursor-pointer active:scale-95 ${
+                isImageMode
+                  ? 'bg-black/40 hover:bg-black/60 text-white/90 border border-white/20 backdrop-blur-md shadow-sm hover:border-white/40'
+                  : 'bg-white hover:bg-stone-50 text-[var(--ink)] border border-[var(--ink)]/15 shadow-2xs hover:border-[var(--ink)]/30'
+              }`}
+              aria-label={`Buka detail profil ${bride.name}`}
+            >
+              <ArrowUpIcon className="w-3.5 h-3.5 opacity-80 transition-transform duration-300 group-hover:-translate-y-0.5" />
+              <span>Detail Profil</span>
+            </button>
+          </div>
         </div>
 
         {/* Bottom Glide Chevron Button to Story Section */}
@@ -403,6 +457,15 @@ export function Couple({
           </button>
         </div>
       </section>
+
+      {/* Profile Detail Bottom Sheet Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        initialPerson={modalPerson}
+        groom={groom}
+        bride={bride}
+      />
     </>
   );
 }

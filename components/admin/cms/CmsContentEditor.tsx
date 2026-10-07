@@ -1102,7 +1102,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                     </div>
 
                     <ImageUploadField
-                      label="Foto / Avatar Kecil Orang Tua Pria (Opsional)"
+                      label="Foto Profil Orang Tua Pria (Tampil di Pop-up Detail)"
                       value={content.couple.groom.parentsAvatarSrc || ''}
                       folder="couple"
                       onChange={(url) =>
@@ -1114,7 +1114,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                           },
                         })
                       }
-                      hint="Foto avatar kecil orang tua di bawah profil mempelai pria."
+                      hint="Foto orang tua yang akan tampil di sisi kiri kartu orang tua pada pop-up 'Detail Profil'."
                     />
                   </div>
                 </div>
@@ -1285,7 +1285,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                     </div>
 
                     <ImageUploadField
-                      label="Foto / Avatar Kecil Orang Tua Wanita (Opsional)"
+                      label="Foto Profil Orang Tua Wanita (Tampil di Pop-up Detail)"
                       value={content.couple.bride.parentsAvatarSrc || ''}
                       folder="couple"
                       onChange={(url) =>
@@ -1297,7 +1297,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                           },
                         })
                       }
-                      hint="Foto avatar kecil orang tua di bawah profil mempelai wanita."
+                      hint="Foto orang tua yang akan tampil di sisi kiri kartu orang tua pada pop-up 'Detail Profil'."
                     />
                   </div>
                 </div>

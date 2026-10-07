@@ -1176,7 +1176,7 @@ export function SplashCursor({
 
   return (
     <div
-      className="fixed inset-0 pointer-events-none z-[35] overflow-hidden"
+      className="fixed inset-0 pointer-events-none z-[80] overflow-hidden"
       style={{
         width: '100vw',
         height: '100vh',

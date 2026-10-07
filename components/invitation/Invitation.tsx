@@ -179,6 +179,9 @@ function InvitationContent({
           motherName: content.couple.groom.motherName,
           parentsTitle: content.couple.groom.parentsTitle,
           parentsAvatarSrc: content.couple.groom.parentsAvatarSrc,
+          fatherPhotoSrc: content.couple.groom.fatherPhotoSrc,
+          motherPhotoSrc: content.couple.groom.motherPhotoSrc,
+          parentsBio: content.couple.groom.parentsBio,
           photo: {
             ...ASSETS.couple.groom.photo,
             src: content.couple.groom.photoSrc || ASSETS.couple.groom.photo.src,
@@ -196,6 +199,9 @@ function InvitationContent({
           motherName: content.couple.bride.motherName,
           parentsTitle: content.couple.bride.parentsTitle,
           parentsAvatarSrc: content.couple.bride.parentsAvatarSrc,
+          fatherPhotoSrc: content.couple.bride.fatherPhotoSrc,
+          motherPhotoSrc: content.couple.bride.motherPhotoSrc,
+          parentsBio: content.couple.bride.parentsBio,
           photo: {
             ...ASSETS.couple.bride.photo,
             src: content.couple.bride.photoSrc || ASSETS.couple.bride.photo.src,

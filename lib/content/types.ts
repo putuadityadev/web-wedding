@@ -60,6 +60,9 @@ export interface PersonProfile {
   motherName?: string;
   parentsTitle?: string;
   parentsAvatarSrc?: string;
+  fatherPhotoSrc?: string;
+  motherPhotoSrc?: string;
+  parentsBio?: string;
 }
 
 export type CoupleBackgroundMode = 'solid' | 'image';
@@ -230,7 +233,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       fatherName: 'I Wayan Suweta',
       motherName: 'Ni Wayan Murni',
       parentsTitle: 'Putra Pertama Dari Pasangan:',
-      parentsAvatarSrc: '',
+      parentsAvatarSrc: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=800&q=80',
     },
     bride: {
       name: 'Luthfi Quasimah Widoyo',
@@ -243,7 +246,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       fatherName: 'Widoyo',
       motherName: 'Sri Mulyani',
       parentsTitle: 'Putri Tercinta Dari Pasangan:',
-      parentsAvatarSrc: '',
+      parentsAvatarSrc: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80',
     },
   },
   story: {
