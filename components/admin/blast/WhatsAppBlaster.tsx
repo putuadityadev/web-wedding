@@ -3,6 +3,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import {
+  BlastTemplatesConfig,
+  DEFAULT_BLAST_CONFIG,
+  DEFAULT_FORMAL_TEMPLATE,
+  DEFAULT_WARM_TEMPLATE,
+  DEFAULT_CASUAL_TEMPLATE,
+} from '@/lib/blast/templates';
 
 export interface GuestItem {
   id: string;
@@ -23,23 +30,6 @@ export interface GuestItem {
   createdAt: string;
 }
 
-const DEFAULT_WA_TEMPLATE = `Halo {{sapaan}} {{panggilan}},
-
-Dengan penuh rasa syukur dan bahagia, kami mengundang Anda untuk hadir pada momen pernikahan kami:
-
-💍 Dharma & Lutfhy
-🗓️ Sabtu, 12 Desember 2026
-📍 Kediaman Mempelai Pria (Kayubihi, Bangli)
-⏰ Waktu Kehadiran: {{jam_hadir}}
-
-Detail acara, denah lokasi, dan konfirmasi kehadiran (RSVP) dapat diakses melalui tautan personal Anda berikut:
-👉 {{link}}
-
-Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.
-
-Salam hangat,
-Dharma & Lutfhy`;
-
 export function WhatsAppBlaster() {
   const searchParams = useSearchParams();
   const batchIdParam = searchParams.get('batchId') || '';
@@ -49,9 +39,11 @@ export function WhatsAppBlaster() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Template state
-  const [template, setTemplate] = useState<string>(DEFAULT_WA_TEMPLATE);
+  // Template config state (supports per-group & per-tone customization)
+  const [blastConfig, setBlastConfig] = useState<BlastTemplatesConfig>(DEFAULT_BLAST_CONFIG);
+  const [editingGroup, setEditingGroup] = useState<string>('__DEFAULT__');
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -66,6 +58,22 @@ export function WhatsAppBlaster() {
     setToast({ text, type });
     setTimeout(() => setToast(null), 3500);
   };
+
+  // Load saved templates from server on mount
+  useEffect(() => {
+    async function loadTemplates() {
+      try {
+        const res = await fetch('/api/admin/blast/templates');
+        const json = await res.json();
+        if (json.ok && json.data) {
+          setBlastConfig(json.data);
+        }
+      } catch (err) {
+        console.warn('Gagal memuat template tersimpan dari server:', err);
+      }
+    }
+    loadTemplates();
+  }, []);
 
   const fetchGuests = useCallback(async () => {
     setLoading(true);
@@ -97,6 +105,48 @@ export function WhatsAppBlaster() {
     fetchGuests();
   }, [fetchGuests]);
 
+  // Resolve which template to use for a specific guest based on group & tone
+  const resolveTemplateForGuest = useCallback(
+    (guest: GuestItem): { template: string; label: string; tone: 'formal' | 'warm' | 'casual' | 'custom' } => {
+      // 1. Specific custom template saved for this guest's group
+      if (guest.groupLabel && blastConfig.groupTemplates[guest.groupLabel]?.trim()) {
+        const tone = blastConfig.groupTones[guest.groupLabel] || guest.tone || 'custom';
+        return {
+          template: blastConfig.groupTemplates[guest.groupLabel],
+          label: `Khusus Grup "${guest.groupLabel}"`,
+          tone,
+        };
+      }
+
+      // 2. Group tone preset override
+      if (guest.groupLabel && blastConfig.groupTones[guest.groupLabel]) {
+        const tone = blastConfig.groupTones[guest.groupLabel];
+        return {
+          template: blastConfig.toneTemplates[tone] || blastConfig.defaultTemplate,
+          label: `Grup "${guest.groupLabel}" (${tone.toUpperCase()})`,
+          tone,
+        };
+      }
+
+      // 3. Guest individual tone ('formal' | 'warm' | 'casual')
+      if (guest.tone && blastConfig.toneTemplates[guest.tone]) {
+        return {
+          template: blastConfig.toneTemplates[guest.tone],
+          label: `Tone Tamu (${guest.tone.toUpperCase()})`,
+          tone: guest.tone,
+        };
+      }
+
+      // 4. Default global fallback
+      return {
+        template: blastConfig.defaultTemplate,
+        label: 'Format Default',
+        tone: 'warm',
+      };
+    },
+    [blastConfig]
+  );
+
   // Format message for a specific guest
   const formatMessageForGuest = useCallback(
     (guest: GuestItem): string => {
@@ -110,6 +160,8 @@ export function WhatsAppBlaster() {
           }) + ' WITA'
         : '11.00 WITA';
 
+      const { template } = resolveTemplateForGuest(guest);
+
       return template
         .replace(/{{nama}}/g, guest.name)
         .replace(/{{panggilan}}/g, guest.nickname || guest.name.split(' ')[0])
@@ -119,8 +171,9 @@ export function WhatsAppBlaster() {
         .replace(/{{jam_hadir}}/g, jamHadir)
         .replace(/{{mempelai}}/g, 'Dharma & Lutfhy');
     },
-    [template]
+    [resolveTemplateForGuest]
   );
+
 
   // Active guest
   const activeGuest = useMemo(() => {
@@ -246,8 +299,97 @@ export function WhatsAppBlaster() {
     }
   };
 
+  const getCurrentEditingText = (): string => {
+    if (editingGroup === '__DEFAULT__') {
+      return blastConfig.defaultTemplate;
+    }
+    if (blastConfig.groupTemplates[editingGroup] !== undefined) {
+      return blastConfig.groupTemplates[editingGroup];
+    }
+    if (blastConfig.groupTones[editingGroup]) {
+      const tone = blastConfig.groupTones[editingGroup];
+      return blastConfig.toneTemplates[tone] || blastConfig.defaultTemplate;
+    }
+    return blastConfig.defaultTemplate;
+  };
+
+  const handleUpdateEditingText = (newText: string) => {
+    if (editingGroup === '__DEFAULT__') {
+      setBlastConfig((prev) => ({ ...prev, defaultTemplate: newText }));
+    } else {
+      setBlastConfig((prev) => ({
+        ...prev,
+        groupTemplates: {
+          ...prev.groupTemplates,
+          [editingGroup]: newText,
+        },
+      }));
+    }
+  };
+
+  const handleApplyTonePreset = (tone: 'formal' | 'warm' | 'casual') => {
+    const presetText = blastConfig.toneTemplates[tone] || DEFAULT_BLAST_CONFIG.toneTemplates[tone];
+    if (editingGroup === '__DEFAULT__') {
+      setBlastConfig((prev) => ({
+        ...prev,
+        defaultTemplate: presetText,
+      }));
+    } else {
+      setBlastConfig((prev) => ({
+        ...prev,
+        groupTemplates: {
+          ...prev.groupTemplates,
+          [editingGroup]: presetText,
+        },
+        groupTones: {
+          ...prev.groupTones,
+          [editingGroup]: tone,
+        },
+      }));
+    }
+    showToast(`Format "${tone.toUpperCase()}" berhasil diterapkan untuk ${editingGroup === '__DEFAULT__' ? 'Semua Grup' : 'Grup ' + editingGroup}!`);
+  };
+
+  const handleResetGroupToDefault = (groupName: string) => {
+    setBlastConfig((prev) => {
+      const nextGroupTemplates = { ...prev.groupTemplates };
+      const nextGroupTones = { ...prev.groupTones };
+      delete nextGroupTemplates[groupName];
+      delete nextGroupTones[groupName];
+      return {
+        ...prev,
+        groupTemplates: nextGroupTemplates,
+        groupTones: nextGroupTones,
+      };
+    });
+    showToast(`Grup "${groupName}" dikembalikan menggunakan format Default!`);
+  };
+
+  const handleSaveTemplatesToServer = async () => {
+    setSavingConfig(true);
+    try {
+      const res = await fetch('/api/admin/blast/templates', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(blastConfig),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        throw new Error(json.error || 'Gagal menyimpan template');
+      }
+      showToast('Seluruh format template berhasil disimpan secara permanen!');
+      setShowTemplateEditor(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan template';
+      showToast(msg, 'error');
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
   const insertVariable = (variable: string) => {
-    setTemplate((prev) => prev + ` {{${variable}}}`);
+    const current = getCurrentEditingText();
+    handleUpdateEditingText(current + ` {{${variable}}}`);
   };
 
   return (
@@ -270,13 +412,13 @@ export function WhatsAppBlaster() {
       <div className="bg-white border border-[#0F1B2D]/10 rounded-[var(--radius-sm)] p-6 shadow-xs flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <span className="text-[10px] tracking-[0.2em] uppercase text-[#0F1B2D]/50 font-mono block">
-            BROADCAST & PENDISTRIBUSIAN
+            BROADCAST &amp; PENDISTRIBUSIAN
           </span>
           <h2 className="font-serif text-2xl text-[#0F1B2D] font-light mt-0.5">
             WhatsApp Blasting Undangan
           </h2>
           <p className="text-xs text-[#0F1B2D]/60 mt-1 max-w-2xl leading-relaxed">
-            Kirim undangan personal secara cepat dan terarah ke kontak WhatsApp tamu. Setiap pesan otomatis menyertakan sapaan dan tautan unik personal tamu.
+            Kirim undangan personal secara cepat dan terarah ke kontak WhatsApp tamu. Setiap grup dapat memiliki format pesan sendiri (misal Formal untuk VIP, Warm untuk Keluarga, Casual untuk Sahabat).
           </p>
         </div>
 
@@ -292,9 +434,13 @@ export function WhatsAppBlaster() {
           <button
             type="button"
             onClick={() => setShowTemplateEditor(!showTemplateEditor)}
-            className="px-3.5 py-2.5 rounded bg-white hover:bg-stone-50 border border-[#0F1B2D]/15 text-[#0F1B2D] text-xs font-medium shadow-2xs inline-flex items-center gap-1.5"
+            className={`px-3.5 py-2.5 rounded border text-xs font-medium shadow-2xs inline-flex items-center gap-2 transition-all cursor-pointer ${
+              showTemplateEditor
+                ? 'bg-[#0F1B2D] text-white border-[#0F1B2D]'
+                : 'bg-white hover:bg-stone-50 border-[#0F1B2D]/15 text-[#0F1B2D]'
+            }`}
           >
-            <span>✍️ {showTemplateEditor ? 'Tutup Template' : 'Ubah Format Pesan'}</span>
+            <span>⚙️ {showTemplateEditor ? 'Tutup Pengaturan Template' : 'Atur Format Pesan Per Grup'}</span>
           </button>
         </div>
       </div>
@@ -354,59 +500,192 @@ export function WhatsAppBlaster() {
         </div>
       </div>
 
-      {/* Template Editor Drawer (Collapsible) */}
+      {/* Advanced Per-Group Template Editor Drawer */}
       {showTemplateEditor && (
-        <div className="bg-white border border-[#0F1B2D]/10 rounded-[var(--radius-sm)] p-6 shadow-xs space-y-4 animate-in fade-in">
-          <div className="flex items-center justify-between pb-3 border-b border-[#0F1B2D]/10">
+        <div className="bg-white border border-[#0F1B2D]/15 rounded-[var(--radius-sm)] p-6 shadow-md space-y-5 animate-in fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#0F1B2D]/10 gap-2">
             <div>
-              <h3 className="font-serif text-base font-medium text-[#0F1B2D]">
-                Format Template Pesan WhatsApp
-              </h3>
-              <p className="text-xs text-[#0F1B2D]/50 mt-0.5">
-                Sesuaikan kata-kata undangan. Variabel dalam kurung kurawal ganda akan otomatis digantikan sesuai profil masing-masing tamu.
+              <div className="flex items-center gap-2">
+                <span className="text-base">📝</span>
+                <h3 className="font-serif text-lg font-medium text-[#0F1B2D]">
+                  Pengaturan Format Pesan Berdasarkan Grup &amp; Tone
+                </h3>
+              </div>
+              <p className="text-xs text-[#0F1B2D]/60 mt-1">
+                Atur variasi bahasa pesan secara fleksibel. Misalnya grup <strong>VIP</strong> memakai format <em>Formal</em>, grup <strong>Keluarga</strong> memakai <em>Warm</em>, dan grup <strong>Teman</strong> memakai <em>Casual</em>.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setTemplate(DEFAULT_WA_TEMPLATE)}
-              className="text-[11px] text-[#0F1B2D]/60 hover:text-[#0F1B2D] underline font-mono"
-            >
-              Reset ke Default
-            </button>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleSaveTemplatesToServer}
+                disabled={savingConfig}
+                className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5 transition-all"
+              >
+                <span>{savingConfig ? 'Menyimpan...' : '💾 Simpan Semua Format'}</span>
+              </button>
+            </div>
           </div>
 
+          {/* Group Selector Pill Bar */}
+          <div>
+            <label className="text-[11px] font-mono uppercase tracking-wider text-[#0F1B2D]/60 block mb-2 font-semibold">
+              Pilih Target Grup Yang Ingin Diatur:
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingGroup('__DEFAULT__')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                  editingGroup === '__DEFAULT__'
+                    ? 'bg-[#0F1B2D] text-white shadow-xs font-semibold'
+                    : 'bg-stone-100 hover:bg-stone-200 text-[#0F1B2D]/80'
+                }`}
+              >
+                <span>🌐</span>
+                <span>Default (Semua Grup Lainnya)</span>
+              </button>
+
+              {groups.map((grp) => {
+                const isSelected = editingGroup === grp;
+                const hasCustom = Boolean(blastConfig.groupTemplates[grp]?.trim());
+                const tone = blastConfig.groupTones[grp];
+
+                return (
+                  <button
+                    key={grp}
+                    type="button"
+                    onClick={() => setEditingGroup(grp)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 border ${
+                      isSelected
+                        ? 'bg-[#0F1B2D] text-white border-[#0F1B2D] shadow-xs font-semibold'
+                        : hasCustom
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                        : 'bg-white hover:bg-stone-100 text-[#0F1B2D]/80 border-stone-200'
+                    }`}
+                  >
+                    <span>🏷️</span>
+                    <span>{grp}</span>
+                    {hasCustom && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Kustom aktif" />
+                    )}
+                    {tone && (
+                      <span className="text-[9px] uppercase opacity-75 font-mono">({tone})</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Preset Buttons Bar */}
+          <div className="p-3 rounded-lg bg-stone-50 border border-[#0F1B2D]/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-[#0F1B2D]/70">Pilih Preset Cepat:</span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleApplyTonePreset('formal')}
+                  className="px-2.5 py-1 rounded text-xs font-medium bg-white hover:bg-stone-100 border border-stone-300 text-indigo-900 shadow-2xs transition-colors cursor-pointer"
+                  title="Gunakan bahasa sangat resmi, santun, dan terhormat"
+                >
+                  🌿 Formal (Resmi)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleApplyTonePreset('warm')}
+                  className="px-2.5 py-1 rounded text-xs font-medium bg-white hover:bg-stone-100 border border-stone-300 text-amber-900 shadow-2xs transition-colors cursor-pointer"
+                  title="Gunakan bahasa hangat, penuh rasa syukur, kekeluargaan"
+                >
+                  ☀️ Warm (Hangat)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleApplyTonePreset('casual')}
+                  className="px-2.5 py-1 rounded text-xs font-medium bg-white hover:bg-stone-100 border border-stone-300 text-emerald-900 shadow-2xs transition-colors cursor-pointer"
+                  title="Gunakan bahasa santai, akrab, dan asik"
+                >
+                  💬 Casual (Santai)
+                </button>
+              </div>
+            </div>
+
+            {editingGroup !== '__DEFAULT__' && blastConfig.groupTemplates[editingGroup] && (
+              <button
+                type="button"
+                onClick={() => handleResetGroupToDefault(editingGroup)}
+                className="text-xs text-red-600 hover:text-red-800 underline font-mono cursor-pointer"
+              >
+                ✕ Hapus Kustom (Ikuti Default)
+              </button>
+            )}
+          </div>
+
+          {/* Variable Insertion Pills */}
           <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
-            <span className="text-[#0F1B2D]/50 font-sans text-xs mr-1">Sisipkan:</span>
+            <span className="text-[#0F1B2D]/50 font-sans text-xs mr-1">Sisipkan Variabel:</span>
             {['sapaan', 'panggilan', 'nama', 'link', 'jam_hadir', 'pax', 'mempelai'].map((v) => (
               <button
                 key={v}
                 type="button"
                 onClick={() => insertVariable(v)}
-                className="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-[#0F1B2D] border border-stone-200"
+                className="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-[#0F1B2D] border border-stone-200 cursor-pointer transition-colors"
+                title={`Sisipkan {{${v}}}`}
               >
                 + {`{{${v}}}`}
               </button>
             ))}
           </div>
 
-          <textarea
-            rows={10}
-            value={template}
-            onChange={(e) => setTemplate(e.target.value)}
-            className="w-full p-4 rounded font-mono text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] bg-[#FDFDFE] leading-relaxed"
-          />
+          {/* Textarea for Editing Active Template */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5 text-xs">
+              <span className="font-mono text-[#0F1B2D]/70 font-medium">
+                Teks Pesan untuk{' '}
+                <strong>
+                  {editingGroup === '__DEFAULT__' ? 'Default (Semua Grup)' : `Grup "${editingGroup}"`}
+                </strong>
+                :
+              </span>
+              <span className="font-mono text-[#0F1B2D]/50 text-[11px]">
+                {getCurrentEditingText().length} karakter
+              </span>
+            </div>
+            <textarea
+              rows={11}
+              value={getCurrentEditingText()}
+              onChange={(e) => handleUpdateEditingText(e.target.value)}
+              className="w-full p-4 rounded-lg font-mono text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] bg-[#FDFDFE] leading-relaxed shadow-inner"
+            />
+          </div>
 
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => setShowTemplateEditor(false)}
-              className="px-4 py-2 rounded bg-[#0F1B2D] text-white hover:bg-[#1E293B] text-xs font-medium shadow-xs"
-            >
-              Simpan & Terapkan
-            </button>
+          {/* Bottom Action Footer */}
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-[11px] text-[#0F1B2D]/50 font-mono">
+              💡 Format per grup langsung diterapkan saat tombol Kirim WA atau Salin Pesan diklik.
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowTemplateEditor(false)}
+                className="px-4 py-2 rounded text-stone-600 hover:text-stone-900 text-xs font-medium transition-colors"
+              >
+                Tutup
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveTemplatesToServer}
+                disabled={savingConfig}
+                className="px-5 py-2 rounded bg-[#0F1B2D] hover:bg-[#1E293B] text-white text-xs font-medium shadow-xs disabled:opacity-50 cursor-pointer transition-all"
+              >
+                {savingConfig ? 'Menyimpan...' : '💾 Simpan & Terapkan'}
+              </button>
+            </div>
           </div>
         </div>
       )}
+
 
       {/* Next Up Quick Action Queue Banner */}
       {nextUnsentGuest && (
@@ -526,6 +805,27 @@ export function WhatsAppBlaster() {
                         <span>{guest.phone || '—'}</span>
                         <span>•</span>
                         <span>{guest.groupLabel}</span>
+                        {/* Format resolution badge */}
+                        {(() => {
+                          const res = resolveTemplateForGuest(guest);
+                          return (
+                            <>
+                              <span>•</span>
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[9.5px] uppercase font-mono ${
+                                  res.tone === 'formal'
+                                    ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                                    : res.tone === 'casual'
+                                    ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                                    : 'bg-amber-50 text-amber-700'
+                                }`}
+                                title={res.label}
+                              >
+                                {res.tone}
+                              </span>
+                            </>
+                          );
+                        })()}
                         {guest.lastBlastedAt && (
                           <>
                             <span>•</span>
@@ -610,6 +910,28 @@ export function WhatsAppBlaster() {
                   <h4 className="text-sm font-serif font-medium text-[#0F1B2D] mt-0.5">
                     {activeGuest.salutation} {activeGuest.name}
                   </h4>
+                  {/* Active Template Source & Tone Badge */}
+                  {(() => {
+                    const res = resolveTemplateForGuest(activeGuest);
+                    return (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-stone-100 text-[#0F1B2D]/80 border border-stone-200">
+                          Format: {res.label}
+                        </span>
+                        <span
+                          className={`text-[9.5px] font-mono uppercase px-1.5 py-0.5 rounded font-bold ${
+                            res.tone === 'formal'
+                              ? 'bg-indigo-100 text-indigo-800'
+                              : res.tone === 'casual'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {res.tone}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 {activeGuest.lastBlastedAt ? (
                   <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
