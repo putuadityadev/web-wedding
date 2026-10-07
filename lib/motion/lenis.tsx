@@ -39,8 +39,14 @@ export function LenisProvider({
 
     const lenis = new Lenis({
       autoRaf: false,
-      lerp: 0.1,
-      syncTouch: false, // native touch scrolling on mobile
+      duration: 1.4,
+      lerp: 0.075,
+      smoothWheel: true,
+      wheelMultiplier: 0.85,
+      touchMultiplier: 0.9,
+      syncTouch: true,
+      syncTouchLerp: 0.075,
+      touchInertiaExponent: 1.65,
     });
 
     lenisRef.current = lenis;
@@ -52,7 +58,7 @@ export function LenisProvider({
     };
 
     gsap.ticker.add(tickerCb);
-    gsap.ticker.lagSmoothing(0);
+    gsap.ticker.lagSmoothing(500, 33);
 
     // Initial state: stop scroll if locked until cover opened
     if (initiallyLocked) {

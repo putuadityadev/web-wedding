@@ -32,12 +32,22 @@ export function GalleryModal({
   const [origin, setOrigin] = useState<'landing' | 'gallery'>(entryOrigin);
   const [visibleCount, setVisibleCount] = useState(24);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Touch drag-down to dismiss sheet
+  const sheetTouchStartY = useRef<number | null>(null);
+  const [sheetDragOffset, setSheetDragOffset] = useState<number>(0);
+
+  // Swipe detection coordinates for mobile touch gestures in Lightbox
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
 
   // Sync origin and reset visibleCount whenever modal opens
   useEffect(() => {
     if (isOpen) {
       setOrigin(entryOrigin);
       setVisibleCount(24);
+      setSheetDragOffset(0);
     }
   }, [isOpen, entryOrigin]);
 
@@ -45,10 +55,6 @@ export function GalleryModal({
   useEffect(() => {
     setVisibleCount(24);
   }, [filter]);
-
-  // Swipe detection coordinates for mobile touch gestures
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
 
   // Filter items based on active tab
   const filteredItems = useMemo(() => {
@@ -116,7 +122,7 @@ export function GalleryModal({
       setActiveLightboxIndex(null);
       onClose();
     } else {
-      // User opened from the full gallery -> return to the full gallery grid
+      // User opened from the full gallery sheet -> return to the full gallery grid
       setActiveLightboxIndex(null);
     }
   }, [origin, onClose]);
@@ -171,16 +177,38 @@ export function GalleryModal({
     }
   }, [isOpen, lenis]);
 
+  // Drag down handlers for bottom sheet
+  const handleHeaderTouchStart = (e: React.TouchEvent) => {
+    if (scrollContainerRef.current && scrollContainerRef.current.scrollTop > 5) return;
+    sheetTouchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleHeaderTouchMove = (e: React.TouchEvent) => {
+    if (sheetTouchStartY.current === null) return;
+    const deltaY = e.touches[0].clientY - sheetTouchStartY.current;
+    if (deltaY > 0) {
+      setSheetDragOffset(deltaY);
+    }
+  };
+
+  const handleHeaderTouchEnd = () => {
+    if (sheetDragOffset > 80) {
+      onClose();
+    }
+    sheetTouchStartY.current = null;
+    setSheetDragOffset(0);
+  };
+
   // Mobile swipe handlers for Lightbox
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleLightboxTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleLightboxTouchMove = (e: React.TouchEvent) => {
     touchEndX.current = e.targetTouches[0].clientX;
   };
 
-  const handleTouchEnd = () => {
+  const handleLightboxTouchEnd = () => {
     if (!touchStartX.current || !touchEndX.current) return;
     const distance = touchStartX.current - touchEndX.current;
     const minSwipeDistance = 45;
@@ -207,144 +235,137 @@ export function GalleryModal({
     activeLightboxIndex !== null ? filteredItems[activeLightboxIndex] : null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex flex-col bg-[#0F1B2D]/95 backdrop-blur-xl text-white select-none animate-in fade-in duration-200"
-    >
+    <>
       {/* ============================================================== */}
-      {/* 1. TOP STICKY HEADER BAR (Ultra Clean & Responsive)             */}
-      {/* ============================================================== */}
-      <header className="w-full border-b border-white/10 px-4 sm:px-8 py-3 flex items-center justify-between shrink-0 bg-[#0F1B2D]/80 backdrop-blur-md z-20">
-        {/* Left: Couple & Section Identity */}
-        <div className="flex items-center gap-2.5 min-w-0 pr-2">
-          <div className="w-2 h-2 rounded-full bg-[var(--baby-blue)] shrink-0 animate-pulse" />
-          <div className="min-w-0">
-            <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.22em] text-white/50 uppercase block truncate">
-              GALERI DOKUMENTASI
-            </span>
-            <h3 className="font-serif italic text-sm sm:text-base text-white font-light truncate">
-              {groomName} &amp; {brideName}
-              <span className="hidden sm:inline text-white/40 font-sans text-xs ml-2 font-normal">
-                — {sectionTitle}
-              </span>
-            </h3>
-          </div>
-        </div>
-
-        {/* Center: Desktop Filter Tabs */}
-        <div className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/10 text-xs font-mono">
-          <button
-            type="button"
-            onClick={() => setFilter('all')}
-            className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-              filter === 'all'
-                ? 'bg-white text-[#0F1B2D] font-semibold shadow-xs'
-                : 'text-white/60 hover:text-white'
-            }`}
-          >
-            Semua ({items.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('photo')}
-            className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-              filter === 'photo'
-                ? 'bg-white text-[#0F1B2D] font-semibold shadow-xs'
-                : 'text-white/60 hover:text-white'
-            }`}
-          >
-            Foto ({photoCount})
-          </button>
-          {videoCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setFilter('video')}
-              className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                filter === 'video'
-                  ? 'bg-white text-[#0F1B2D] font-semibold shadow-xs'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              Video ({videoCount})
-            </button>
-          )}
-        </div>
-
-        {/* Right: Clean Circular Close Button */}
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Tutup Galeri"
-          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </header>
-
-      {/* Mobile Filter Tabs (Clean Centered Pill Bar) */}
-      <div className="flex md:hidden items-center justify-center gap-1.5 py-2 px-3 bg-[#0F1B2D]/95 border-b border-white/5 text-[11px] font-mono shrink-0">
-        <button
-          type="button"
-          onClick={() => setFilter('all')}
-          className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
-            filter === 'all'
-              ? 'bg-white text-[#0F1B2D] font-bold shadow-xs'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          Semua ({items.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilter('photo')}
-          className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
-            filter === 'photo'
-              ? 'bg-white text-[#0F1B2D] font-bold shadow-xs'
-              : 'text-white/60 hover:text-white'
-          }`}
-        >
-          Foto ({photoCount})
-        </button>
-        {videoCount > 0 && (
-          <button
-            type="button"
-            onClick={() => setFilter('video')}
-            className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
-              filter === 'video'
-                ? 'bg-white text-[#0F1B2D] font-bold shadow-xs'
-                : 'text-white/60 hover:text-white'
-            }`}
-          >
-            Video ({videoCount})
-          </button>
-        )}
-      </div>
-
-      {/* ============================================================== */}
-      {/* 2. MASONRY / EDITORIAL GRID WITH SMOOTH SCROLLING              */}
+      {/* 1. BACKDROP OVERLAY                                             */}
       {/* ============================================================== */}
       <div
-        data-lenis-prevent="true"
-        className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 md:p-10 scrollbar-thin scrollbar-thumb-white/20"
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs animate-fade-in-backdrop"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* ============================================================== */}
+      {/* 2. MOBILE APP STYLE BOTTOM SHEET (82-85% HEIGHT, CLEAN WHITE)   */}
+      {/* ============================================================== */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Galeri Dokumentasi"
         style={{
-          WebkitOverflowScrolling: 'touch',
-          touchAction: 'pan-y',
-          scrollBehavior: 'smooth',
+          transform: sheetDragOffset > 0 ? `translateY(${sheetDragOffset}px)` : undefined,
+          transition: sheetDragOffset > 0 ? 'none' : 'transform 0.25s ease-out',
         }}
+        className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-4xl h-[82vh] sm:h-[86vh] max-h-[92vh] bg-white text-[#0F1B2D] rounded-t-[28px] sm:rounded-t-[32px] shadow-2xl border-t border-stone-200/80 flex flex-col overflow-hidden animate-slide-up-sheet select-none"
       >
-        <div className="max-w-7xl mx-auto">
+        {/* Drag Handle Bar (Top Center Grab Indicator) */}
+        <div
+          onTouchStart={handleHeaderTouchStart}
+          onTouchMove={handleHeaderTouchMove}
+          onTouchEnd={handleHeaderTouchEnd}
+          className="pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing shrink-0 touch-none"
+        >
+          <div className="w-12 h-1.5 bg-stone-300 rounded-full" />
+        </div>
+
+        {/* Sticky Sheet Header Bar */}
+        <header
+          onTouchStart={handleHeaderTouchStart}
+          onTouchMove={handleHeaderTouchMove}
+          onTouchEnd={handleHeaderTouchEnd}
+          className="px-5 sm:px-7 py-2.5 sm:py-3 border-b border-stone-100 flex items-center justify-between shrink-0 bg-white z-20"
+        >
+          {/* Left: Title & Count */}
+          <div className="min-w-0 pr-2">
+            <h3 className="font-serif text-lg sm:text-xl font-normal text-[#0F1B2D] truncate">
+              Galeri Dokumentasi
+            </h3>
+            <p className="text-[11px] font-mono text-stone-500 truncate">
+              {filteredItems.length} Momen Terabadikan
+            </p>
+          </div>
+
+          {/* Center: Clean Filter Pills */}
+          <div className="flex items-center gap-1 bg-stone-100/90 p-1 rounded-full text-xs font-mono">
+            <button
+              type="button"
+              onClick={() => setFilter('all')}
+              className={`px-3.5 py-1 rounded-full transition-all cursor-pointer ${
+                filter === 'all'
+                  ? 'bg-[var(--deep)] text-white font-medium shadow-xs'
+                  : 'text-stone-600 hover:text-[var(--deep)]'
+              }`}
+            >
+              Semua
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter('photo')}
+              className={`px-3.5 py-1 rounded-full transition-all cursor-pointer ${
+                filter === 'photo'
+                  ? 'bg-[var(--deep)] text-white font-medium shadow-xs'
+                  : 'text-stone-600 hover:text-[var(--deep)]'
+              }`}
+            >
+              Foto
+            </button>
+            {videoCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setFilter('video')}
+                className={`px-3.5 py-1 rounded-full transition-all cursor-pointer ${
+                  filter === 'video'
+                    ? 'bg-[var(--deep)] text-white font-medium shadow-xs'
+                    : 'text-stone-600 hover:text-[var(--deep)]'
+                }`}
+              >
+                Video
+              </button>
+            )}
+          </div>
+
+          {/* Right: Close Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Tutup Galeri"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </header>
+
+        {/* Pinterest-Style 2-Column Masonry Grid */}
+        <div
+          ref={scrollContainerRef}
+          data-lenis-prevent="true"
+          className="flex-1 overflow-y-auto overscroll-contain px-3 sm:px-6 py-4 bg-white"
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
+          }}
+        >
           {filteredItems.length === 0 ? (
-            <div className="py-24 text-center text-white/50 text-xs font-mono">
+            <div className="py-20 text-center text-stone-400 text-xs font-mono">
               Belum ada media di kategori ini.
             </div>
           ) : (
             <>
-              <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-6 space-y-4 sm:space-y-6">
+              <div className="columns-2 sm:columns-3 gap-3 sm:gap-4 space-y-3 sm:space-y-4">
                 {displayedItems.map((item, idx) => {
                   const isVideo = item.mediaType === 'video' || Boolean(item.videoSrc);
+
+                  // Calculate natural aspect ratio
+                  const aspectRatioClass =
+                    item.aspectRatio === '16/9' || item.aspectRatio === '16/10'
+                      ? 'aspect-[16/10]'
+                      : item.aspectRatio === '1/1'
+                      ? 'aspect-square'
+                      : item.aspectRatio === '3/4'
+                      ? 'aspect-[3/4]'
+                      : 'aspect-[4/5]';
 
                   return (
                     <div
@@ -353,69 +374,51 @@ export function GalleryModal({
                         setOrigin('gallery');
                         setActiveLightboxIndex(idx);
                       }}
-                      className="break-inside-avoid group relative rounded-[var(--radius-sm)] overflow-hidden bg-black/30 border border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-2xl"
+                      className="break-inside-avoid group relative rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/70 hover:border-stone-400/60 shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer"
                     >
-                      {/* Media Container */}
-                      <div className="relative w-full overflow-hidden">
+                      {/* Media Display */}
+                      <div className={`relative w-full ${aspectRatioClass} overflow-hidden bg-stone-200`}>
                         {isVideo ? (
-                          <div className="relative w-full aspect-video bg-black/60 flex items-center justify-center">
+                          <div className="relative w-full h-full bg-stone-900 flex items-center justify-center">
                             <video
                               src={item.videoSrc || item.src}
                               poster={item.posterSrc || item.src}
-                              autoPlay
                               muted
                               loop
                               playsInline
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
-                            {/* Video Play Badge */}
-                            <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs border border-white/20 text-[9px] font-mono tracking-widest uppercase text-white flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                            {/* Video Badge */}
+                            <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-[9px] font-mono tracking-wider uppercase text-white flex items-center gap-1 shadow-sm">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
                               <span>VIDEO</span>
                             </div>
                           </div>
+                        ) : item.src ? (
+                          <Image
+                            src={item.src}
+                            alt={item.title || 'Momen'}
+                            fill
+                            sizes="(max-width: 640px) 50vw, 33vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            unoptimized={item.src.startsWith('http')}
+                          />
                         ) : (
-                          <div
-                            className="relative w-full"
-                            style={{
-                              aspectRatio:
-                                item.aspectRatio === '16/10' || item.aspectRatio === '16/9'
-                                  ? '16/10'
-                                  : item.aspectRatio === '3/2'
-                                  ? '3/2'
-                                  : '3/4',
-                            }}
-                          >
-                            {item.src ? (
-                              <Image
-                                src={item.src}
-                                alt={item.title || 'Momen'}
-                                fill
-                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                unoptimized={item.src.startsWith('http')}
-                              />
-                            ) : (
-                              <div className="w-full h-48 bg-white/5 flex items-center justify-center text-white/30 text-xs font-mono">
-                                (Foto)
-                              </div>
-                            )}
+                          <div className="w-full h-full flex items-center justify-center text-stone-400 text-xs font-mono">
+                            Foto
                           </div>
                         )}
 
-                        {/* Hover Overlay with Vignette & Title */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-95 transition-opacity flex flex-col justify-end p-3.5 sm:p-4">
-                          <div className="flex items-center justify-between text-[10px] font-mono text-white/70 mb-1">
-                            <span>{item.label}</span>
-                            {item.isPrimary && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 border border-white/15">
-                                ★ Utama
-                              </span>
-                            )}
-                          </div>
-                          <h4 className="font-serif italic text-base sm:text-lg text-white drop-shadow-sm truncate">
+                        {/* Subtle Pinterest-style bottom caption */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                          <p className="font-serif text-sm text-white drop-shadow-sm truncate">
                             {item.title}
-                          </h4>
+                          </p>
+                          {item.label && (
+                            <span className="text-[10px] font-mono text-white/70">
+                              {item.label}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -423,16 +426,16 @@ export function GalleryModal({
                 })}
               </div>
 
-              {/* Sentinel indicator for smooth infinite scroll */}
+              {/* Infinite scroll sentinel */}
               {visibleCount < filteredItems.length && (
                 <div
                   ref={sentinelRef}
-                  className="py-8 flex items-center justify-center text-white/50 text-xs font-mono"
+                  className="py-8 flex items-center justify-center text-stone-400 text-xs font-mono"
                 >
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-xs border border-white/10">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-100 border border-stone-200">
+                    <span className="w-2 h-2 rounded-full bg-stone-400 animate-pulse" />
                     <span>
-                      Memuat lebih banyak momen ({displayedItems.length} dari {filteredItems.length})...
+                      Memuat lebih banyak ({displayedItems.length} dari {filteredItems.length})...
                     </span>
                   </div>
                 </div>
@@ -443,58 +446,53 @@ export function GalleryModal({
       </div>
 
       {/* ============================================================== */}
-      {/* 3. LIGHTBOX OVERLAY VIEW (Clean, Minimal, Dynamic Close)        */}
+      {/* 3. LIGHTBOX OVERLAY VIEW (HIGH-RES PHOTO / VIDEO VIEWER)        */}
       {/* ============================================================== */}
       {currentLightboxItem && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-60 bg-black/95 backdrop-blur-2xl flex flex-col justify-between animate-in fade-in zoom-in-95 duration-200"
+          className="fixed inset-0 z-60 bg-black/95 backdrop-blur-2xl flex flex-col justify-between animate-in fade-in duration-200 select-none"
           onClick={handleCloseLightbox}
         >
-          {/* Lightbox Minimalist Header Bar (Zero Clutter on Mobile) */}
+          {/* Lightbox Minimalist Header */}
           <div
-            className="w-full px-4 sm:px-6 py-3 flex items-center justify-between z-20 shrink-0 border-b border-white/10 bg-black/50 backdrop-blur-md"
+            className="w-full px-4 sm:px-6 py-3 flex items-center justify-between z-20 shrink-0 border-b border-white/10 bg-black/40 backdrop-blur-md"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Left: Compact Counter */}
+            {/* Left: Counter */}
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-white/90 bg-white/10 px-2.5 py-1 rounded-full border border-white/10 tracking-wider">
                 {activeLightboxIndex! + 1} / {filteredItems.length}
               </span>
               {currentLightboxItem.mediaType === 'video' ? (
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-300 font-medium">
-                  🎬 VIDEO
+                  VIDEO
                 </span>
-              ) : (
-                <span className="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-white/60">
-                  FOTO
-                </span>
-              )}
+              ) : null}
             </div>
 
-            {/* Center: Title preview on tablet & desktop */}
+            {/* Center: Title preview */}
             <div className="hidden sm:block text-center truncate max-w-sm px-2">
               <h4 className="font-serif italic text-base text-white truncate">
                 {currentLightboxItem.title}
               </h4>
             </div>
 
-            {/* Right: Actions (Full Gallery switch if from landing, plus clean Close Button) */}
+            {/* Right: Actions */}
             <div className="flex items-center gap-2">
               {origin === 'landing' && (
                 <button
                   type="button"
                   onClick={handleSwitchToFullGallery}
                   className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 text-xs font-mono text-white/80 transition-all cursor-pointer"
-                  title="Lihat seluruh koleksi di galeri pop-up"
                 >
                   <span>Buka Galeri Penuh</span>
                   <span>↗</span>
                 </button>
               )}
 
-              {/* Clean Circular Close Button: dynamically closes back to landing or back to gallery */}
+              {/* Close Button: closes back to sheet or back to landing */}
               <button
                 type="button"
                 onClick={handleCloseLightbox}
@@ -509,12 +507,12 @@ export function GalleryModal({
             </div>
           </div>
 
-          {/* Lightbox Main Stage (With Touch Swipe Support) */}
+          {/* Lightbox Main Stage */}
           <div
             className="relative flex-1 flex items-center justify-center p-3 sm:p-8 overflow-hidden touch-pan-y"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            onTouchStart={handleLightboxTouchStart}
+            onTouchMove={handleLightboxTouchMove}
+            onTouchEnd={handleLightboxTouchEnd}
           >
             {/* Prev Button */}
             {filteredItems.length > 1 && (
@@ -546,14 +544,14 @@ export function GalleryModal({
                   controls
                   autoPlay
                   playsInline
-                  className="max-w-full max-h-[75vh] rounded-lg shadow-2xl object-contain"
+                  className="max-w-full max-h-[75vh] rounded-xl shadow-2xl object-contain"
                 />
               ) : (
                 <div className="relative w-full h-full flex items-center justify-center">
                   <img
                     src={currentLightboxItem.src}
                     alt={currentLightboxItem.title}
-                    className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl"
+                    className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-2xl"
                   />
                 </div>
               )}
@@ -585,7 +583,7 @@ export function GalleryModal({
             <h4 className="font-serif italic text-base sm:text-xl text-white truncate max-w-xl mx-auto">
               {currentLightboxItem.title}
             </h4>
-            <div className="flex items-center justify-center gap-2 sm:gap-3 text-[11px] font-mono text-white/50 mt-0.5">
+            <div className="flex items-center justify-center gap-2 text-[11px] font-mono text-white/50 mt-0.5">
               <span>{currentLightboxItem.label}</span>
               {currentLightboxItem.category && (
                 <>
@@ -595,7 +593,6 @@ export function GalleryModal({
               )}
             </div>
 
-            {/* If opened from landing page, offer quick link to switch to full gallery */}
             {origin === 'landing' && (
               <div className="mt-2">
                 <button
@@ -611,6 +608,6 @@ export function GalleryModal({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

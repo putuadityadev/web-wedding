@@ -43,12 +43,12 @@ export function SplashCursor({
       if (typeof document === 'undefined') return { r: 0.25, g: 0.42, b: 0.58 };
 
       const el = document.elementFromPoint(clientX, clientY);
-      const target = el?.closest('#event, #footer, #cover, #hero');
+      const target = el?.closest('#event, #footer, #hero');
 
       if (target) {
-        // On baby-blue or dark video sections (#event, #footer, #cover, #hero):
+        // On baby-blue or dark video sections (#event, #footer, #hero):
         // Soft matte pearl white silk (natural warm undertone, no harsh flash)
-        return { r: 0.88, g: 0.90, b: 0.94 };
+        return { r: 0.92, g: 0.94, b: 0.98 };
       }
 
       // On white / paper backgrounds (#quote, #couple, #story, #gallery, #gift, #rsvp, #wishes):
@@ -158,13 +158,21 @@ export function SplashCursor({
         formatR = getSupportedFormat(glCtx, glCtx.RGBA, glCtx.RGBA, halfFloatTexType);
       }
 
+      let resolvedTexType = halfFloatTexType;
+      if (!formatRGBA) {
+        resolvedTexType = glCtx.UNSIGNED_BYTE;
+        formatRGBA = { internalFormat: glCtx.RGBA, format: glCtx.RGBA };
+        formatRG = { internalFormat: glCtx.RGBA, format: glCtx.RGBA };
+        formatR = { internalFormat: glCtx.RGBA, format: glCtx.RGBA };
+      }
+
       return {
         gl: glCtx,
         ext: {
-          formatRGBA: formatRGBA || { internalFormat: glCtx.RGBA, format: glCtx.RGBA },
-          formatRG: formatRG || { internalFormat: glCtx.RGBA, format: glCtx.RGBA },
-          formatR: formatR || { internalFormat: glCtx.RGBA, format: glCtx.RGBA },
-          halfFloatTexType,
+          formatRGBA,
+          formatRG: formatRG || formatRGBA,
+          formatR: formatR || formatRGBA,
+          halfFloatTexType: resolvedTexType,
           supportLinearFiltering: Boolean(supportLinearFiltering),
         },
       };
@@ -365,8 +373,8 @@ export function SplashCursor({
           float maxChannel = max(c.r, max(c.g, c.b));
           vec3 normalizedColor = maxChannel > 0.001 ? (c / maxChannel) : c;
 
-          // Velvet opacity curve: subtle, airy, maxes at ~0.55 for soft quiet luxury
-          float alpha = smoothstep(0.001, 0.32, maxChannel) * 0.55;
+          // Velvet opacity curve: subtle, airy, soft quiet luxury
+          float alpha = smoothstep(0.001, 0.26, maxChannel) * 0.75;
 
           // True premultiplied alpha: (color * alpha, alpha) ensures 0% additive neon glow
           gl_FragColor = vec4(normalizedColor * alpha, alpha);
@@ -731,12 +739,15 @@ export function SplashCursor({
     let isSleeping = false;
     let lastActiveTime = Date.now();
 
-    // Optimize pressure iterations on touch screens to prevent scroll stutter
+    // Optimize configuration on touch / mobile screens to ensure zero memory exhaustion or stutter
     const isTouch =
       typeof window !== 'undefined' &&
-      ('ontouchstart' in window || (navigator && navigator.maxTouchPoints > 0));
+      ('ontouchstart' in window || (navigator && navigator.maxTouchPoints > 0) || window.innerWidth < 768);
     if (isTouch) {
-      config.PRESSURE_ITERATIONS = Math.min(config.PRESSURE_ITERATIONS, 8);
+      config.DYE_RESOLUTION = Math.min(config.DYE_RESOLUTION, 512);
+      config.SIM_RESOLUTION = Math.min(config.SIM_RESOLUTION, 64);
+      config.PRESSURE_ITERATIONS = Math.min(config.PRESSURE_ITERATIONS, 6);
+      config.SHADING = false;
     }
 
     function wakeUp() {
@@ -887,10 +898,10 @@ export function SplashCursor({
     }
 
     function touchSplat(pointer: Pointer) {
-      // Soft, delicate whisper puff when finger touches screen
-      const dx = 3.5 * (Math.random() - 0.5);
-      const dy = 3.5 * (Math.random() - 0.5);
-      splat(pointer.texcoordX, pointer.texcoordY, dx, dy, pointer.color, 0.45);
+      // Ethereal whisper puff when finger touches screen
+      const dx = 8 * (Math.random() - 0.5);
+      const dy = 8 * (Math.random() - 0.5);
+      splat(pointer.texcoordX, pointer.texcoordY, dx, dy, pointer.color, 1.1);
     }
 
     function splat(
@@ -911,8 +922,8 @@ export function SplashCursor({
       blit(velocity.write);
       velocity.swap();
 
-      // Soft injection factor for matte, non-glowing fluid simulation
-      const INJECTION = 0.09 * intensityMultiplier;
+      // Rich, visible injection factor for quiet luxury fluid
+      const INJECTION = 0.20 * intensityMultiplier;
       gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
       gl.uniform3f(splatProgram.uniforms.color, color.r * INJECTION, color.g * INJECTION, color.b * INJECTION);
       blit(dye.write);
@@ -975,7 +986,7 @@ export function SplashCursor({
     }
 
     function scaleByPixelRatio(input: number) {
-      const pixelRatio = window.devicePixelRatio || 1;
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, isTouch ? 1.5 : 2.0);
       return Math.floor(input * pixelRatio);
     }
 
@@ -1051,9 +1062,9 @@ export function SplashCursor({
       const posX = scaleByPixelRatio(touch.clientX);
       const posY = scaleByPixelRatio(touch.clientY);
       const targetColor = getFluidColor(touch.clientX, touch.clientY);
-      currentColor.r += (targetColor.r - currentColor.r) * 0.12;
-      currentColor.g += (targetColor.g - currentColor.g) * 0.12;
-      currentColor.b += (targetColor.b - currentColor.b) * 0.12;
+      currentColor.r += (targetColor.r - currentColor.r) * 0.15;
+      currentColor.g += (targetColor.g - currentColor.g) * 0.15;
+      currentColor.b += (targetColor.b - currentColor.b) * 0.15;
 
       pointer.prevTexcoordX = pointer.texcoordX;
       pointer.prevTexcoordY = pointer.texcoordY;
@@ -1064,15 +1075,15 @@ export function SplashCursor({
       let dy = correctDeltaY(pointer.texcoordY - pointer.prevTexcoordY);
 
       // Clamp touch movement so rapid page swipes don't blast giant clouds of smoke
-      const MAX_TOUCH_DELTA = 0.025;
+      const MAX_TOUCH_DELTA = 0.04;
       dx = Math.max(-MAX_TOUCH_DELTA, Math.min(MAX_TOUCH_DELTA, dx));
       dy = Math.max(-MAX_TOUCH_DELTA, Math.min(MAX_TOUCH_DELTA, dy));
 
-      // Minimum movement threshold prevents accumulation when user holds finger still without moving
+      // Minimum movement threshold
       const dist = Math.hypot(dx, dy);
-      if (dist > 0.001) {
-        pointer.deltaX = dx * 0.38; // Delicate, whisper-thin trail on touch
-        pointer.deltaY = dy * 0.38;
+      if (dist > 0.0008) {
+        pointer.deltaX = dx * 0.65;
+        pointer.deltaY = dy * 0.65;
         pointer.moved = true;
       } else {
         pointer.deltaX = 0;
@@ -1090,12 +1101,46 @@ export function SplashCursor({
       pointer.deltaY = 0;
     }
 
+    function handleFluidBurst(e: Event) {
+      wakeUp();
+      const ce = e as CustomEvent<{ x?: number; y?: number }>;
+      const cx = ce.detail?.x ?? window.innerWidth / 2;
+      const cy = ce.detail?.y ?? window.innerHeight / 2;
+      const pointer = pointers[0];
+      const posX = scaleByPixelRatio(cx);
+      const posY = scaleByPixelRatio(cy);
+      const targetColor = getFluidColor(cx, cy);
+      pointer.color = targetColor;
+      pointer.texcoordX = posX / canvas!.width;
+      pointer.texcoordY = 1.0 - posY / canvas!.height;
+
+      for (let i = 0; i < 4; i++) {
+        setTimeout(() => {
+          if (!isActive) return;
+          wakeUp();
+          const angle = (i / 4) * Math.PI * 2 + Math.random() * 0.5;
+          const force = 14 + Math.random() * 10;
+          const dx = Math.cos(angle) * force;
+          const dy = Math.sin(angle) * force;
+          splat(
+            pointer.texcoordX + (Math.random() - 0.5) * 0.04,
+            pointer.texcoordY + (Math.random() - 0.5) * 0.04,
+            dx,
+            dy,
+            targetColor,
+            1.4
+          );
+        }, i * 40);
+      }
+    }
+
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('touchend', handleTouchEnd, { passive: true });
     window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    window.addEventListener('fluid-burst', handleFluidBurst);
 
     updateFrame();
 
@@ -1113,6 +1158,7 @@ export function SplashCursor({
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
+      window.removeEventListener('fluid-burst', handleFluidBurst);
     };
   }, [
     SIM_RESOLUTION,
@@ -1130,7 +1176,7 @@ export function SplashCursor({
 
   return (
     <div
-      className="fixed inset-0 pointer-events-none z-30 overflow-hidden"
+      className="fixed inset-0 pointer-events-none z-[35] overflow-hidden"
       style={{
         width: '100vw',
         height: '100vh',

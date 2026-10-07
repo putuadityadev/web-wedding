@@ -125,7 +125,6 @@ export function Hero({
           {
             y: -40,
             opacity: 0,
-            filter: 'blur(4px)',
             ease: 'none',
           },
           0

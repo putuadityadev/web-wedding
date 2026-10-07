@@ -81,20 +81,18 @@ export function Gallery({
           },
         });
 
-        // Awwwards-style individual card blur & scale entry using containerAnimation
+        // Awwwards-style individual card scale & opacity entry using containerAnimation (smooth GPU compositing)
         cardsRef.current.forEach((card) => {
           if (!card) return;
 
           gsap.fromTo(
             card,
             {
-              filter: 'blur(14px)',
-              opacity: 0.25,
-              scale: 0.9,
-              y: 20,
+              opacity: 0.35,
+              scale: 0.93,
+              y: 16,
             },
             {
-              filter: 'blur(0px)',
               opacity: 1,
               scale: 1,
               y: 0,
@@ -207,31 +205,25 @@ export function Gallery({
                 cardsRef.current[primaryItems.length] = el;
               }}
               onClick={handleOpenAll}
-              className="flex-none w-[270px] sm:w-[320px] md:w-[380px] flex flex-col justify-center items-center text-center cursor-pointer group will-change-[transform,filter,opacity] translate-y-2 sm:translate-y-4"
+              className="flex-none w-[260px] sm:w-[300px] md:w-[340px] flex flex-col justify-center items-center text-center cursor-pointer group will-change-[transform,opacity] translate-y-2 sm:translate-y-4"
             >
-              <div className="w-full aspect-[4/5] rounded-[var(--radius-sm)] border-2 border-dashed border-[var(--deep)]/25 group-hover:border-[var(--deep)]/60 bg-[var(--mist)]/40 hover:bg-[var(--mist)]/80 transition-all duration-500 p-8 flex flex-col items-center justify-center relative shadow-sm group-hover:shadow-xl overflow-hidden">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[var(--baby-blue)]/15 group-hover:scale-110 transition-transform duration-500 flex items-center justify-center mb-5 sm:mb-6">
-                  <span className="text-2xl sm:text-3xl text-[var(--deep)] group-hover:rotate-45 transition-transform duration-500">
-                    ✦
-                  </span>
+              <div className="w-full aspect-[4/5] rounded-2xl border border-[var(--ink)]/15 group-hover:border-[var(--deep)]/40 bg-white/80 backdrop-blur-md hover:bg-white transition-all duration-300 p-8 flex flex-col items-center justify-center relative shadow-[0_4px_20px_rgba(15,27,45,0.03)] group-hover:shadow-[0_8px_32px_rgba(15,27,45,0.08)] overflow-hidden">
+                <div className="w-14 h-14 rounded-full bg-[var(--mist)] text-[var(--deep)] group-hover:scale-110 group-hover:bg-[var(--deep)] group-hover:text-white transition-all duration-300 flex items-center justify-center mb-5 shadow-xs">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
                 </div>
-                <span className="label-eyebrow text-[var(--deep)] tracking-[0.25em] text-[10px] sm:text-[11px] mb-2 uppercase font-mono">
-                  KOLEKSI LENGKAP
-                </span>
-                <h4 className="font-serif italic text-2xl sm:text-3xl text-[var(--ink)] mb-3 leading-snug">
-                  Lihat Seluruh Momen
+                <h4 className="font-serif text-2xl sm:text-3xl text-[var(--ink)] mb-1.5 font-normal">
+                  Lihat Semua Foto
                 </h4>
-                <p className="text-xs font-mono text-[var(--ink)]/60 max-w-[220px] mb-6">
-                  {items.length} foto &amp; video kenangan kami
+                <p className="text-xs font-mono text-[var(--ink)]/60 mb-6">
+                  {items.length} Dokumentasi Momen
                 </p>
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--deep)] text-white text-xs font-mono tracking-wider shadow-sm group-hover:scale-105 transition-transform">
+                <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--deep)] text-white text-xs font-mono tracking-wider shadow-sm group-hover:bg-[#34587c] group-hover:scale-105 transition-all">
                   <span>Buka Galeri</span>
                   <span>↗</span>
-                </span>
-              </div>
-              <div className="pt-2">
-                <span className="label-eyebrow text-[var(--ink)] opacity-40 text-[10px] tracking-[0.18em]">
-                  POP-UP GALLERY
                 </span>
               </div>
             </div>
