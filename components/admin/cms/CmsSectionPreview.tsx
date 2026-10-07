@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { SiteContent } from '@/lib/content/types';
+import { WhatsAppBubblePreview } from './WhatsAppBubblePreview';
 
 interface CmsSectionPreviewProps {
   section: keyof SiteContent;
@@ -13,6 +14,35 @@ export function CmsSectionPreview({ section, content }: CmsSectionPreviewProps) 
   const [deviceMode, setDeviceMode] = useState<'mobile' | 'desktop'>('mobile');
   const [coverOpen, setCoverOpen] = useState(section !== 'cover');
   const [isIframeLoaded, setIsIframeLoaded] = useState(false);
+
+  // If viewing branding section, display the dedicated WhatsApp bubble preview
+  if (section === 'branding') {
+    return (
+      <div className="flex flex-col items-center w-full">
+        {/* Frame Top Toolbar */}
+        <div className="w-full flex items-center justify-between mb-3 px-1 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[10px] tracking-wider uppercase bg-[#008069] text-white px-2.5 py-1 rounded-sm font-semibold">
+              PREVIEW WHATSAPP SHARE
+            </span>
+            <span className="text-[11px] font-mono text-[#0F1B2D]/60 hidden sm:inline">
+              🏷️ LIVE BUBBLE CHAT
+            </span>
+          </div>
+
+          <div className="text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Sinkron Otomatis</span>
+          </div>
+        </div>
+
+        {/* Real-time WhatsApp Bubble Container */}
+        <div className="w-full max-w-[420px] mx-auto shadow-xl rounded-2xl overflow-hidden border border-[#0F1B2D]/15">
+          <WhatsAppBubblePreview content={content} />
+        </div>
+      </div>
+    );
+  }
 
   // Sync content updates into the iframe via postMessage on every change
   useEffect(() => {

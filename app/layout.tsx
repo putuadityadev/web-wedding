@@ -17,23 +17,55 @@ const hankenGrotesk = Hanken_Grotesk({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: 'Dharma & Lutfhy — Pernikahan Suci',
-  description: 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.',
-  icons: {
-    icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
-    ],
-    apple: [
-      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
-    ],
-  },
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+import { getSiteContent } from '@/lib/content/service';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getSiteContent();
+  const branding = content.branding;
+
+  const title = branding?.siteTitle || 'Dharma & Lutfhy — Pernikahan Suci';
+  const description =
+    branding?.siteDescription ||
+    'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.';
+  const ogImageUrl = branding?.ogImage || '/apple-icon.png';
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: branding?.ogImageAlt || title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImageUrl],
+    },
+    icons: {
+      icon: [
+        { url: '/icon.svg', type: 'image/svg+xml' },
+        { url: '/favicon.ico', sizes: 'any' },
+      ],
+      apple: [
+        { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+      ],
+    },
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: 'device-width',

@@ -369,6 +369,14 @@ insert into site_content (section_key, data) values
 ('audio', '{
   "musicUrl": "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=piano-moment-9835.mp3",
   "title": "Adagio in Blue — Instrumental"
+}'::jsonb),
+
+('branding', '{
+  "siteTitle": "Dharma & Lutfhy — Pernikahan Suci",
+  "siteDescription": "Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.",
+  "ogImage": "/apple-icon.png",
+  "ogImageAlt": "Pernikahan Dharma & Lutfhy",
+  "whatsappShareText": "Halo {nama_tamu}, dengan sukacita dan penuh syukur kami mengundang Anda ke pernikahan Dharma & Lutfhy.\\n\\nDetail acara, denah lokasi, dan konfirmasi kehadiran dapat diakses melalui tautan personal Anda:\\n{link_undangan}\\n\\nSalam hangat,\\nDharma & Lutfhy"
 }'::jsonb)
 on conflict (section_key) do update set
   data = excluded.data,

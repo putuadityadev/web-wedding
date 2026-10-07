@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Invitation } from '@/components/invitation/Invitation';
 import { getSiteContent } from '@/lib/content/service';
@@ -9,6 +10,51 @@ export const dynamic = 'force-dynamic';
 interface PageProps {
   params: Promise<{ token: string }>;
   searchParams?: Promise<{ preview?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  try {
+    const { token } = await params;
+    const siteContent = await getSiteContent();
+    const branding = siteContent.branding;
+    const guestRow = await getGuestByToken(token);
+
+    const title = branding?.siteTitle || 'Dharma & Lutfhy — Pernikahan Suci';
+    const description = guestRow
+      ? `Undangan pernikahan teruntuk ${guestRow.salutation ? guestRow.salutation + ' ' : ''}${guestRow.name}. ${branding?.siteDescription || ''}`.trim()
+      : (branding?.siteDescription || 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.');
+
+    const imageUrl = branding?.ogImage || '/apple-icon.png';
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        images: [
+          {
+            url: imageUrl,
+            width: 1200,
+            height: 630,
+            alt: branding?.ogImageAlt || title,
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [imageUrl],
+      },
+    };
+  } catch {
+    return {
+      title: 'Dharma & Lutfhy — Pernikahan Suci',
+      description: 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.',
+    };
+  }
 }
 
 export default async function PersonalInvitationPage({

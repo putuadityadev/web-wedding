@@ -10,6 +10,7 @@ import { HeroSlideshowModal } from './HeroSlideshowModal';
 
 interface CmsContentEditorProps {
   initialContent: SiteContent;
+  initialTab?: keyof SiteContent;
 }
 
 const TABS: { id: keyof SiteContent; label: string; icon: string }[] = [
@@ -23,13 +24,29 @@ const TABS: { id: keyof SiteContent; label: string; icon: string }[] = [
   { id: 'gift', label: 'Tanda Kasih (Bank)', icon: '🎁' },
   { id: 'footer', label: 'Penutup (Footer)', icon: '🌿' },
   { id: 'audio', label: 'Musik Latar', icon: '🎵' },
+  { id: 'branding', label: 'Branding & Meta WA', icon: '🏷️' },
 ];
 
-export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
+export function CmsContentEditor({ initialContent, initialTab = 'cover' }: CmsContentEditorProps) {
   const router = useRouter();
-  const [content, setContent] = useState<SiteContent>(initialContent);
-  const [savedContent, setSavedContent] = useState<SiteContent>(initialContent);
-  const [activeTab, setActiveTab] = useState<keyof SiteContent>('cover');
+  const [content, setContent] = useState<SiteContent>({
+    ...DEFAULT_SITE_CONTENT,
+    ...initialContent,
+    branding: initialContent.branding || DEFAULT_SITE_CONTENT.branding,
+  });
+  const [savedContent, setSavedContent] = useState<SiteContent>({
+    ...DEFAULT_SITE_CONTENT,
+    ...initialContent,
+    branding: initialContent.branding || DEFAULT_SITE_CONTENT.branding,
+  });
+  const [activeTab, setActiveTab] = useState<keyof SiteContent>(initialTab);
+
+  React.useEffect(() => {
+    if (initialTab && TABS.some((t) => t.id === initialTab)) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
   const [mobileMode, setMobileMode] = useState<'editor' | 'preview'>('editor');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -2734,6 +2751,208 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                     />
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* 11. BRANDING & META WA FORM */}
+            {activeTab === 'branding' && (
+              <div className="space-y-6">
+                {/* Intro banner */}
+                <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200/80 text-emerald-950 text-xs">
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-base leading-none">💬</span>
+                    <div>
+                      <p className="font-semibold text-emerald-900">
+                        Pengaturan Tampilan Link WhatsApp &amp; OpenGraph
+                      </p>
+                      <p className="text-[11px] text-emerald-800/90 mt-0.5 leading-relaxed">
+                        Atur gambar thumbnail, judul, dan ringkasan teks yang muncul otomatis ketika tautan undangan dibagikan di WhatsApp. Tampilan langsung tersinkronisasi di preview sebelah kanan.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 1. Judul Meta Preview WA */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 font-medium">
+                      Judul Preview WhatsApp (Meta Title)
+                    </label>
+                    <span className="text-[10px] font-mono text-[#0F1B2D]/50">
+                      {(content.branding?.siteTitle || '').length} karakter (optimal: 40–60)
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={content.branding?.siteTitle ?? ''}
+                    placeholder="Dharma & Lutfhy — Pernikahan Suci"
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        branding: {
+                          ...(content.branding || DEFAULT_SITE_CONTENT.branding),
+                          siteTitle: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                  />
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Teks judul tebal di dalam kartu tautan WhatsApp atau saat dibagikan ke media sosial.
+                  </p>
+                </div>
+
+                {/* 2. Deskripsi Meta Preview WA */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 font-medium">
+                      Deskripsi Ringkas Preview (Meta Description)
+                    </label>
+                    <span className="text-[10px] font-mono text-[#0F1B2D]/50">
+                      {(content.branding?.siteDescription || '').length} karakter (optimal: 70–140)
+                    </span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={content.branding?.siteDescription ?? ''}
+                    placeholder="Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo."
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        branding: {
+                          ...(content.branding || DEFAULT_SITE_CONTENT.branding),
+                          siteDescription: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                  />
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Ringkasan teks di bawah judul pada preview bubble chat WhatsApp.
+                  </p>
+                </div>
+
+                {/* 3. Thumbnail / OG Image with Gallery Picker */}
+                <div className="border-t border-[#0F1B2D]/10 pt-4">
+                  <ImageUploadField
+                    label="Gambar Thumbnail / OpenGraph Banner WA"
+                    value={content.branding?.ogImage ?? ''}
+                    folder="og"
+                    hint="Pilih foto langsung dari Galeri Foto acara atau upload baru. Thumbnail ini akan tampil di samping judul pada WhatsApp preview."
+                    onChange={(url) =>
+                      setContent({
+                        ...content,
+                        branding: {
+                          ...(content.branding || DEFAULT_SITE_CONTENT.branding),
+                          ogImage: url,
+                        },
+                      })
+                    }
+                  />
+
+                  {/* Manual URL field */}
+                  <div className="mt-3">
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      URL Thumbnail (Manual / Fallback)
+                    </label>
+                    <input
+                      type="text"
+                      value={content.branding?.ogImage ?? ''}
+                      placeholder="/apple-icon.png atau https://..."
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          branding: {
+                            ...(content.branding || DEFAULT_SITE_CONTENT.branding),
+                            ogImage: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 font-mono text-[11px] focus:outline-none focus:border-[#0F1B2D]"
+                    />
+                  </div>
+
+                  <div className="mt-3">
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Alt Teks Gambar (Aksesibilitas)
+                    </label>
+                    <input
+                      type="text"
+                      value={content.branding?.ogImageAlt ?? ''}
+                      placeholder="Pernikahan Dharma & Lutfhy"
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          branding: {
+                            ...(content.branding || DEFAULT_SITE_CONTENT.branding),
+                            ogImageAlt: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                    />
+                  </div>
+                </div>
+
+                {/* 4. WhatsApp Share Message Template */}
+                <div className="border-t border-[#0F1B2D]/10 pt-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/70 font-medium">
+                      Template Pesan Teks WhatsApp
+                    </label>
+                    <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Variabel Dinamis Tersedia
+                    </span>
+                  </div>
+                  <textarea
+                    rows={6}
+                    value={content.branding?.whatsappShareText ?? ''}
+                    placeholder={`Halo {nama_tamu}, dengan sukacita dan penuh syukur kami mengundang Anda ke pernikahan {mempelai}.\n\nDetail acara dan konfirmasi kehadiran dapat diakses melalui:\n{link_undangan}\n\nSalam hangat,\n{mempelai}`}
+                    onChange={(e) =>
+                      setContent({
+                        ...content,
+                        branding: {
+                          ...(content.branding || DEFAULT_SITE_CONTENT.branding),
+                          whatsappShareText: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 font-sans leading-relaxed focus:outline-none focus:border-[#0F1B2D]"
+                  />
+
+                  {/* Variable Pills for Quick Insertion */}
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] text-[#0F1B2D]/60 mr-1">Sisipkan:</span>
+                    {[
+                      { key: '{nama_tamu}', desc: 'Nama Tamu' },
+                      { key: '{mempelai}', desc: 'Nama Mempelai' },
+                      { key: '{link_undangan}', desc: 'Link Undangan Unik' },
+                    ].map((pill) => (
+                      <button
+                        key={pill.key}
+                        type="button"
+                        onClick={() => {
+                          const currentText = content.branding?.whatsappShareText || '';
+                          setContent({
+                            ...content,
+                            branding: {
+                              ...(content.branding || DEFAULT_SITE_CONTENT.branding),
+                              whatsappShareText: currentText ? `${currentText} ${pill.key}` : pill.key,
+                            },
+                          });
+                        }}
+                        className="px-2 py-0.5 rounded text-[10px] font-mono bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 transition-colors cursor-pointer"
+                        title={`Klik untuk menambahkan ${pill.key}`}
+                      >
+                        + {pill.key}
+                      </button>
+                    ))}
+                  </div>
+
+                  <p className="text-[10px] text-stone-400 mt-2 leading-relaxed">
+                    Format pesan ini akan tampil bersama preview link di WhatsApp. Variabel seperti <code>{'{nama_tamu}'}</code> dan <code>{'{link_undangan}'}</code> akan otomatis terisi data personal tiap tamu.
+                  </p>
+                </div>
               </div>
             )}
           </div>

@@ -162,6 +162,14 @@ export interface AudioContent {
   title: string;
 }
 
+export interface BrandingContent {
+  siteTitle: string;
+  siteDescription: string;
+  ogImage: string;
+  ogImageAlt?: string;
+  whatsappShareText?: string;
+}
+
 export interface SiteContent {
   cover: CoverContent;
   hero: HeroContent;
@@ -174,6 +182,7 @@ export interface SiteContent {
   gift: GiftContent;
   footer: FooterContent;
   audio: AudioContent;
+  branding: BrandingContent;
 }
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
@@ -441,5 +450,12 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   audio: {
     musicUrl: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=piano-moment-9835.mp3',
     title: 'Adagio in Blue — Instrumental',
+  },
+  branding: {
+    siteTitle: 'Dharma & Lutfhy — Pernikahan Suci',
+    siteDescription: 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.',
+    ogImage: '/apple-icon.png',
+    ogImageAlt: 'Pernikahan Dharma & Lutfhy',
+    whatsappShareText: 'Halo {nama_tamu}, dengan sukacita dan penuh syukur kami mengundang Anda ke pernikahan Dharma & Lutfhy.\n\nDetail acara, denah lokasi, dan konfirmasi kehadiran dapat diakses melalui tautan personal Anda:\n{link_undangan}\n\nSalam hangat,\nDharma & Lutfhy',
   },
 };

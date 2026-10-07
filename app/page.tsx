@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { getMockGuestView } from '@/lib/guests/mock';
 import { Invitation } from '@/components/invitation/Invitation';
 import { Tone } from '@/lib/guests/view';
@@ -12,6 +13,42 @@ interface PageProps {
     preview?: string;
   }>;
 }
+
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getSiteContent();
+  const branding = content.branding;
+
+  const title = branding?.siteTitle || 'Dharma & Lutfhy — Pernikahan Suci';
+  const description =
+    branding?.siteDescription ||
+    'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.';
+  const imageUrl = branding?.ogImage || '/apple-icon.png';
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: branding?.ogImageAlt || title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [imageUrl],
+    },
+  };
+}
+
 
 export default async function HomePage({ searchParams }: PageProps) {
   const sp = await searchParams;

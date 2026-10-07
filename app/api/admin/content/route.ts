@@ -16,26 +16,64 @@ export async function GET() {
   }
 }
 
+const ALLOWED_SECTIONS: (keyof SiteContent)[] = [
+  'cover',
+  'hero',
+  'quote',
+  'prayer',
+  'couple',
+  'story',
+  'event',
+  'gallery',
+  'gift',
+  'footer',
+  'audio',
+  'branding',
+];
+
 export async function PUT(request: Request) {
   try {
     const admin = await requireAdmin();
-    const body = await request.json();
 
-    const { section, data } = body as {
-      section: keyof SiteContent;
-      data: unknown;
-    };
-
-    if (!section || !data) {
+    let body: { section?: keyof SiteContent; data?: unknown };
+    try {
+      body = await request.json();
+    } catch {
       return NextResponse.json(
-        { ok: false, error: 'Section dan data harus diisi' },
+        { ok: false, error: 'Format JSON body tidak valid' },
         { status: 400 }
       );
     }
 
-    const result = await updateSectionContent(section, data, admin.email);
+    const { section, data } = body;
+
+    if (!section || typeof section !== 'string') {
+      return NextResponse.json(
+        { ok: false, error: 'Nama section wajib disertakan' },
+        { status: 400 }
+      );
+    }
+
+    if (!ALLOWED_SECTIONS.includes(section as keyof SiteContent)) {
+      return NextResponse.json(
+        { ok: false, error: `Section "${section}" tidak dikenal dalam sistem` },
+        { status: 400 }
+      );
+    }
+
+    if (data === undefined || data === null || typeof data !== 'object') {
+      return NextResponse.json(
+        { ok: false, error: 'Data konten untuk section ini wajib berupa objek data valid' },
+        { status: 400 }
+      );
+    }
+
+    const result = await updateSectionContent(section as keyof SiteContent, data, admin.email);
     if (!result.ok) {
-      return NextResponse.json({ ok: false, error: result.error }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: result.error || 'Terjadi kegagalan saat memperbarui data di database' },
+        { status: 500 }
+      );
     }
 
     // Immediately revalidate public and preview pages so edits reflect seamlessly
@@ -50,9 +88,10 @@ export async function PUT(request: Request) {
       console.warn('[CMS] Revalidation warning:', revalErr);
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, message: `Section "${section}" berhasil diperbarui` });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Gagal menyimpan konten';
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    const status = message.toLowerCase().includes('unauthorized') || message.toLowerCase().includes('sesi') ? 401 : 500;
+    return NextResponse.json({ ok: false, error: message }, { status });
   }
 }
