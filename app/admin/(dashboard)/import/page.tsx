@@ -380,7 +380,7 @@ export default function AdminImportPage() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#0F1B2D]/10 bg-[#F9FAFB] text-[#0F1B2D]/60 font-mono text-[10px] uppercase sticky top-0">
-                  <th className="py-2.5 px-3">#</th>
+                  <th className="py-2.5 px-3 text-center w-12 font-normal">No.</th>
                   <th className="py-2.5 px-3">Nama</th>
                   <th className="py-2.5 px-3">No. WhatsApp</th>
                   <th className="py-2.5 px-3">Sapaan</th>
@@ -401,7 +401,7 @@ export default function AdminImportPage() {
 
                   return (
                     <tr key={idx} className="hover:bg-[#F9FAFB]/70">
-                      <td className="py-2 px-3 font-mono text-[#0F1B2D]/40 text-[11px]">{idx + 1}</td>
+                      <td className="py-2 px-3 text-center font-mono text-[#0F1B2D]/40 text-[11px] select-none">{idx + 1}</td>
                       <td className="py-2 px-3 font-medium text-[#0F1B2D]">
                         {name ? name : <span className="text-red-500 italic">(Nama kosong)</span>}
                       </td>

@@ -30,6 +30,7 @@ export function GuestManager() {
 
   const [search, setSearch] = useState('');
   const [filterGroup, setFilterGroup] = useState('ALL');
+  const [filterSalutation, setFilterSalutation] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterPhone, setFilterPhone] = useState<'ALL' | 'NO_PHONE' | 'HAS_PHONE'>('ALL');
 
@@ -41,6 +42,16 @@ export function GuestManager() {
   const [editingGuest, setEditingGuest] = useState<GuestItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [toastMsg, setToastMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Extract unique salutations from guests
+  const salutations = React.useMemo(() => {
+    const set = new Set<string>();
+    guests.forEach((g) => {
+      const sal = g.salutation?.trim();
+      if (sal) set.add(sal);
+    });
+    return Array.from(set).sort();
+  }, [guests]);
 
   // Add form state
   const [form, setForm] = useState({
@@ -247,6 +258,8 @@ export function GuestManager() {
       g.token.toLowerCase().includes(search.toLowerCase());
 
     const matchGroup = filterGroup === 'ALL' || g.groupLabel === filterGroup;
+    const matchSalutation =
+      filterSalutation === 'ALL' || (g.salutation?.trim() || '') === filterSalutation;
     const matchStatus = filterStatus === 'ALL' || g.status === filterStatus;
 
     let matchPhone = true;
@@ -256,7 +269,7 @@ export function GuestManager() {
       matchPhone = Boolean(g.phone);
     }
 
-    return matchSearch && matchGroup && matchStatus && matchPhone;
+    return matchSearch && matchGroup && matchSalutation && matchStatus && matchPhone;
   });
 
   return (
@@ -304,10 +317,11 @@ export function GuestManager() {
             className="px-3.5 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] w-full sm:w-64"
           />
 
+          {/* Filter by Group */}
           <select
             value={filterGroup}
             onChange={(e) => setFilterGroup(e.target.value)}
-            className="px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none bg-white"
+            className="px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none bg-white font-medium"
           >
             <option value="ALL">Semua Grup ({guests.length})</option>
             {groups.map((grp) => (
@@ -317,6 +331,28 @@ export function GuestManager() {
             ))}
           </select>
 
+          {/* Filter by Salutation (Sapaan) */}
+          <select
+            value={filterSalutation}
+            onChange={(e) => setFilterSalutation(e.target.value)}
+            className={`px-3 py-2 rounded text-xs border focus:outline-none bg-white font-medium ${
+              filterSalutation !== 'ALL'
+                ? 'border-indigo-400 text-indigo-900 bg-indigo-50/40'
+                : 'border-[#0F1B2D]/20 text-[#0F1B2D]'
+            }`}
+          >
+            <option value="ALL">Semua Sapaan ({guests.length})</option>
+            {salutations.map((sal) => {
+              const count = guests.filter((g) => (g.salutation?.trim() || '') === sal).length;
+              return (
+                <option key={sal} value={sal}>
+                  {sal} ({count})
+                </option>
+              );
+            })}
+          </select>
+
+          {/* Filter by RSVP Status */}
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -328,6 +364,7 @@ export function GuestManager() {
             <option value="pending">Belum Konfirmasi</option>
           </select>
 
+          {/* Filter by Contact Phone */}
           <select
             value={filterPhone}
             onChange={(e) => setFilterPhone(e.target.value as any)}
@@ -342,16 +379,21 @@ export function GuestManager() {
             <option value="HAS_PHONE">✓ Ada No. HP ({withPhoneCount})</option>
           </select>
 
-          {(search || filterGroup !== 'ALL' || filterStatus !== 'ALL' || filterPhone !== 'ALL') && (
+          {(search ||
+            filterGroup !== 'ALL' ||
+            filterSalutation !== 'ALL' ||
+            filterStatus !== 'ALL' ||
+            filterPhone !== 'ALL') && (
             <button
               type="button"
               onClick={() => {
                 setSearch('');
                 setFilterGroup('ALL');
+                setFilterSalutation('ALL');
                 setFilterStatus('ALL');
                 setFilterPhone('ALL');
               }}
-              className="text-[11px] text-[#0F1B2D]/60 hover:text-[#0F1B2D] underline underline-offset-2"
+              className="text-[11px] text-[#0F1B2D]/60 hover:text-[#0F1B2D] underline underline-offset-2 cursor-pointer"
             >
               Reset Filter
             </button>
@@ -434,6 +476,7 @@ export function GuestManager() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#0F1B2D]/10 bg-[#F9FAFB] text-[#0F1B2D]/60 font-mono text-[10px] uppercase">
+                  <th className="py-3 px-3 font-normal text-center w-12">No.</th>
                   <th className="py-3 px-4 font-normal">Nama & Sapaan</th>
                   <th className="py-3 px-4 font-normal">No. WhatsApp</th>
                   <th className="py-3 px-4 font-normal">Grup</th>
@@ -444,8 +487,13 @@ export function GuestManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#0F1B2D]/5">
-                {filteredGuests.map((guest) => (
+                {filteredGuests.map((guest, idx) => (
                   <tr key={guest.id} className="hover:bg-[#F9FAFB]/80 transition-colors">
+                    {/* Numbering */}
+                    <td className="py-3 px-3 text-center font-mono text-[11px] text-[#0F1B2D]/40 select-none">
+                      {idx + 1}
+                    </td>
+
                     {/* Name */}
                     <td className="py-3 px-4">
                       <div className="font-medium text-[#0F1B2D] text-[13px]">{guest.name}</div>
@@ -636,6 +684,16 @@ export function GuestManager() {
                 ))}
               </tbody>
             </table>
+            <div className="px-4 py-3 bg-[#F9FAFB] border-t border-[#0F1B2D]/10 text-[11px] text-[#0F1B2D]/60 font-mono flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span>
+                Menampilkan <strong>{filteredGuests.length}</strong> dari <strong>{guests.length}</strong> total tamu undangan
+              </span>
+              {filteredGuests.length < guests.length && (
+                <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 self-start sm:self-auto text-[10.5px]">
+                  🔍 Filter aktif ({guests.length - filteredGuests.length} tamu tersembunyi)
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>

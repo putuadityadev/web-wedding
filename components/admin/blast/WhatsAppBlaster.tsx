@@ -48,6 +48,7 @@ export function WhatsAppBlaster() {
   // Filters
   const [search, setSearch] = useState('');
   const [filterGroup, setFilterGroup] = useState('ALL');
+  const [filterSalutation, setFilterSalutation] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'UNSENT' | 'SENT' | 'NO_PHONE'>('ALL');
   const [activeGuestId, setActiveGuestId] = useState<string | null>(null);
 
@@ -180,6 +181,14 @@ export function WhatsAppBlaster() {
     return guests.find((g) => g.id === activeGuestId) || guests[0] || null;
   }, [guests, activeGuestId]);
 
+  // Unique salutations extracted dynamically
+  const salutations = useMemo(() => {
+    const list = guests
+      .map((g) => (g.salutation || '').trim())
+      .filter((s) => Boolean(s));
+    return Array.from(new Set(list)).sort((a, b) => a.localeCompare(b));
+  }, [guests]);
+
   // Filtered guest list
   const filteredGuests = useMemo(() => {
     return guests.filter((g) => {
@@ -190,6 +199,9 @@ export function WhatsAppBlaster() {
 
       const matchGroup = filterGroup === 'ALL' || g.groupLabel === filterGroup;
 
+      const matchSalutation =
+        filterSalutation === 'ALL' || (g.salutation?.trim() || '') === filterSalutation;
+
       let matchStatus = true;
       if (filterStatus === 'UNSENT') {
         matchStatus = Boolean(g.phone) && !g.lastBlastedAt;
@@ -199,9 +211,9 @@ export function WhatsAppBlaster() {
         matchStatus = !g.phone;
       }
 
-      return matchSearch && matchGroup && matchStatus;
+      return matchSearch && matchGroup && matchSalutation && matchStatus;
     });
-  }, [guests, search, filterGroup, filterStatus]);
+  }, [guests, search, filterGroup, filterSalutation, filterStatus]);
 
   // Statistics
   const stats = useMemo(() => {
@@ -748,13 +760,49 @@ export function WhatsAppBlaster() {
               onChange={(e) => setFilterGroup(e.target.value)}
               className="px-2.5 py-1.5 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none bg-white"
             >
-              <option value="ALL">Semua Grup</option>
+              <option value="ALL">Semua Grup ({groups.length})</option>
               {groups.map((grp) => (
                 <option key={grp} value={grp}>
                   {grp}
                 </option>
               ))}
             </select>
+
+            {/* Filter by Salutation (Sapaan) */}
+            <select
+              value={filterSalutation}
+              onChange={(e) => setFilterSalutation(e.target.value)}
+              className={`px-2.5 py-1.5 rounded text-xs border focus:outline-none bg-white font-medium ${
+                filterSalutation !== 'ALL'
+                  ? 'border-indigo-400 text-indigo-900 bg-indigo-50/40'
+                  : 'border-[#0F1B2D]/20 text-[#0F1B2D]'
+              }`}
+            >
+              <option value="ALL">Semua Sapaan ({guests.length})</option>
+              {salutations.map((sal) => {
+                const count = guests.filter((g) => (g.salutation?.trim() || '') === sal).length;
+                return (
+                  <option key={sal} value={sal}>
+                    {sal} ({count})
+                  </option>
+                );
+              })}
+            </select>
+
+            {(search || filterStatus !== 'ALL' || filterGroup !== 'ALL' || filterSalutation !== 'ALL') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  setFilterStatus('ALL');
+                  setFilterGroup('ALL');
+                  setFilterSalutation('ALL');
+                }}
+                className="text-[11px] text-red-600 hover:text-red-800 underline font-mono cursor-pointer ml-auto"
+              >
+                Reset Filter
+              </button>
+            )}
           </div>
 
           {/* Guest List */}
@@ -769,7 +817,7 @@ export function WhatsAppBlaster() {
                 Tidak ada tamu yang cocok dengan filter.
               </div>
             ) : (
-              filteredGuests.map((guest) => {
+              filteredGuests.map((guest, idx) => {
                 const isActive = activeGuest?.id === guest.id;
                 const isSent = Boolean(guest.lastBlastedAt);
 
@@ -785,6 +833,14 @@ export function WhatsAppBlaster() {
                   >
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
+                        <span className="font-mono text-[11px] text-[#0F1B2D]/40 font-semibold min-w-[24px] text-left select-none">
+                          #{idx + 1}
+                        </span>
+                        {guest.salutation && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-[#0F1B2D]/70 font-mono">
+                            {guest.salutation}
+                          </span>
+                        )}
                         <span className="font-medium text-[#0F1B2D] text-xs">{guest.name}</span>
                         {isSent ? (
                           <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -801,7 +857,7 @@ export function WhatsAppBlaster() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 text-[11px] text-[#0F1B2D]/50 font-mono">
+                      <div className="flex items-center gap-3 text-[11px] text-[#0F1B2D]/50 font-mono pl-8 sm:pl-0">
                         <span>{guest.phone || '—'}</span>
                         <span>•</span>
                         <span>{guest.groupLabel}</span>
@@ -894,6 +950,20 @@ export function WhatsAppBlaster() {
                   </div>
                 );
               })
+            )}
+
+            {/* List Footer Summary */}
+            {!loading && filteredGuests.length > 0 && (
+              <div className="p-3 bg-stone-50/80 flex items-center justify-between text-[11px] text-[#0F1B2D]/60 font-mono">
+                <span>
+                  Menampilkan <strong>{filteredGuests.length}</strong> dari <strong>{guests.length}</strong> tamu
+                </span>
+                {filteredGuests.length !== guests.length && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-sans font-medium">
+                    Filter Aktif
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>

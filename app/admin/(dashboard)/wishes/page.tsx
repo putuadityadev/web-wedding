@@ -153,13 +153,16 @@ export default function AdminWishesPage() {
             </p>
           </div>
         ) : (
-          wishes.map((item) => (
+          wishes.map((item, idx) => (
             <div
               key={item.id}
               className="p-5 flex flex-col sm:flex-row justify-between items-start gap-4 hover:bg-[#F9FAFB]/50 transition-colors"
             >
               <div className="space-y-1.5 flex-1">
                 <div className="flex items-center gap-2.5">
+                  <span className="font-mono text-xs font-semibold text-[#0F1B2D]/40 select-none">
+                    #{idx + 1}
+                  </span>
                   <span className="font-serif text-base font-medium text-[#0F1B2D]">
                     {item.name}
                   </span>

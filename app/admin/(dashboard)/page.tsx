@@ -263,6 +263,7 @@ export default async function AdminOverviewPage() {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-[#0F1B2D]/10 text-[#0F1B2D]/50 font-mono text-[10px] uppercase">
+                    <th className="pb-3 font-normal w-10 text-center">No.</th>
                     <th className="pb-3 font-normal">Nama Tamu</th>
                     <th className="pb-3 font-normal">Status</th>
                     <th className="pb-3 font-normal">Pax</th>
@@ -270,8 +271,11 @@ export default async function AdminOverviewPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#0F1B2D]/5">
-                  {stats.recentRsvps.map((rsvp) => (
+                  {stats.recentRsvps.map((rsvp, idx) => (
                     <tr key={rsvp.id} className="hover:bg-[#F9FAFB]">
+                      <td className="py-3.5 text-center font-mono text-[11px] text-[#0F1B2D]/40 select-none">
+                        {idx + 1}
+                      </td>
                       <td className="py-3.5 font-medium text-[#0F1B2D] whitespace-nowrap">
                         {rsvp.guestName}
                       </td>
