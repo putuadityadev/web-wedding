@@ -2472,7 +2472,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
 
             {/* 9. FOOTER FORM */}
             {activeTab === 'footer' && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
                   <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
                     Kalimat Doa Penutup (Closing Line)
@@ -2486,24 +2486,179 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                         footer: { ...content.footer, closingLine: e.target.value },
                       })
                     }
-                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 leading-relaxed"
+                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D] leading-relaxed"
+                    placeholder="Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu."
                   />
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Kalimat permohonan doa restu dan terima kasih kepada para tamu undangan.
+                  </p>
                 </div>
-                <div>
-                  <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
-                    Teks Hak Cipta / Watermark
-                  </label>
-                  <input
-                    type="text"
-                    value={content.footer.copyright}
-                    onChange={(e) =>
-                      setContent({
-                        ...content,
-                        footer: { ...content.footer, copyright: e.target.value },
-                      })
-                    }
-                    className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 font-mono text-[11px]"
-                  />
+
+                <div className="border-t border-[#0F1B2D]/10 pt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-[#0F1B2D]">
+                      Nama Mempelai di Footer (Tanda Tangan &amp; Monogram)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setContent({
+                          ...content,
+                          footer: {
+                            ...content.footer,
+                            groomName: content.hero?.groomName || content.cover?.groomName || '',
+                            brideName: content.hero?.brideName || content.cover?.brideName || '',
+                          },
+                        })
+                      }
+                      className="text-[10px] font-mono text-stone-500 hover:text-[#0F1B2D] underline cursor-pointer"
+                    >
+                      🔄 Samakan dengan Hero Utama
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                        Nama Panggilan Pria (Footer)
+                      </label>
+                      <input
+                        type="text"
+                        value={content.footer.groomName ?? ''}
+                        placeholder={content.hero?.groomName || 'Dharma'}
+                        onChange={(e) =>
+                          setContent({
+                            ...content,
+                            footer: { ...content.footer, groomName: e.target.value },
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                        Nama Panggilan Wanita (Footer)
+                      </label>
+                      <input
+                        type="text"
+                        value={content.footer.brideName ?? ''}
+                        placeholder={content.hero?.brideName || 'Lutfhy'}
+                        onChange={(e) =>
+                          setContent({
+                            ...content,
+                            footer: { ...content.footer, brideName: e.target.value },
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Digunakan untuk inisial monogram seal, tanda tangan penutup, dan watermark raksasa. Kosongkan untuk otomatis mengikuti Hero.
+                  </p>
+                </div>
+
+                <div className="border-t border-[#0F1B2D]/10 pt-4">
+                  <span className="text-xs font-medium text-[#0F1B2D] block mb-2">
+                    Teks Tanda Tangan Keluarga
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                        Label Atas Tanda Tangan
+                      </label>
+                      <input
+                        type="text"
+                        value={content.footer.familyHeading ?? ''}
+                        placeholder="Kami Yang Berbahagia"
+                        onChange={(e) =>
+                          setContent({
+                            ...content,
+                            footer: { ...content.footer, familyHeading: e.target.value },
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                        Keterangan Keluarga Besar
+                      </label>
+                      <input
+                        type="text"
+                        value={content.footer.familySubheading ?? ''}
+                        placeholder="Beserta Keluarga Besar Kedua Mempelai"
+                        onChange={(e) =>
+                          setContent({
+                            ...content,
+                            footer: { ...content.footer, familySubheading: e.target.value },
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-[#0F1B2D]/10 pt-4">
+                  <span className="text-xs font-medium text-[#0F1B2D] block mb-2">
+                    Navigasi &amp; Colophon Bawah
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                        Label Tombol Kembali Ke Atas
+                      </label>
+                      <input
+                        type="text"
+                        value={content.footer.backToTopText ?? ''}
+                        placeholder="KEMBALI KE ATAS"
+                        onChange={(e) =>
+                          setContent({
+                            ...content,
+                            footer: { ...content.footer, backToTopText: e.target.value },
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                        Prefix Editorial Colophon
+                      </label>
+                      <input
+                        type="text"
+                        value={content.footer.colophonPrefix ?? ''}
+                        placeholder="THE WEDDING OF"
+                        onChange={(e) =>
+                          setContent({
+                            ...content,
+                            footer: { ...content.footer, colophonPrefix: e.target.value },
+                          })
+                        }
+                        className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Teks Hak Cipta / Colophon Lokasi &amp; Tahun
+                    </label>
+                    <input
+                      type="text"
+                      value={content.footer.copyright ?? ''}
+                      placeholder="BANGLI, BALI · 2026"
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          footer: { ...content.footer, copyright: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 font-mono text-[11px] focus:outline-none focus:border-[#0F1B2D]"
+                    />
+                    <p className="text-[10px] text-stone-400 mt-1">
+                      Teks copyright atau lokasi dan tahun yang tampil di pojok kanan bawah footer.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

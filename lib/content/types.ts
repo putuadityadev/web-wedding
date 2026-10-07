@@ -145,9 +145,13 @@ export interface GiftContent {
 
 export interface FooterContent {
   closingLine: string;
+  familyHeading?: string;
+  familySubheading?: string;
   groomName: string;
   brideName: string;
   copyright: string;
+  backToTopText?: string;
+  colophonPrefix?: string;
 }
 
 export interface AudioContent {
@@ -423,9 +427,13 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   },
   footer: {
     closingLine: 'Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.',
+    familyHeading: 'Kami Yang Berbahagia',
+    familySubheading: 'Beserta Keluarga Besar Kedua Mempelai',
     groomName: 'Dharma',
     brideName: 'Lutfhy',
     copyright: '© 2026 Dharma & Lutfhy. All Rights Reserved.',
+    backToTopText: 'KEMBALI KE ATAS',
+    colophonPrefix: 'THE WEDDING OF',
   },
   audio: {
     musicUrl: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=piano-moment-9835.mp3',

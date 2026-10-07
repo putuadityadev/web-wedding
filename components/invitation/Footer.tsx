@@ -6,16 +6,32 @@ import { useLenisContext } from '@/lib/motion/lenis';
 
 export interface FooterProps {
   closingLine?: string;
+  familyHeading?: string;
+  familySubheading?: string;
   groomName: string;
   brideName: string;
   copyright?: string;
+  backToTopText?: string;
+  colophonPrefix?: string;
 }
 
-export function Footer({ closingLine, groomName, brideName, copyright }: FooterProps) {
+export function Footer({
+  closingLine,
+  familyHeading,
+  familySubheading,
+  groomName,
+  brideName,
+  copyright,
+  backToTopText,
+  colophonPrefix,
+}: FooterProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bigNameRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const { lenis } = useLenisContext();
+
+  const groomInitial = (groomName || '').trim().charAt(0) || 'D';
+  const brideInitial = (brideName || '').trim().charAt(0) || 'L';
 
   useEffect(() => {
     const container = containerRef.current;
@@ -84,7 +100,7 @@ export function Footer({ closingLine, groomName, brideName, copyright }: FooterP
         <div className="flex items-center justify-center mb-8">
           <div className="w-12 h-12 rounded-full border border-[var(--deep)]/30 flex items-center justify-center bg-white/60 backdrop-blur-sm shadow-xs">
             <span className="font-serif italic text-base text-[var(--deep)] font-semibold tracking-wider">
-              {groomName.charAt(0)} &amp; {brideName.charAt(0)}
+              {groomInitial} &amp; {brideInitial}
             </span>
           </div>
         </div>
@@ -98,14 +114,16 @@ export function Footer({ closingLine, groomName, brideName, copyright }: FooterP
         {/* Signature & Family Acknowledgment */}
         <div className="my-10 flex flex-col items-center">
           <span className="label-eyebrow tracking-[0.28em] text-[10px] text-[var(--deep)] font-medium uppercase mb-2">
-            Kami Yang Berbahagia
+            {familyHeading || 'Kami Yang Berbahagia'}
           </span>
           <div className="font-serif text-3xl sm:text-4xl text-[var(--ink)] font-light tracking-tight my-1">
             {groomName} &amp; {brideName}
           </div>
-          <span className="body-xs text-[var(--ink)] opacity-60 text-xs tracking-wider mt-1">
-            Beserta Keluarga Besar Kedua Mempelai
-          </span>
+          {(familySubheading ?? 'Beserta Keluarga Besar Kedua Mempelai') && (
+            <span className="body-xs text-[var(--ink)] opacity-60 text-xs tracking-wider mt-1">
+              {familySubheading ?? 'Beserta Keluarga Besar Kedua Mempelai'}
+            </span>
+          )}
         </div>
 
         {/* Back to Top Interactive Button */}
@@ -117,7 +135,7 @@ export function Footer({ closingLine, groomName, brideName, copyright }: FooterP
             aria-label="Kembali ke bagian atas halaman"
           >
             <span className="label-eyebrow tracking-[0.22em] text-[10px] font-semibold">
-              KEMBALI KE ATAS
+              {backToTopText || 'KEMBALI KE ATAS'}
             </span>
             <svg
               className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-translate-y-0.5"
@@ -137,7 +155,9 @@ export function Footer({ closingLine, groomName, brideName, copyright }: FooterP
 
         {/* Bottom Editorial Colophon */}
         <div className="pt-8 border-t border-[var(--ink)]/15 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] font-mono label-eyebrow opacity-55">
-          <span>THE WEDDING OF {groomName.toUpperCase()} &amp; {brideName.toUpperCase()}</span>
+          <span>
+            {(colophonPrefix || 'THE WEDDING OF')} {(groomName || '').toUpperCase()} &amp; {(brideName || '').toUpperCase()}
+          </span>
           <span>{copyright || 'BANGLI, BALI · 2026'}</span>
         </div>
       </div>

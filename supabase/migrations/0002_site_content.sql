@@ -227,9 +227,13 @@ insert into site_content (section_key, data) values
 
 ('footer', '{
   "closingLine": "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.",
+  "familyHeading": "Kami Yang Berbahagia",
+  "familySubheading": "Beserta Keluarga Besar Kedua Mempelai",
   "groomName": "Dharma",
   "brideName": "Lutfhy",
-  "copyright": "© 2026 Dharma & Lutfhy. All Rights Reserved."
+  "copyright": "© 2026 Dharma & Lutfhy. All Rights Reserved.",
+  "backToTopText": "KEMBALI KE ATAS",
+  "colophonPrefix": "THE WEDDING OF"
 }'::jsonb),
 
 ('audio', '{

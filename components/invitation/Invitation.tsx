@@ -297,9 +297,13 @@ function InvitationContent({
         {/* 10. Footer */}
         <Footer
           closingLine={content.footer.closingLine || guest.copy.closingLine}
-          groomName={content.footer.groomName || guest.event.groomName}
-          brideName={content.footer.brideName || guest.event.brideName}
+          groomName={content.footer.groomName || content.hero?.groomName || guest.event.groomName}
+          brideName={content.footer.brideName || content.hero?.brideName || guest.event.brideName}
           copyright={content.footer.copyright}
+          familyHeading={content.footer.familyHeading}
+          familySubheading={content.footer.familySubheading}
+          backToTopText={content.footer.backToTopText}
+          colophonPrefix={content.footer.colophonPrefix}
         />
       </div>
   );
