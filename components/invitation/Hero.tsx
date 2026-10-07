@@ -198,12 +198,7 @@ export function Hero({
     <section
       ref={containerRef}
       id="hero"
-      data-snap-section="true"
-      className="relative h-[100dvh] min-h-[100dvh] w-full flex flex-col justify-between overflow-hidden select-none bg-[var(--ink)] text-white snap-start"
-      style={{
-        scrollSnapAlign: 'start',
-        scrollSnapStop: 'normal',
-      }}
+      className="relative min-h-[100dvh] w-full flex flex-col justify-between overflow-hidden select-none bg-[var(--ink)] text-white"
     >
       {/* 1. Cinematic Background Media Layer with Lightroom-style Soft Fog / White Mist */}
       <div

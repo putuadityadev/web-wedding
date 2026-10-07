@@ -17,6 +17,7 @@ export function PreviewClient({
   initialUnlocked = true,
 }: PreviewClientProps) {
   const [content, setContent] = useState<SiteContent>(initialContent);
+  const [guestState, setGuestState] = useState<GuestView>(guest);
   const [isCoverForceOpened, setIsCoverForceOpened] = useState<boolean>(initialUnlocked);
 
   useEffect(() => {
@@ -35,6 +36,26 @@ export function PreviewClient({
 
       if (data.type === 'SYNC_CONTENT' && data.content) {
         setContent(data.content);
+        if (data.content.event) {
+          const ev = data.content.event;
+          setGuestState((prev) => ({
+            ...prev,
+            event: {
+              ...prev.event,
+              dateFormatted: ev.dateFormatted || prev.event.dateFormatted,
+              dayFormatted: ev.dayFormatted || prev.event.dayFormatted,
+              dateNumeral: ev.dateNumeral || prev.event.dateNumeral,
+              monthYearFormatted: ev.monthYearFormatted || prev.event.monthYearFormatted,
+              timeFormatted: ev.timeFormatted || prev.event.timeFormatted,
+              guestArrivalTimeFormatted: ev.timeFormatted || prev.event.guestArrivalTimeFormatted,
+              venueName: ev.venueName || prev.event.venueName,
+              venueAddress: ev.venueAddress || prev.event.venueAddress,
+              mapsUrl: ev.mapsUrl || prev.event.mapsUrl,
+              startsAt: ev.startsAt || prev.event.startsAt,
+              endsAt: ev.endsAt || prev.event.endsAt,
+            },
+          }));
+        }
       }
 
       if (data.type === 'TOGGLE_COVER') {
@@ -71,7 +92,7 @@ export function PreviewClient({
   return (
     <div className="w-full min-h-screen">
       <Invitation
-        guest={guest}
+        guest={guestState}
         siteContent={content}
         isPreview={true}
         isCoverForceOpened={isCoverForceOpened}

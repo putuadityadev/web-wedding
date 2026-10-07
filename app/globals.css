@@ -51,13 +51,6 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Native hardware-accelerated scroll snapping on mobile touch devices */
-@media (hover: none) and (pointer: coarse) {
-  html {
-    scroll-snap-type: y proximity;
-  }
-}
-
 body {
   margin: 0;
   padding: 0;

@@ -23,8 +23,8 @@ export const DEFAULT_COPY_TEMPLATES: Record<CopyKey, Record<Tone, string>> = {
   },
   invite_line: {
     formal: 'Kami mengundang {{sapaan}} {{nama}} untuk hadir pada {{tanggal}}, pukul {{jam_hadir}}.',
-    warm: 'Satu kursi sudah kami siapkan untuk {{panggilan}} pada {{tanggal}}. Mohon datang sekitar pukul {{jam_hadir}}.',
-    casual: 'Catat ya, {{panggilan}}: {{tanggal}}, jam {{jam_hadir}}. Siapkan outfit terbaikmu.',
+    warm: 'Merupakan kehormatan dan kebahagiaan bagi kami atas kehadiran {{panggilan}} pada {{tanggal}}.',
+    casual: 'Catat ya, {{panggilan}}: {{tanggal}}, jam {{jam_hadir}}. Sampai jumpa di hari bahagia kami!',
   },
   rsvp_prompt: {
     formal: 'Mohon konfirmasi kehadiran Anda.',
@@ -34,7 +34,7 @@ export const DEFAULT_COPY_TEMPLATES: Record<CopyKey, Record<Tone, string>> = {
   rsvp_thanks_attending: {
     formal: 'Terima kasih, {{sapaan}} {{nama}}. Konfirmasi kehadiran Anda telah kami terima.',
     warm: 'Terima kasih, {{panggilan}}. Sampai bertemu pada {{tanggal}}!',
-    casual: 'Siap, {{panggilan}}! Kursimu sudah kami catat.',
+    casual: 'Siap, {{panggilan}}! Kehadiranmu sudah kami catat.',
   },
   rsvp_thanks_declining: {
     formal: 'Terima kasih atas kabar dan doa baik {{sapaan}} {{nama}}.',

@@ -1500,6 +1500,7 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                           }
                           const newEnd = new Date(d.getTime() + durationMs);
                           const timeStr = `${padH(d.getHours())}.${padH(d.getMinutes())} – ${padH(newEnd.getHours())}.${padH(newEnd.getMinutes())} WITA`;
+                          const heroDateStr = `${dayName.toUpperCase()}, ${dateNum} ${MONTHS_ID_UP[d.getMonth()]} ${d.getFullYear()}`;
                           setContent({
                             ...content,
                             event: {
@@ -1511,6 +1512,14 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
                               monthYearFormatted: monthYear,
                               dateFormatted: dateFullStr,
                               timeFormatted: timeStr,
+                            },
+                            hero: {
+                              ...content.hero,
+                              dateShort: heroDateStr,
+                            },
+                            cover: {
+                              ...content.cover,
+                              dateDisplay: dateFullStr,
                             },
                           });
                         }}

@@ -23,13 +23,14 @@ export default async function HomePage({ searchParams }: PageProps) {
       ? rawTone
       : 'warm';
 
+  const siteContent = await getSiteContent();
+
   // Support dev personalization query: ?to=Bapak+Budi+%26+Keluarga
   const guest = getMockGuestView({
     name: rawTo || 'Tamu Undangan',
     tone,
+    siteContent,
   });
-
-  const siteContent = await getSiteContent();
 
   return (
     <main>

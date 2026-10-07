@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { gsap } from '@/lib/motion/gsap';
 import { downloadCalendarEvent } from '@/lib/calendar/ics';
 
-// Safe dynamic client-side import for the map to prevent any SSR hydration conflict
+// Safe dynamic client-side import for the map to prevent SSR hydration conflict
 const InteractiveMap = dynamic(
   () => import('./InteractiveMap').then((m) => m.InteractiveMap),
   { ssr: false }
@@ -14,10 +14,10 @@ const InteractiveMap = dynamic(
 export interface EventProps {
   sectionLabel?: string;
   sectionTitle?: string;
-  dayFormatted: string; // e.g. "SABTU"
+  dayFormatted: string; // e.g. "SENIN"
   dateNumeral: string; // e.g. "12"
-  monthYearFormatted: string; // e.g. "DESEMBER 2026"
-  dateFormatted: string; // e.g. "Sabtu, 12 Desember 2026"
+  monthYearFormatted: string; // e.g. "OKTOBER 2026"
+  dateFormatted: string; // e.g. "Senin, 12 Oktober 2026"
   timeFormatted: string; // e.g. "11.00 – 14.00 WITA"
   venueName: string;
   venueAddress: string;
@@ -25,7 +25,7 @@ export interface EventProps {
   lat?: number;
   lng?: number;
   countdownLabel?: string;
-  guestArrivalTime?: string | null; // e.g. "11.00 – 12.00 WITA"
+  guestArrivalTime?: string | null;
   inviteLine?: string | null;
   startsAt: string; // ISO
   endsAt?: string | null;
@@ -39,12 +39,12 @@ interface TimeRemaining {
 }
 
 export function Event({
-  sectionLabel = 'Waktu & Lokasi Acara',
-  sectionTitle,
-  dayFormatted = 'SABTU',
+  sectionLabel = 'WAKTU & LOKASI',
+  sectionTitle = 'Resepsi Pernikahan',
+  dayFormatted = 'SENIN',
   dateNumeral = '12',
-  monthYearFormatted = 'DESEMBER 2026',
-  dateFormatted = 'Sabtu, 12 Desember 2026',
+  monthYearFormatted = 'OKTOBER 2026',
+  dateFormatted = 'Senin, 12 Oktober 2026',
   timeFormatted = '11.00 – 14.00 WITA',
   venueName = 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
   venueAddress = 'Banjar Kawan, Desa Kayubihi, Kec. Bangli, Kabupaten Bangli, Bali 80614',
@@ -53,12 +53,12 @@ export function Event({
   lng = 115.3643337,
   countdownLabel = 'MENGHITUNG HARI',
   guestArrivalTime,
-  inviteLine,
   startsAt,
   endsAt,
 }: EventProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const dateCardRef = useRef<HTMLDivElement | null>(null);
+  const timeCardRef = useRef<HTMLDivElement | null>(null);
+  const locationCardRef = useRef<HTMLDivElement | null>(null);
 
   const [timeLeft, setTimeLeft] = useState<TimeRemaining>({
     days: 0,
@@ -67,7 +67,7 @@ export function Event({
     seconds: 0,
   });
 
-  // Calculate Countdown
+  // Calculate Real-Time Countdown
   useEffect(() => {
     if (!startsAt) return;
     const target = new Date(startsAt).getTime();
@@ -95,52 +95,68 @@ export function Event({
     return () => clearInterval(interval);
   }, [startsAt]);
 
-  // Motion setup with 3D perspective
+  // Premium GSAP ScrollTrigger Entrance
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const ctx = gsap.context(() => {
-      gsap.set(container, { perspective: 1000 });
-
-      // Color scrub to baby-blue
-      gsap.to(container, {
-        backgroundColor: 'var(--baby-blue)',
-        ease: 'none',
-        scrollTrigger: {
-          trigger: container,
-          start: 'top 80%',
-          end: 'top 20%',
-          scrub: true,
-        },
-      });
-
-      // Date number 3D reveal
-      if (dateCardRef.current) {
-        gsap.fromTo(
-          dateCardRef.current,
-          {
-            opacity: 0,
-            y: 50,
-            rotateX: 20,
-            scale: 0.95,
+      // Header reveal
+      gsap.fromTo(
+        '.event-header-reveal',
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1.1,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: container,
+            start: 'top 80%',
+            once: true,
           },
+        }
+      );
+
+      // Left card (Time & Date) entrance
+      if (timeCardRef.current) {
+        gsap.fromTo(
+          timeCardRef.current,
+          { opacity: 0, y: 40 },
           {
             opacity: 1,
             y: 0,
-            rotateX: 0,
-            scale: 1,
-            duration: 1.3,
-            ease: 'power4.out',
+            duration: 1.2,
+            ease: 'power3.out',
             scrollTrigger: {
-              trigger: container,
-              start: 'top 70%',
+              trigger: timeCardRef.current,
+              start: 'top 85%',
               once: true,
             },
           }
         );
       }
-    }, containerRef);
+
+      // Right card (Location & Map) entrance
+      if (locationCardRef.current) {
+        gsap.fromTo(
+          locationCardRef.current,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1.2,
+            delay: 0.15,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: locationCardRef.current,
+              start: 'top 85%',
+              once: true,
+            },
+          }
+        );
+      }
+    }, container);
 
     return () => ctx.revert();
   }, []);
@@ -148,9 +164,7 @@ export function Event({
   const handleDownloadICS = () => {
     downloadCalendarEvent({
       title: 'Pernikahan Dharma & Lutfhy',
-      description: guestArrivalTime
-        ? `Waktu kehadiran: ${guestArrivalTime}. ${inviteLine || ''}`
-        : 'Resepsi Pernikahan I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo',
+      description: `Resepsi Pernikahan. Waktu: ${timeFormatted}. Tempat: ${venueName}, ${venueAddress}`,
       location: `${venueName}, ${venueAddress}`,
       startDate: startsAt,
       endDate: endsAt,
@@ -161,186 +175,215 @@ export function Event({
     <section
       ref={containerRef}
       id="event"
-      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] transition-colors select-none overflow-hidden"
+      className="relative w-full py-20 sm:py-28 md:py-32 px-4 sm:px-8 md:px-12 bg-[var(--paper)] select-none overflow-hidden"
     >
-      <div className="max-w-4xl mx-auto w-full">
-        {/* Section Eyebrow */}
-        <div className="text-center mb-6">
-          <span className="label-eyebrow tracking-[0.32em] text-[var(--deep)] text-[10px] sm:text-xs font-semibold uppercase">
-            {sectionLabel}
-          </span>
-          {sectionTitle && (
-            <h2 className="display-l font-serif text-3xl sm:text-4xl text-[var(--ink)] mt-2">
-              {sectionTitle}
-            </h2>
-          )}
+      {/* Ambient background lighting */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 60% at 50% 20%, rgba(169, 203, 234, 0.12) 0%, transparent 70%)',
+        }}
+      />
+
+      <div className="relative z-10 max-w-6xl mx-auto w-full">
+        {/* Section Header: Minimalist & Clean */}
+        <div className="event-header-reveal text-center mb-12 sm:mb-16">
+          <div className="inline-flex items-center gap-2 mb-2.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--deep)]" />
+            <span className="label-eyebrow tracking-[0.28em] text-[var(--deep)] text-[11px] font-mono uppercase font-semibold">
+              {sectionLabel}
+            </span>
+          </div>
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[var(--ink)] font-normal tracking-tight">
+            {sectionTitle}
+          </h2>
         </div>
 
-        {/* Date Display */}
-        <div
-          ref={dateCardRef}
-          className="flex flex-col items-center text-center my-6 transform-gpu"
-        >
-          <span className="label-eyebrow tracking-[0.3em] text-[var(--ink)] opacity-70 mb-2">
-            {dayFormatted}
-          </span>
-          <div className="event-date-numeral display-xl font-serif text-[var(--ink)] leading-none my-1 font-light drop-shadow-sm">
-            {dateNumeral}
-          </div>
-          <span className="label-eyebrow tracking-[0.3em] text-[var(--ink)] opacity-70 mt-2">
-            {monthYearFormatted}
-          </span>
-        </div>
-
-        {/* Simple & Clean Personalized Arrival Time (Quiet Luxury) */}
-        {guestArrivalTime && (
-          <div className="my-10 p-6 sm:p-8 bg-white/60 backdrop-blur-xs border border-[var(--ink)]/15 rounded-[var(--radius-sm)] max-w-xl mx-auto text-center">
-            <span className="label-eyebrow tracking-[0.24em] text-[var(--deep)] text-[10px] sm:text-xs block mb-2 font-medium">
-              WAKTU KEHADIRAN ANDA
-            </span>
-            <div className="font-serif text-3xl sm:text-4xl text-[var(--ink)] mb-2 font-normal">
-              {guestArrivalTime}
-            </div>
-            {inviteLine && (
-              <p className="body-base text-[var(--ink)] opacity-80 text-xs sm:text-sm leading-relaxed mt-2">
-                {inviteLine}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Event Details: Clean Hairline Rows */}
-        <div className="border-t border-[var(--ink)]/20 divide-y divide-[var(--ink)]/15 my-12 max-w-3xl mx-auto">
-          {/* Row 1: Tanggal */}
-          <div className="py-4 sm:py-5 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-6 items-baseline">
-            <span className="sm:col-span-4 label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.2em] text-[10px] sm:text-xs">
-              TANGGAL
-            </span>
-            <span className="sm:col-span-8 font-serif text-lg sm:text-xl text-[var(--ink)]">
-              {dateFormatted}
-            </span>
-          </div>
-
-          {/* Row 2: Waktu Acara */}
-          <div className="py-4 sm:py-5 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-6 items-baseline">
-            <span className="sm:col-span-4 label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.2em] text-[10px] sm:text-xs">
-              WAKTU ACARA
-            </span>
-            <span className="sm:col-span-8 font-serif text-lg sm:text-xl text-[var(--ink)]">
-              {timeFormatted}
-            </span>
-          </div>
-
-          {/* Row 3: Lokasi */}
-          <div className="py-4 sm:py-5 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-6 items-baseline">
-            <span className="sm:col-span-4 label-eyebrow text-[var(--ink)] opacity-60 tracking-[0.2em] text-[10px] sm:text-xs">
-              LOKASI
-            </span>
-            <div className="sm:col-span-8 flex flex-col">
-              <span className="font-serif text-lg sm:text-xl text-[var(--ink)] font-normal">
-                {venueName}
-              </span>
-              <span className="body-base text-[var(--ink)] opacity-70 text-xs sm:text-sm mt-1 leading-relaxed">
-                {venueAddress}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 my-8">
-          <a
-            href={mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-signature w-full sm:w-auto bg-white/80"
+        {/* 2-Column Balanced Editorial Layout: Waktu di Mana & Lokasi di Mana */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 items-stretch">
+          {/* ========================================================
+              CARD 1: WAKTU & TANGGAL RESEPSI (WHEN)
+              ======================================================== */}
+          <div
+            ref={timeCardRef}
+            className="bg-white/80 backdrop-blur-md border border-[var(--ink)]/10 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-[0_4px_24px_rgba(15,27,45,0.04)] flex flex-col justify-between"
           >
-            <span>Buka Google Maps</span>
-            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M4 12L12 4M12 4H6M12 4V10"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </a>
+            <div>
+              {/* Card Tag */}
+              <div className="flex items-center justify-between pb-4 border-b border-[var(--ink)]/10 mb-6">
+                <span className="label-eyebrow tracking-[0.24em] text-[var(--deep)] text-[10px] sm:text-[11px] font-mono uppercase font-medium">
+                  WAKTU &amp; TANGGAL
+                </span>
+                <span className="text-[10px] font-mono text-[var(--ink)]/40 uppercase">
+                  RESEPSI
+                </span>
+              </div>
 
-          <button
-            type="button"
-            onClick={handleDownloadICS}
-            className="btn-signature w-full sm:w-auto bg-transparent border-[var(--ink)]"
+              {/* Architectural Date Display */}
+              <div className="flex flex-col items-center text-center my-4">
+                <span className="label-eyebrow tracking-[0.3em] text-[var(--deep)] text-xs sm:text-sm font-semibold uppercase mb-1">
+                  {dayFormatted}
+                </span>
+                <div className="font-serif text-6xl sm:text-7xl lg:text-8xl text-[var(--ink)] leading-none my-1 font-light drop-shadow-xs">
+                  {dateNumeral}
+                </div>
+                <span className="label-eyebrow tracking-[0.28em] text-[var(--ink)]/70 text-xs sm:text-sm uppercase mt-1">
+                  {monthYearFormatted}
+                </span>
+              </div>
+
+              {/* Time Badge */}
+              <div className="mt-6 p-4 rounded-xl bg-[var(--paper)] border border-[var(--ink)]/8 flex flex-col items-center text-center">
+                <div className="flex items-center gap-2 text-[var(--deep)] text-xs font-mono tracking-wider uppercase mb-1">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <span>Waktu Acara</span>
+                </div>
+                <span className="font-serif text-xl sm:text-2xl text-[var(--ink)] font-normal mt-0.5">
+                  {timeFormatted}
+                </span>
+                {guestArrivalTime && guestArrivalTime !== timeFormatted && (
+                  <span className="text-[11px] font-mono text-[var(--deep)] mt-1.5 px-2.5 py-0.5 rounded-full bg-white border border-[var(--deep)]/20">
+                    Sesi Kehadiran: {guestArrivalTime}
+                  </span>
+                )}
+              </div>
+
+              {/* Live Countdown Timer */}
+              <div className="mt-6 pt-5 border-t border-[var(--ink)]/10 text-center">
+                <span className="label-eyebrow tracking-[0.24em] text-[var(--ink)]/55 block mb-3 text-[10px] font-mono uppercase">
+                  {countdownLabel}
+                </span>
+
+                <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                  {/* Days */}
+                  <div className="flex flex-col items-center py-2.5 px-1 bg-[var(--paper)] border border-[var(--ink)]/8 rounded-xl">
+                    <div className="font-serif tabular-nums text-xl sm:text-2xl text-[var(--ink)] font-light">
+                      {String(timeLeft.days).padStart(2, '0')}
+                    </div>
+                    <span className="text-[8.5px] tracking-[0.16em] text-[var(--ink)]/50 mt-1 font-mono uppercase">
+                      HARI
+                    </span>
+                  </div>
+
+                  {/* Hours */}
+                  <div className="flex flex-col items-center py-2.5 px-1 bg-[var(--paper)] border border-[var(--ink)]/8 rounded-xl">
+                    <div className="font-serif tabular-nums text-xl sm:text-2xl text-[var(--ink)] font-light">
+                      {String(timeLeft.hours).padStart(2, '0')}
+                    </div>
+                    <span className="text-[8.5px] tracking-[0.16em] text-[var(--ink)]/50 mt-1 font-mono uppercase">
+                      JAM
+                    </span>
+                  </div>
+
+                  {/* Minutes */}
+                  <div className="flex flex-col items-center py-2.5 px-1 bg-[var(--paper)] border border-[var(--ink)]/8 rounded-xl">
+                    <div className="font-serif tabular-nums text-xl sm:text-2xl text-[var(--ink)] font-light">
+                      {String(timeLeft.minutes).padStart(2, '0')}
+                    </div>
+                    <span className="text-[8.5px] tracking-[0.16em] text-[var(--ink)]/50 mt-1 font-mono uppercase">
+                      MENIT
+                    </span>
+                  </div>
+
+                  {/* Seconds */}
+                  <div className="flex flex-col items-center py-2.5 px-1 bg-[var(--paper)] border border-[var(--ink)]/8 rounded-xl">
+                    <div className="font-serif tabular-nums text-xl sm:text-2xl text-[var(--ink)] font-light">
+                      {String(timeLeft.seconds).padStart(2, '0')}
+                    </div>
+                    <span className="text-[8.5px] tracking-[0.16em] text-[var(--ink)]/50 mt-1 font-mono uppercase">
+                      DETIK
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action: Simpan ke Kalender */}
+            <div className="mt-8 pt-4">
+              <button
+                type="button"
+                onClick={handleDownloadICS}
+                className="btn-signature w-full bg-white hover:bg-[var(--mist)] border border-[var(--ink)]/20 text-[var(--ink)] transition-all cursor-pointer shadow-2xs"
+              >
+                <span>Simpan ke Kalender</span>
+                <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M3 4H13V14H3V4ZM3 7H13M6 2V4M10 2V4"
+                    stroke="currentColor"
+                    strokeWidth="1.3"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* ========================================================
+              CARD 2: TEMPAT & LOKASI (WHERE)
+              ======================================================== */}
+          <div
+            ref={locationCardRef}
+            className="bg-white/80 backdrop-blur-md border border-[var(--ink)]/10 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-[0_4px_24px_rgba(15,27,45,0.04)] flex flex-col justify-between"
           >
-            <span>Simpan ke Kalender</span>
-            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M3 4H13V14H3V4ZM3 7H13M6 2V4M10 2V4"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Clean Interactive Map */}
-        <div className="my-10">
-          <InteractiveMap
-            lat={lat}
-            lng={lng}
-            zoom={16}
-            mapsUrl={mapsUrl}
-            venueName={venueName}
-            venueAddress={venueAddress}
-          />
-        </div>
-
-        {/* Countdown Timer Block */}
-        <div className="mt-16 pt-10 border-t border-[var(--ink)]/15 text-center">
-          <span className="label-eyebrow tracking-[0.25em] text-[var(--ink)] opacity-60 block mb-6 text-[10px] uppercase">
-            {countdownLabel}
-          </span>
-
-          <div className="grid grid-cols-4 gap-2 sm:gap-4 max-w-xl mx-auto">
-            {/* Days */}
-            <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)]">
-              <div className="font-serif tabular-nums text-2xl sm:text-4xl text-[var(--ink)] font-light">
-                {String(timeLeft.days).padStart(2, '0')}
+            <div>
+              {/* Card Tag */}
+              <div className="flex items-center justify-between pb-4 border-b border-[var(--ink)]/10 mb-6">
+                <span className="label-eyebrow tracking-[0.24em] text-[var(--deep)] text-[10px] sm:text-[11px] font-mono uppercase font-medium">
+                  TEMPAT &amp; LOKASI
+                </span>
+                <span className="text-[10px] font-mono text-[var(--ink)]/40 uppercase">
+                  MAPS
+                </span>
               </div>
-              <span className="label-eyebrow text-[9px] tracking-[0.2em] text-[var(--ink)] opacity-55 mt-1.5 font-mono">
-                HARI
-              </span>
+
+              {/* Venue Name & Address */}
+              <div className="my-2">
+                <h3 className="font-serif text-2xl sm:text-3xl text-[var(--ink)] font-normal leading-snug mb-3">
+                  {venueName}
+                </h3>
+                <p className="body-base text-sm text-[var(--ink)]/75 leading-relaxed">
+                  {venueAddress}
+                </p>
+              </div>
+
+              {/* Interactive Map Embed */}
+              <div className="my-6 rounded-xl overflow-hidden border border-[var(--ink)]/15 shadow-2xs">
+                <div className="h-[220px] sm:h-[240px] w-full">
+                  <InteractiveMap
+                    lat={lat}
+                    lng={lng}
+                    zoom={16}
+                    mapsUrl={mapsUrl}
+                    venueName={venueName}
+                    venueAddress={venueAddress}
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Hours */}
-            <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)]">
-              <div className="font-serif tabular-nums text-2xl sm:text-4xl text-[var(--ink)] font-light">
-                {String(timeLeft.hours).padStart(2, '0')}
-              </div>
-              <span className="label-eyebrow text-[9px] tracking-[0.2em] text-[var(--ink)] opacity-55 mt-1.5 font-mono">
-                JAM
-              </span>
-            </div>
-
-            {/* Minutes */}
-            <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)]">
-              <div className="font-serif tabular-nums text-2xl sm:text-4xl text-[var(--ink)] font-light">
-                {String(timeLeft.minutes).padStart(2, '0')}
-              </div>
-              <span className="label-eyebrow text-[9px] tracking-[0.2em] text-[var(--ink)] opacity-55 mt-1.5 font-mono">
-                MENIT
-              </span>
-            </div>
-
-            {/* Seconds */}
-            <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 backdrop-blur-xs border border-[var(--ink)]/10 rounded-[var(--radius-sm)]">
-              <div className="font-serif tabular-nums text-2xl sm:text-4xl text-[var(--ink)] font-light">
-                {String(timeLeft.seconds).padStart(2, '0')}
-              </div>
-              <span className="label-eyebrow text-[9px] tracking-[0.2em] text-[var(--ink)] opacity-55 mt-1.5 font-mono">
-                DETIK
-              </span>
+            {/* Action: Buka Google Maps */}
+            <div className="mt-8 pt-4">
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-signature w-full bg-[#0F1B2D] text-white hover:bg-[#1E2E44] border-transparent transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2"
+              >
+                <span>Buka Google Maps</span>
+                <svg className="w-4 h-4 text-white" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M4 12L12 4M12 4H6M12 4V10"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </a>
             </div>
           </div>
         </div>

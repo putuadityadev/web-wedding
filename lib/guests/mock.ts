@@ -1,36 +1,48 @@
 import { GuestView, Tone } from './view';
 import { resolveCopy } from '../copy/render';
 import { formatEventDate, formatEventTimeRange } from '../time/tz';
+import { SiteContent, DEFAULT_SITE_CONTENT } from '../content/types';
 
 export function getMockGuestView(overrides?: {
   name?: string | null;
   tone?: Tone;
   arrivalAt?: string | null;
   salutation?: string | null;
+  siteContent?: SiteContent;
 }): GuestView {
   const name = overrides?.name || 'Bapak Budi & Keluarga';
   const tone: Tone = overrides?.tone || 'warm';
-  const salutation = overrides?.salutation || (name.toLowerCase().startsWith('bapak') || name.toLowerCase().startsWith('ibu') ? '' : 'Bapak / Ibu');
+  const salutation =
+    overrides?.salutation ||
+    (name.toLowerCase().startsWith('bapak') || name.toLowerCase().startsWith('ibu')
+      ? ''
+      : 'Bapak / Ibu');
   const nickname = name.split(/\s+/)[0] || name;
 
-  const startsAt = '2026-12-12T11:00:00+08:00';
-  const endsAt = '2026-12-12T14:00:00+08:00';
-  const arrivalAt = overrides?.arrivalAt !== undefined ? overrides?.arrivalAt : '2026-12-12T11:00:00+08:00';
-  const arrivalUntil = '2026-12-12T12:30:00+08:00';
+  const content = overrides?.siteContent || DEFAULT_SITE_CONTENT;
+  const eventContent = content.event;
 
-  const dateFormatted = formatEventDate(startsAt);
-  const timeFormatted = formatEventTimeRange(startsAt, endsAt);
-  const guestArrivalTimeFormatted = arrivalAt ? formatEventTimeRange(arrivalAt, arrivalUntil) : null;
+  const startsAt = eventContent.startsAt || '2026-10-12T11:00:00+08:00';
+  const endsAt = eventContent.endsAt || '2026-10-12T14:00:00+08:00';
+  const arrivalAt = overrides?.arrivalAt !== undefined ? overrides?.arrivalAt : startsAt;
+  const arrivalUntil = endsAt;
+
+  const dateFormatted = eventContent.dateFormatted || formatEventDate(startsAt);
+  const timeFormatted = eventContent.timeFormatted || formatEventTimeRange(startsAt, endsAt);
+  const guestArrivalTimeFormatted = eventContent.timeFormatted || timeFormatted;
+
+  const groomName = content.hero?.groomName || content.cover?.groomName || 'Dharma';
+  const brideName = content.hero?.brideName || content.cover?.brideName || 'Lutfhy';
 
   const copyCtx = {
     sapaan: salutation,
     nama: name,
     panggilan: nickname,
-    tanggal: '12 Desember 2026',
-    jam_hadir: guestArrivalTimeFormatted || '11.00 WITA',
-    lokasi: 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
+    tanggal: eventContent.dateFormatted || '12 Oktober 2026',
+    jam_hadir: guestArrivalTimeFormatted,
+    lokasi: eventContent.venueName || 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
     link: 'https://dharmalutfhy.wedding',
-    mempelai: 'Dharma & Lutfhy',
+    mempelai: `${groomName} & ${brideName}`,
   };
 
   return {
@@ -48,33 +60,32 @@ export function getMockGuestView(overrides?: {
     hasOpened: false,
     rsvp: null,
     event: {
-      groomName: 'Dharma',
-      brideName: 'Lutfhy',
+      groomName,
+      brideName,
       dateFormatted,
-      dayFormatted: 'SABTU',
-      dateNumeral: '12',
-      monthYearFormatted: 'DESEMBER 2026',
+      dayFormatted: eventContent.dayFormatted || 'SENIN',
+      dateNumeral: eventContent.dateNumeral || '12',
+      monthYearFormatted: eventContent.monthYearFormatted || 'OKTOBER 2026',
       timeFormatted,
       guestArrivalTimeFormatted,
       startsAt,
       endsAt,
-      venueName: 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
-      venueAddress: 'Banjar Kawan, Desa Kayubihi, Kec. Bangli, Kabupaten Bangli, Bali 80614',
-      mapsUrl: 'https://www.google.com/maps/search/?api=1&query=-8.3981403,115.3643337',
+      venueName: eventContent.venueName || 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
+      venueAddress:
+        eventContent.venueAddress ||
+        'Banjar Kawan, Desa Kayubihi, Kec. Bangli, Kabupaten Bangli, Bali 80614',
+      mapsUrl:
+        eventContent.mapsUrl ||
+        'https://www.google.com/maps/search/?api=1&query=-8.3981403,115.3643337',
       rsvpDeadline: '2026-11-28T23:59:59+08:00',
-      bankAccounts: [
+      bankAccounts: content.gift?.accounts || [
         {
           bank: 'BCA',
           accountName: 'I Wayan Dharma Wirahadi',
           accountNumber: '7820192831',
         },
-        {
-          bank: 'Bank Mandiri',
-          accountName: 'Luthfi Quasimah Widoyo',
-          accountNumber: '1420019283741',
-        },
       ],
-      musicUrl: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=piano-moment-9835.mp3',
+      musicUrl: content.audio?.musicUrl || null,
     },
     copy: {
       coverGreeting: resolveCopy('cover_greeting', tone, copyCtx),

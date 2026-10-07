@@ -162,16 +162,11 @@ export function Couple({
       <section
         ref={groomSectionRef}
         id="couple"
-        data-snap-section="true"
-        className={`relative w-full h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex flex-col justify-center items-center select-none overflow-hidden snap-start transition-colors px-6 sm:px-12 ${
+        className={`relative w-full min-h-[100dvh] flex flex-col justify-center items-center select-none overflow-hidden transition-colors px-6 py-20 sm:py-28 md:py-32 sm:px-12 ${
           isImageMode
             ? 'bg-[#0A121E] text-white'
             : 'bg-[var(--paper)] text-[var(--ink)]'
         }`}
-        style={{
-          scrollSnapAlign: 'start',
-          scrollSnapStop: 'normal',
-        }}
       >
         {/* MODE A: FULL BLEED BACKGROUND PHOTO (Like reference image) */}
         {isImageMode && groom.photo?.src && (
@@ -291,16 +286,11 @@ export function Couple({
       <section
         ref={brideSectionRef}
         id="bride"
-        data-snap-section="true"
-        className={`relative w-full h-[100dvh] min-h-[100dvh] max-h-[100dvh] flex flex-col justify-center items-center select-none overflow-hidden snap-start transition-colors px-6 sm:px-12 ${
+        className={`relative w-full min-h-[100dvh] flex flex-col justify-center items-center select-none overflow-hidden transition-colors px-6 py-20 sm:py-28 md:py-32 sm:px-12 ${
           isImageMode
             ? 'bg-[#0A121E] text-white'
             : 'bg-[var(--paper)] text-[var(--ink)]'
         }`}
-        style={{
-          scrollSnapAlign: 'start',
-          scrollSnapStop: 'normal',
-        }}
       >
         {/* MODE A: FULL BLEED BACKGROUND PHOTO (Like reference image) */}
         {isImageMode && bride.photo?.src && (

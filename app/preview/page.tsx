@@ -19,6 +19,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
   const guest = getMockGuestView({
     name: 'Bapak Budi & Rekan',
     tone: 'warm',
+    siteContent: content,
   });
 
   return (

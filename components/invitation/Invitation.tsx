@@ -19,7 +19,6 @@ import { Footer } from './Footer';
 import { SplashCursor } from '@/components/ui/SplashCursor';
 import { SiteContent, DEFAULT_SITE_CONTENT, GalleryItem } from '@/lib/content/types';
 import { useLenisContext } from '@/lib/motion/lenis';
-import { ScrollSnapSync } from './ScrollSnapSync';
 
 interface InvitationProps {
   guest: GuestView;
@@ -114,10 +113,9 @@ function InvitationContent({
       <PersistentBar
         audioSrc={content.audio.musicUrl || guest.event.musicUrl || ASSETS.audio.src}
         isUnlocked={isCoverOpened}
+        dateFormatted={content.event.dateFormatted || guest.event.dateFormatted}
+        coupleNames={`${content.hero.groomName || guest.event.groomName} & ${content.hero.brideName || guest.event.brideName}`}
       />
-
-      {/* Synchronized 100% DVH Chapter Snap Engine */}
-      <ScrollSnapSync />
 
       {/* 1. Hero with Real Editorial Portrait & 3D Typography */}
       <Hero
@@ -217,21 +215,20 @@ function InvitationContent({
         <Event
           sectionLabel={content.event.sectionLabel}
           sectionTitle={content.event.sectionTitle}
-          dayFormatted={content.event.dayFormatted || guest.event.dayFormatted}
-          dateNumeral={content.event.dateNumeral || guest.event.dateNumeral}
-          monthYearFormatted={content.event.monthYearFormatted || guest.event.monthYearFormatted}
-          dateFormatted={content.event.dateFormatted || guest.event.dateFormatted}
-          timeFormatted={content.event.timeFormatted || guest.event.timeFormatted}
-          venueName={content.event.venueName || guest.event.venueName}
-          venueAddress={content.event.venueAddress || guest.event.venueAddress}
-          mapsUrl={content.event.mapsUrl || guest.event.mapsUrl}
+          dayFormatted={content.event.dayFormatted || 'SENIN'}
+          dateNumeral={content.event.dateNumeral || '12'}
+          monthYearFormatted={content.event.monthYearFormatted || 'OKTOBER 2026'}
+          dateFormatted={content.event.dateFormatted || 'Senin, 12 Oktober 2026'}
+          timeFormatted={content.event.timeFormatted || '11.00 – 14.00 WITA'}
+          venueName={content.event.venueName}
+          venueAddress={content.event.venueAddress}
+          mapsUrl={content.event.mapsUrl}
           lat={content.event.lat}
           lng={content.event.lng}
           countdownLabel={content.event.countdownLabel}
           guestArrivalTime={guest.event.guestArrivalTimeFormatted}
-          inviteLine={guest.copy.inviteLine}
-          startsAt={content.event.startsAt || guest.event.startsAt}
-          endsAt={content.event.endsAt || guest.event.endsAt}
+          startsAt={content.event.startsAt}
+          endsAt={content.event.endsAt}
         />
 
         {/* 6. Gallery */}

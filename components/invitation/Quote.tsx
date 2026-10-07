@@ -61,16 +61,11 @@ export function Quote({
     <section
       ref={containerRef}
       id="quote"
-      data-snap-section="true"
-      className={`relative w-full min-h-[100dvh] h-[100dvh] flex flex-col justify-center items-center select-none overflow-hidden transition-colors snap-start ${
+      className={`relative w-full min-h-[100dvh] flex flex-col justify-center items-center select-none overflow-hidden transition-colors ${
         isImageMode
-          ? 'px-6 py-12 sm:px-12 text-white bg-[#0A121E]'
-          : 'px-6 py-12 sm:px-12 bg-[var(--paper)] text-[var(--ink)]'
+          ? 'px-6 py-16 sm:py-24 sm:px-12 text-white bg-[#0A121E]'
+          : 'px-6 py-16 sm:py-24 sm:px-12 bg-[var(--paper)] text-[var(--ink)]'
       }`}
-      style={{
-        scrollSnapAlign: 'start',
-        scrollSnapStop: 'normal',
-      }}
     >
       {/* 1. Atmospheric Image Background (when bgMode === 'image') */}
       {isImageMode && (

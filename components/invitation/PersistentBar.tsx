@@ -7,6 +7,8 @@ import { gsap } from '@/lib/motion/gsap';
 interface PersistentBarProps {
   audioSrc?: string;
   isUnlocked: boolean;
+  dateFormatted?: string;
+  coupleNames?: string;
 }
 
 const MENU_ITEMS = [
@@ -20,7 +22,12 @@ const MENU_ITEMS = [
   { label: 'Dinding Ucapan', href: '#wishes', numeral: 'VIII' },
 ];
 
-export function PersistentBar({ audioSrc, isUnlocked }: PersistentBarProps) {
+export function PersistentBar({
+  audioSrc,
+  isUnlocked,
+  dateFormatted = 'SENIN, 12 OKTOBER 2026',
+  coupleNames = 'DHARMA & LUTFHY',
+}: PersistentBarProps) {
   const { lenis } = useLenisContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -228,8 +235,8 @@ export function PersistentBar({ audioSrc, isUnlocked }: PersistentBarProps) {
         </nav>
 
         <div className="flex items-center justify-between text-[11px] label-eyebrow text-[var(--ink)] opacity-50">
-          <span>DHARMA &amp; LUTFHY</span>
-          <span>SABTU, 12 DESEMBER 2026</span>
+          <span>{coupleNames.toUpperCase()}</span>
+          <span>{dateFormatted.toUpperCase()}</span>
         </div>
       </div>
     </>
