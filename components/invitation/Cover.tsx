@@ -39,9 +39,6 @@ const SPRITE_CONFIG = {
 function triggerSmokeyBurst(x: number, y: number) {
   if (typeof window === 'undefined') return;
   try {
-    // Custom fluid burst event
-    window.dispatchEvent(new CustomEvent('fluid-burst', { detail: { x, y } }));
-
     const downEvent = new MouseEvent('mousedown', {
       clientX: x,
       clientY: y,
@@ -131,19 +128,17 @@ export function Cover({
   const { lenis } = useLenisContext();
 
   useEffect(() => {
-    if (isForceOpened || isOpened) {
+    if (isForceOpened) {
       if (containerRef.current) {
         containerRef.current.style.display = 'none';
-        containerRef.current.style.pointerEvents = 'none';
       }
       lenis?.start();
     } else {
       if (containerRef.current) {
         containerRef.current.style.display = 'block';
-        containerRef.current.style.pointerEvents = 'auto';
       }
     }
-  }, [isForceOpened, isOpened, lenis]);
+  }, [isForceOpened, lenis]);
 
   const { unlockScroll } = useLenisContext();
 
@@ -443,17 +438,11 @@ export function Cover({
       return;
     }
 
-    // Disable pointer events on container immediately once opening animation begins
-    if (containerRef.current) {
-      containerRef.current.style.pointerEvents = 'none';
-    }
-
     const tl = gsap.timeline({
       onComplete: () => {
         unlockScroll();
         if (containerRef.current) {
           containerRef.current.style.display = 'none';
-          containerRef.current.style.pointerEvents = 'none';
         }
       },
     });
@@ -592,9 +581,7 @@ export function Cover({
     }
 
     // 8. Container finishes completely after the smokey veil dissolves (at 3.2s)
-    if (containerRef.current) {
-      tl.set(containerRef.current, { display: 'none', pointerEvents: 'none' }, 3.2);
-    }
+    tl.to({}, { duration: 0.05 }, 3.2);
   }, [isOpened, isOpening, onOpenInvitation, unlockScroll, drawFrame]);
 
   const coupleNames = `${groomName || 'Dharma'} & ${brideName || 'Lutfhy'}`;

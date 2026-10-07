@@ -43,7 +43,7 @@ export function SplashCursor({
       if (typeof document === 'undefined') return { r: 0.25, g: 0.42, b: 0.58 };
 
       const el = document.elementFromPoint(clientX, clientY);
-      const target = el?.closest('#event, #footer, #hero');
+      const target = el?.closest('#event, #footer, #cover, #hero');
 
       if (target) {
         // On baby-blue or dark video sections (#event, #footer, #hero):
