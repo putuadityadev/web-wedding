@@ -11,12 +11,10 @@ export interface GiftProps {
 }
 
 export function Gift({
-  sectionLabel = 'TANDA KASIH',
   sectionTitle = 'Doa Restu & Amplop Digital',
   sectionDesc = 'Kehadiran dan doa restu Anda adalah hadiah terindah bagi kami. Namun jika Anda bermaksud memberikan tanda kasih secara digital, Anda dapat menggunakan informasi rekening berikut.',
   accounts,
 }: GiftProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const handleCopy = (accountNumber: string, index: number) => {
@@ -24,97 +22,83 @@ export function Gift({
     setCopiedIndex(index);
     setTimeout(() => {
       setCopiedIndex(null);
-    }, 1800);
+    }, 2000);
   };
 
   return (
     <section
       id="gift"
-      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none"
+      className="relative w-full py-16 sm:py-20 md:py-24 px-[var(--gutter)] bg-[var(--paper)] select-none"
     >
       <div className="max-w-4xl mx-auto w-full">
-        {/* Intro Text */}
-        <div className="text-center max-w-xl mx-auto mb-10">
-          {sectionLabel && (
-            <div className="inline-flex items-center gap-2 mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-              <span className="label-eyebrow tracking-[0.25em] text-[11px] text-[var(--ink)] opacity-60 uppercase">
-                {sectionLabel}
-              </span>
-            </div>
+        {/* Intro Text: Clean Minimalist, No Blue Dot */}
+        <div className="text-center max-w-xl mx-auto mb-10 sm:mb-12">
+          {sectionTitle && (
+            <h3 className="font-serif text-2xl sm:text-3xl md:text-4xl text-[var(--ink)] font-normal tracking-tight mb-3">
+              {sectionTitle}
+            </h3>
           )}
-          <h3 className="display-m text-3xl sm:text-4xl text-[var(--ink)] font-serif mb-4">
-            {sectionTitle}
-          </h3>
           {sectionDesc && (
-            <p className="body-base text-[var(--ink)] opacity-80 leading-relaxed">
+            <p className="body-base text-sm sm:text-base text-[var(--ink)] opacity-75 max-w-lg mx-auto leading-relaxed">
               {sectionDesc}
             </p>
           )}
         </div>
 
-        {/* Accordion Container */}
-        <div className="border border-[var(--hairline)] rounded-[var(--radius-sm)] bg-white/40 overflow-hidden max-w-2xl mx-auto">
-          {/* Accordion Trigger */}
-          <button
-            type="button"
-            onClick={() => setIsOpen(!isOpen)}
-            className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[var(--mist)]/40 transition-colors"
-            aria-expanded={isOpen}
-          >
-            <span className="label-eyebrow tracking-[0.2em] text-[var(--ink)] font-medium">
-              LIHAT NOMOR REKENING
-            </span>
-            <span className="font-mono text-xl text-[var(--deep)] transition-transform duration-300">
-              {isOpen ? '−' : '+'}
-            </span>
-          </button>
+        {/* Minimalist Bank Account Cards — Open Directly (No Extra Step) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
+          {accounts.map((acc, index) => {
+            const isCopied = copiedIndex === index;
 
-          {/* Accordion Content with animated CSS grid */}
-          <div
-            className={`grid transition-all duration-400 ease-[var(--ease-out)] ${
-              isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-            }`}
-          >
-            <div className="overflow-hidden">
-              <div className="px-6 pb-6 pt-2 divide-y divide-[var(--hairline)]">
-                {accounts.map((acc, index) => {
-                  const isCopied = copiedIndex === index;
+            return (
+              <div
+                key={`${acc.bank}-${acc.accountNumber}-${index}`}
+                className="relative bg-white/80 backdrop-blur-md border border-[var(--ink)]/10 rounded-2xl p-5 sm:p-6 shadow-[0_4px_24px_rgba(15,27,45,0.03)] flex flex-col justify-between gap-5 transition-all hover:border-[var(--ink)]/20"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="text-[11px] font-mono tracking-wider font-semibold uppercase text-[var(--deep)] bg-[var(--mist)]/80 px-2.5 py-1 rounded-md">
+                      {acc.bank}
+                    </span>
+                  </div>
+                  <div className="font-mono text-xl sm:text-2xl font-normal text-[var(--ink)] tracking-wider mt-2 select-all">
+                    {acc.accountNumber}
+                  </div>
+                  <div className="text-xs text-[var(--ink)] opacity-60 mt-1 font-sans">
+                    Atas nama: <span className="text-[var(--ink)] opacity-90 font-medium">{acc.accountName}</span>
+                  </div>
+                </div>
 
-                  return (
-                    <div
-                      key={acc.accountNumber}
-                      className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                    >
-                      <div className="flex flex-col">
-                        <span className="label-eyebrow text-[var(--deep)] tracking-[0.2em] mb-1">
-                          {acc.bank}
-                        </span>
-                        <span className="font-mono text-xl sm:text-2xl text-[var(--ink)] tabular-nums tracking-wider">
-                          {acc.accountNumber}
-                        </span>
-                        <span className="body-base text-[var(--ink)] opacity-70 text-sm mt-0.5">
-                          a.n. {acc.accountName}
-                        </span>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(acc.accountNumber, index)}
-                        className={`self-start sm:self-auto label-eyebrow px-4 py-2 border rounded-[var(--radius-sm)] transition-all duration-300 tracking-[0.16em] ${
-                          isCopied
-                            ? 'bg-[var(--baby-blue)] border-[var(--deep)] text-[var(--ink)]'
-                            : 'border-[var(--ink)] text-[var(--ink)] hover:bg-[var(--mist)]'
-                        }`}
-                      >
-                        {isCopied ? 'TERSLIN' : 'SALIN'}
-                      </button>
-                    </div>
-                  );
-                })}
+                <button
+                  type="button"
+                  onClick={() => handleCopy(acc.accountNumber, index)}
+                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-mono tracking-wider flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer ${
+                    isCopied
+                      ? 'bg-emerald-600 text-white font-medium shadow-xs'
+                      : 'bg-[var(--paper)] text-[var(--ink)] border border-[var(--ink)]/15 hover:bg-white hover:border-[var(--ink)]/30'
+                  }`}
+                  aria-label={`Salin nomor rekening ${acc.bank}`}
+                >
+                  {isCopied ? (
+                    <>
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>NOMOR TERSALIN</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                      <span>SALIN REKENING</span>
+                    </>
+                  )}
+                </button>
               </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>

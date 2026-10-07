@@ -130,6 +130,15 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
               >
                 <span>{tab.icon}</span>
                 <span>{tab.label}</span>
+                {tab.id === 'gift' && content.gift?.enabled === false && (
+                  <span
+                    className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold ${
+                      isActive ? 'bg-white/20 text-stone-200' : 'bg-stone-200 text-stone-600'
+                    }`}
+                  >
+                    OFF
+                  </span>
+                )}
                 {isTabDirty && (
                   <span
                     className={`w-2 h-2 rounded-full ${
@@ -2220,6 +2229,118 @@ export function CmsContentEditor({ initialContent }: CmsContentEditorProps) {
             {/* 8. GIFT FORM */}
             {activeTab === 'gift' && (
               <div className="space-y-6">
+                {/* ON / OFF Switch Card */}
+                <div
+                  className={`p-4 sm:p-5 rounded-xl border transition-all duration-200 ${
+                    content.gift.enabled !== false
+                      ? 'bg-emerald-50/70 border-emerald-200/80 shadow-xs'
+                      : 'bg-amber-50/70 border-amber-200/80'
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono uppercase font-bold text-[#0F1B2D]">
+                          Status Tampilan Seksi Tanda Kasih
+                        </span>
+                        <span
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold uppercase ${
+                            content.gift.enabled !== false
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
+                              : 'bg-amber-100 text-amber-800 border border-amber-300/60'
+                          }`}
+                        >
+                          {content.gift.enabled !== false ? '● AKTIF (TAMPIL)' : '○ NONAKTIF (SEMBUNYI)'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-600 max-w-xl leading-relaxed">
+                        {content.gift.enabled !== false
+                          ? 'Seksi transfer bank / amplop digital ditampilkan pada halaman undangan dan dapat diakses dari menu navigasi.'
+                          : 'Seksi disembunyikan sepenuhnya dari halaman undangan & menu navigasi. Tamu tidak akan melihat nomor rekening maupun amplop digital.'}
+                      </p>
+                    </div>
+
+                    {/* Toggle Button */}
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextEnabled = content.gift.enabled === false;
+                          setContent({
+                            ...content,
+                            gift: {
+                              ...content.gift,
+                              enabled: nextEnabled,
+                            },
+                          });
+                        }}
+                        className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                          content.gift.enabled !== false ? 'bg-emerald-600' : 'bg-stone-300'
+                        }`}
+                        role="switch"
+                        aria-checked={content.gift.enabled !== false}
+                      >
+                        <span className="sr-only">Toggle Seksi Tanda Kasih</span>
+                        <span
+                          aria-hidden="true"
+                          className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                            content.gift.enabled !== false ? 'translate-x-7' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                      <span className="text-xs font-mono font-semibold text-[#0F1B2D]">
+                        {content.gift.enabled !== false ? 'ON' : 'OFF'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {content.gift.enabled === false && (
+                  <div className="p-3.5 rounded-lg bg-stone-100 border border-stone-200/80 text-xs text-stone-600 flex items-start gap-2.5">
+                    <span className="text-base leading-none">💡</span>
+                    <span>
+                      Seksi sedang <strong>NONAKTIF</strong>. Pengunjung tidak akan melihat seksi ini di web maupun menu navigasi. Anda tetap dapat mengatur rekening di bawah ini dan mengaktifkannya kapan saja.
+                    </span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Label Seksi (Eyebrow)
+                    </label>
+                    <input
+                      type="text"
+                      value={content.gift.sectionLabel ?? ''}
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          gift: { ...content.gift, sectionLabel: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-1.5 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                      placeholder="TANDA KASIH"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
+                      Judul Seksi
+                    </label>
+                    <input
+                      type="text"
+                      value={content.gift.sectionTitle ?? ''}
+                      onChange={(e) =>
+                        setContent({
+                          ...content,
+                          gift: { ...content.gift, sectionTitle: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-1.5 rounded text-xs border border-[#0F1B2D]/20 bg-white"
+                      placeholder="Doa Restu & Amplop Digital"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="text-xs font-mono uppercase text-[#0F1B2D]/60 block mb-1">
                     Pesan Tanda Kasih

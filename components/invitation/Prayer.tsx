@@ -57,19 +57,11 @@ export function Prayer({
     <section
       ref={containerRef}
       id="prayer"
-      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none overflow-hidden"
+      className="relative w-full py-16 sm:py-20 md:py-24 px-[var(--gutter)] bg-[var(--paper)] select-none overflow-hidden"
     >
       <div className="max-w-4xl mx-auto w-full">
         {/* Header */}
         <div className="text-center mb-10 md:mb-14">
-          {sectionLabel && (
-            <div className="inline-flex items-center gap-2 mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-              <span className="label-eyebrow tracking-[0.28em] text-[10.5px] sm:text-xs text-[var(--ink)] opacity-60 uppercase">
-                {sectionLabel}
-              </span>
-            </div>
-          )}
           {title && (
             <h2 className="display-l font-serif text-3xl sm:text-4xl text-[var(--ink)] tracking-[-0.01em]">
               {title}

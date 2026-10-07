@@ -9,24 +9,28 @@ interface PersistentBarProps {
   isUnlocked: boolean;
   dateFormatted?: string;
   coupleNames?: string;
+  showGift?: boolean;
 }
 
-const MENU_ITEMS = [
-  { label: 'Pembuka', href: '#hero', numeral: 'I' },
-  { label: 'Tentang Kami', href: '#couple', numeral: 'II' },
-  { label: 'Cerita', href: '#story', numeral: 'III' },
-  { label: 'Acara & Lokasi', href: '#event', numeral: 'IV' },
-  { label: 'Galeri Momen', href: '#gallery', numeral: 'V' },
-  { label: 'Kirim Hadiah', href: '#gift', numeral: 'VI' },
-  { label: 'Konfirmasi RSVP', href: '#rsvp', numeral: 'VII' },
-  { label: 'Dinding Ucapan', href: '#wishes', numeral: 'VIII' },
+const ALL_MENU_ITEMS = [
+  { label: 'Pembuka', href: '#hero' },
+  { label: 'Tentang Kami', href: '#couple' },
+  { label: 'Cerita', href: '#story' },
+  { label: 'Acara & Lokasi', href: '#event' },
+  { label: 'Galeri Momen', href: '#gallery' },
+  { label: 'Kirim Hadiah', href: '#gift' },
+  { label: 'Konfirmasi RSVP', href: '#rsvp' },
+  { label: 'Dinding Ucapan', href: '#wishes' },
 ];
+
+const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
 export function PersistentBar({
   audioSrc,
   isUnlocked,
   dateFormatted = 'SENIN, 12 OKTOBER 2026',
   coupleNames = 'DHARMA & LUTFHY',
+  showGift = true,
 }: PersistentBarProps) {
   const { lenis } = useLenisContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,6 +39,13 @@ export function PersistentBar({
   const [isPastHero, setIsPastHero] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+
+  const menuItems = ALL_MENU_ITEMS
+    .filter((item) => showGift || item.href !== '#gift')
+    .map((item, index) => ({
+      ...item,
+      numeral: ROMAN_NUMERALS[index] || `${index + 1}`,
+    }));
 
   // Native window scroll listener for Hero threshold detection
   useEffect(() => {
@@ -217,7 +228,7 @@ export function PersistentBar({
 
         <nav className="my-auto py-8">
           <ul className="flex flex-col gap-4 md:gap-6 max-w-2xl">
-            {MENU_ITEMS.map((item) => (
+            {menuItems.map((item) => (
               <li key={item.href} className="menu-overlay-item flex items-baseline gap-4 md:gap-6 border-b border-[var(--hairline)] pb-3">
                 <span className="label-eyebrow text-[var(--deep)] opacity-60 w-8">
                   {item.numeral}

@@ -64,25 +64,15 @@ export function Story({ sectionLabel, sectionTitle, moments }: StoryProps) {
     <section
       ref={containerRef}
       id="story"
-      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none overflow-hidden"
+      className="relative w-full py-16 sm:py-20 md:py-24 px-[var(--gutter)] bg-[var(--paper)] select-none overflow-hidden"
     >
       <div className="max-w-6xl mx-auto w-full">
-        {/* Optional Editorial Header */}
-        {(sectionLabel || sectionTitle) && (
-          <div className="mb-16 md:mb-24 text-center max-w-2xl mx-auto">
-            {sectionLabel && (
-              <div className="inline-flex items-center gap-2 mb-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-                <span className="label-eyebrow tracking-[0.25em] text-[11px] text-[var(--ink)] opacity-60 uppercase">
-                  {sectionLabel}
-                </span>
-              </div>
-            )}
-            {sectionTitle && (
-              <h2 className="display-l font-serif text-3xl sm:text-4xl text-[var(--ink)] tracking-[-0.01em]">
-                {sectionTitle}
-              </h2>
-            )}
+        {/* Editorial Header */}
+        {sectionTitle && (
+          <div className="mb-10 sm:mb-14 text-center max-w-2xl mx-auto">
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-[var(--ink)] font-normal tracking-tight">
+              {sectionTitle}
+            </h2>
           </div>
         )}
 

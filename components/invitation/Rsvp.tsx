@@ -94,7 +94,7 @@ export function Rsvp({ guest, onRsvpSubmitted }: RsvpProps) {
   return (
     <section
       id="rsvp"
-      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none"
+      className="relative w-full py-16 sm:py-20 md:py-24 px-[var(--gutter)] bg-[var(--paper)] select-none"
     >
       <div className="max-w-3xl mx-auto w-full">
         {/* Success State */}

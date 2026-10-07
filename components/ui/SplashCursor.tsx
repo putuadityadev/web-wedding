@@ -758,7 +758,7 @@ export function SplashCursor({
       render(null);
 
       // Sleep when inactive for > 2.2 seconds (all fluid has dissipated)
-      if (now - lastActiveTime > 2200 && !pointers.some((p) => p.down || p.moved)) {
+      if (now - lastActiveTime > 2200 && !pointers.some((p) => p.moved)) {
         isSleeping = true;
         animationFrameId.current = null;
         return;
@@ -886,12 +886,20 @@ export function SplashCursor({
       splat(pointer.texcoordX, pointer.texcoordY, dx, dy, pointer.color);
     }
 
+    function touchSplat(pointer: Pointer) {
+      // Soft, delicate whisper puff when finger touches screen
+      const dx = 3.5 * (Math.random() - 0.5);
+      const dy = 3.5 * (Math.random() - 0.5);
+      splat(pointer.texcoordX, pointer.texcoordY, dx, dy, pointer.color, 0.45);
+    }
+
     function splat(
       x: number,
       y: number,
       dx: number,
       dy: number,
-      color: { r: number; g: number; b: number }
+      color: { r: number; g: number; b: number },
+      intensityMultiplier: number = 1.0
     ) {
       if (!velocity || !dye) return;
       splatProgram.bind();
@@ -899,12 +907,12 @@ export function SplashCursor({
       gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas!.width / canvas!.height);
       gl.uniform2f(splatProgram.uniforms.point, x, y);
       gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
-      gl.uniform1f(splatProgram.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100.0));
+      gl.uniform1f(splatProgram.uniforms.radius, correctRadius((config.SPLAT_RADIUS * intensityMultiplier) / 100.0));
       blit(velocity.write);
       velocity.swap();
 
       // Soft injection factor for matte, non-glowing fluid simulation
-      const INJECTION = 0.09;
+      const INJECTION = 0.09 * intensityMultiplier;
       gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
       gl.uniform3f(splatProgram.uniforms.color, color.r * INJECTION, color.g * INJECTION, color.b * INJECTION);
       blit(dye.write);
@@ -1011,47 +1019,83 @@ export function SplashCursor({
 
     function handleTouchStart(e: TouchEvent) {
       wakeUp();
-      const touches = e.targetTouches;
+      if (!e.targetTouches || e.targetTouches.length === 0) return;
+      const touch = e.targetTouches[0];
       const pointer = pointers[0];
-      for (let i = 0; i < touches.length; i++) {
-        const posX = scaleByPixelRatio(touches[i].clientX);
-        const posY = scaleByPixelRatio(touches[i].clientY);
-        const targetColor = getFluidColor(touches[i].clientX, touches[i].clientY);
-        currentColor.r = targetColor.r;
-        currentColor.g = targetColor.g;
-        currentColor.b = targetColor.b;
-        updatePointerDownData(pointer, touches[i].identifier, posX, posY, currentColor);
-      }
+      const posX = scaleByPixelRatio(touch.clientX);
+      const posY = scaleByPixelRatio(touch.clientY);
+      const targetColor = getFluidColor(touch.clientX, touch.clientY);
+      currentColor.r = targetColor.r;
+      currentColor.g = targetColor.g;
+      currentColor.b = targetColor.b;
+      updatePointerDownData(pointer, touch.identifier, posX, posY, currentColor);
+      touchSplat(pointer);
     }
 
     function handleTouchMove(e: TouchEvent) {
       wakeUp();
-      const touches = e.targetTouches;
+      if (!e.targetTouches || e.targetTouches.length === 0) return;
+      const touch = e.targetTouches[0];
       const pointer = pointers[0];
-      for (let i = 0; i < touches.length; i++) {
-        const posX = scaleByPixelRatio(touches[i].clientX);
-        const posY = scaleByPixelRatio(touches[i].clientY);
-        const targetColor = getFluidColor(touches[i].clientX, touches[i].clientY);
-        currentColor.r += (targetColor.r - currentColor.r) * 0.12;
-        currentColor.g += (targetColor.g - currentColor.g) * 0.12;
-        currentColor.b += (targetColor.b - currentColor.b) * 0.12;
-        updatePointerMoveData(pointer, posX, posY, currentColor);
+
+      // If finger identifier changed, smoothly reposition without creating velocity burst
+      if (pointer.id !== touch.identifier) {
+        pointer.id = touch.identifier;
+        pointer.texcoordX = scaleByPixelRatio(touch.clientX) / canvas!.width;
+        pointer.texcoordY = 1.0 - scaleByPixelRatio(touch.clientY) / canvas!.height;
+        pointer.prevTexcoordX = pointer.texcoordX;
+        pointer.prevTexcoordY = pointer.texcoordY;
+        return;
       }
+
+      const posX = scaleByPixelRatio(touch.clientX);
+      const posY = scaleByPixelRatio(touch.clientY);
+      const targetColor = getFluidColor(touch.clientX, touch.clientY);
+      currentColor.r += (targetColor.r - currentColor.r) * 0.12;
+      currentColor.g += (targetColor.g - currentColor.g) * 0.12;
+      currentColor.b += (targetColor.b - currentColor.b) * 0.12;
+
+      pointer.prevTexcoordX = pointer.texcoordX;
+      pointer.prevTexcoordY = pointer.texcoordY;
+      pointer.texcoordX = posX / canvas!.width;
+      pointer.texcoordY = 1.0 - posY / canvas!.height;
+
+      let dx = correctDeltaX(pointer.texcoordX - pointer.prevTexcoordX);
+      let dy = correctDeltaY(pointer.texcoordY - pointer.prevTexcoordY);
+
+      // Clamp touch movement so rapid page swipes don't blast giant clouds of smoke
+      const MAX_TOUCH_DELTA = 0.025;
+      dx = Math.max(-MAX_TOUCH_DELTA, Math.min(MAX_TOUCH_DELTA, dx));
+      dy = Math.max(-MAX_TOUCH_DELTA, Math.min(MAX_TOUCH_DELTA, dy));
+
+      // Minimum movement threshold prevents accumulation when user holds finger still without moving
+      const dist = Math.hypot(dx, dy);
+      if (dist > 0.001) {
+        pointer.deltaX = dx * 0.38; // Delicate, whisper-thin trail on touch
+        pointer.deltaY = dy * 0.38;
+        pointer.moved = true;
+      } else {
+        pointer.deltaX = 0;
+        pointer.deltaY = 0;
+        pointer.moved = false;
+      }
+      pointer.color = currentColor;
     }
 
-    function handleTouchEnd(e: TouchEvent) {
-      const touches = e.changedTouches;
+    function handleTouchEnd() {
       const pointer = pointers[0];
-      for (let i = 0; i < touches.length; i++) {
-        updatePointerUpData(pointer);
-      }
+      pointer.down = false;
+      pointer.moved = false;
+      pointer.deltaX = 0;
+      pointer.deltaY = 0;
     }
 
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
     updateFrame();
 
@@ -1068,6 +1112,7 @@ export function SplashCursor({
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, [
     SIM_RESOLUTION,

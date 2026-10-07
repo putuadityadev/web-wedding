@@ -56,7 +56,14 @@ export function LenisProvider({
 
     // Initial state: stop scroll if locked until cover opened
     if (initiallyLocked) {
+      if (typeof window !== 'undefined') {
+        if ('scrollRestoration' in history) {
+          history.scrollRestoration = 'manual';
+        }
+        window.scrollTo(0, 0);
+      }
       lenis.stop();
+      lenis.scrollTo(0, { immediate: true });
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';

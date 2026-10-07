@@ -82,15 +82,15 @@ export function Wishes({ newWish }: WishesProps) {
   return (
     <section
       id="wishes"
-      className="relative w-full py-[var(--section-y)] px-[var(--gutter)] bg-[var(--paper)] select-none"
+      className="relative w-full py-16 sm:py-20 md:py-24 px-[var(--gutter)] bg-[var(--paper)] select-none"
     >
       <div className="max-w-5xl mx-auto w-full">
         {/* Section Header */}
-        <div className="text-center max-w-xl mx-auto mb-16 md:mb-20">
-          <span className="label-eyebrow text-[var(--accent)] tracking-[0.2em] mb-4 block">
+        <div className="text-center max-w-xl mx-auto mb-10 sm:mb-12">
+          <span className="label-eyebrow text-[var(--accent)] tracking-[0.2em] mb-3 block">
             DOA & UCAPAN
           </span>
-          <h2 className="title-display text-[var(--ink)] font-light mb-4">
+          <h2 className="title-display text-[var(--ink)] font-light mb-3">
             Dinding Doa Restu
           </h2>
           <p className="body-m text-[var(--ink)] opacity-70">

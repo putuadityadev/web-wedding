@@ -140,18 +140,10 @@ export function Gallery({
         className="relative w-full h-[100svh] bg-[var(--paper)] select-none overflow-hidden flex flex-col justify-between py-6 sm:py-8"
       >
         {/* Centered Top Header Bar (Safe from fixed RSVP & MENU badges) */}
-        <div className="w-full max-w-md mx-auto px-4 pt-4 sm:pt-6 z-20 flex flex-col items-center justify-center text-center pointer-events-none">
-          <div className="flex items-center gap-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--baby-blue)]" />
-            <span className="label-eyebrow tracking-[0.25em] text-[11px] text-[var(--ink)] opacity-70 uppercase font-mono">
-              {sectionLabel}
-            </span>
-          </div>
-          {sectionTitle && (
-            <span className="font-serif italic text-sm sm:text-base text-[var(--ink)] opacity-75 mt-0.5">
-              {sectionTitle}
-            </span>
-          )}
+        <div className="w-full max-w-md mx-auto px-4 pt-3 sm:pt-5 z-20 flex flex-col items-center justify-center text-center pointer-events-none">
+          <h2 className="font-serif text-2xl sm:text-3xl text-[var(--ink)] font-normal tracking-tight">
+            {sectionTitle || 'Galeri Kenangan'}
+          </h2>
         </div>
 
         {/* Pinned Horizontal Gallery Track (Full Screen Immersion - Up to 8 Curated Slots) */}

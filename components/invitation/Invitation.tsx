@@ -38,8 +38,21 @@ function InvitationContent({
   isPreview: boolean;
   isCoverForceOpened?: boolean;
 }) {
-  const { unlockScroll } = useLenisContext();
+  const { unlockScroll, lenis } = useLenisContext();
   const [isCoverOpened, setIsCoverOpened] = useState(Boolean(isCoverForceOpened || isPreview));
+
+  // Reset scroll to top / Hero on mount and page refresh
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+      if (!isCoverForceOpened && !isPreview) {
+        window.scrollTo(0, 0);
+        lenis?.scrollTo(0, { immediate: true });
+      }
+    }
+  }, [isCoverForceOpened, isPreview, lenis]);
 
   React.useEffect(() => {
     if (isCoverForceOpened !== undefined) {
@@ -59,6 +72,9 @@ function InvitationContent({
   const [newWish, setNewWish] = useState<{ name: string; wish: string } | null>(null);
 
   const handleOpenInvitation = async () => {
+    // Ensure we start cleanly from the top / Hero section
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    lenis?.scrollTo(0, { immediate: true });
     setIsCoverOpened(true);
     unlockScroll();
 
@@ -115,6 +131,7 @@ function InvitationContent({
         isUnlocked={isCoverOpened}
         dateFormatted={content.event.dateFormatted || guest.event.dateFormatted}
         coupleNames={`${content.hero.groomName || guest.event.groomName} & ${content.hero.brideName || guest.event.brideName}`}
+        showGift={content.gift?.enabled !== false}
       />
 
       {/* 1. Hero with Real Editorial Portrait & 3D Typography */}
@@ -257,17 +274,19 @@ function InvitationContent({
           }
         />
 
-        {/* 7. Gift */}
-        <Gift
-          sectionLabel={content.gift.sectionLabel}
-          sectionTitle={content.gift.sectionTitle}
-          sectionDesc={content.gift.sectionDesc}
-          accounts={
-            content.gift.accounts && content.gift.accounts.length > 0
-              ? content.gift.accounts
-              : guest.event.bankAccounts
-          }
-        />
+        {/* 7. Gift (Optional / Toggleable) */}
+        {content.gift?.enabled !== false && (
+          <Gift
+            sectionLabel={content.gift.sectionLabel}
+            sectionTitle={content.gift.sectionTitle}
+            sectionDesc={content.gift.sectionDesc}
+            accounts={
+              content.gift.accounts && content.gift.accounts.length > 0
+                ? content.gift.accounts
+                : guest.event.bankAccounts
+            }
+          />
+        )}
 
         {/* 8. RSVP */}
         <Rsvp guest={guest} onRsvpSubmitted={handleRsvpSubmitted} />

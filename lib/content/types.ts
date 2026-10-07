@@ -136,6 +136,7 @@ export interface BankAccountItem {
 }
 
 export interface GiftContent {
+  enabled?: boolean;
   sectionLabel: string;
   sectionTitle: string;
   sectionDesc: string;
@@ -403,6 +404,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     ],
   },
   gift: {
+    enabled: true,
     sectionLabel: 'TANDA KASIH',
     sectionTitle: 'Doa Restu & Amplop Digital',
     sectionDesc: 'Doa restu Anda merupakan karunia terindah bagi kami. Bagi keluarga dan sahabat yang ingin memberikan tanda kasih secara digital, dapat melalui rekening berikut:',
