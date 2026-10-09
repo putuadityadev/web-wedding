@@ -17,6 +17,34 @@ describe('Phone Normalization', () => {
     assert.equal(normalizePhoneNumber('81234567890'), '+6281234567890');
   });
 
+  test('normalizes Excel scientific notation to +62812', () => {
+    assert.equal(normalizePhoneNumber('8.123456789E+10'), '+6281234567890');
+    assert.equal(normalizePhoneNumber('6.28123456789E+12'), '+6281234567890');
+  });
+
+  test('normalizes Excel decimal artifacts', () => {
+    assert.equal(normalizePhoneNumber('081234567890.0'), '+6281234567890');
+    assert.equal(normalizePhoneNumber('81234567890,00'), '+6281234567890');
+  });
+
+  test('extracts first valid number from cell with multiple numbers', () => {
+    assert.equal(normalizePhoneNumber('081234567890 / 081987654321'), '+6281234567890');
+    assert.equal(normalizePhoneNumber('081234567890, 081987654321'), '+6281234567890');
+  });
+
+  test('cleans notes and trailing words attached to phone number', () => {
+    assert.equal(normalizePhoneNumber('081234567890 (WA)'), '+6281234567890');
+    assert.equal(normalizePhoneNumber('081234567890 - ibu'), '+6281234567890');
+    assert.equal(normalizePhoneNumber('0812_3456_7890'), '+6281234567890');
+  });
+
+  test('handles prefix variations like +620, +08, 0062', () => {
+    assert.equal(normalizePhoneNumber('+62081234567890'), '+6281234567890');
+    assert.equal(normalizePhoneNumber('62081234567890'), '+6281234567890');
+    assert.equal(normalizePhoneNumber('+081234567890'), '+6281234567890');
+    assert.equal(normalizePhoneNumber('006281234567890'), '+6281234567890');
+  });
+
   test('returns null on invalid phone numbers', () => {
     assert.equal(normalizePhoneNumber('12345'), null);
     assert.equal(normalizePhoneNumber('invalid'), null);

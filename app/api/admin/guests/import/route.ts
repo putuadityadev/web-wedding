@@ -7,23 +7,57 @@ import { normalizePhoneNumber } from '@/lib/guests/phone';
 export const dynamic = 'force-dynamic';
 
 interface CsvRowInput {
+  [key: string]: unknown;
   nama?: string;
   name?: string;
+  nama_lengkap?: string;
+  nama_tamu?: string;
+  guest_name?: string;
+  guest?: string;
   no_hp?: string;
+  no_hp_wa?: string;
   phone?: string;
   wa?: string;
   whatsapp?: string;
+  nomor_hp?: string;
+  nomor?: string;
+  nohp?: string;
+  hp?: string;
+  kontak?: string;
+  telepon?: string;
+  telp?: string;
+  no_telp?: string;
+  no_telepon?: string;
+  mobile?: string;
   sapaan?: string;
   salutation?: string;
+  gelar?: string;
+  title?: string;
   panggilan?: string;
   nickname?: string;
+  nama_panggilan?: string;
   grup?: string;
   group?: string;
+  kategori?: string;
+  category?: string;
+  rombongan?: string;
   maks_tamu?: string | number;
   max_pax?: string | number;
   pax?: string | number;
+  jumlah_tamu?: string | number;
+  kuota?: string | number;
   nada?: string;
   tone?: string;
+}
+
+function extractFieldValue(row: CsvRowInput, aliases: string[]): string {
+  for (const alias of aliases) {
+    const val = row[alias];
+    if (val !== undefined && val !== null && String(val).trim() !== '') {
+      return String(val).trim();
+    }
+  }
+  return '';
 }
 
 export async function POST(request: Request) {
@@ -65,18 +99,26 @@ export async function POST(request: Request) {
     let createdCount = 0;
     let updatedCount = 0;
     let skippedCount = 0;
+    let withPhoneCount = 0;
+    let withoutPhoneCount = 0;
+    let invalidPhoneCount = 0;
 
-    // 2. Fetch all existing phones to detect duplicates efficiently
+    // 2. Fetch all existing guests to detect duplicates efficiently (by phone and by name)
     const { data: existingGuests } = await admin
       .from('guests')
-      .select('id, phone')
-      .not('phone', 'is', null);
+      .select('id, name, group_label, phone');
 
     const existingPhoneMap = new Map<string, string>();
+    const existingNameMap = new Map<string, string>(); // lowercase name + '::' + lowercase group
+
     if (existingGuests) {
       for (const g of existingGuests) {
         if (g.phone) {
           existingPhoneMap.set(g.phone, g.id);
+        }
+        if (g.name) {
+          const key = `${g.name.toLowerCase().trim()}::${(g.group_label || '').toLowerCase().trim()}`;
+          existingNameMap.set(key, g.id);
         }
       }
     }
@@ -85,44 +127,103 @@ export async function POST(request: Request) {
     const toInsert: Array<Record<string, unknown>> = [];
 
     for (const row of rawRows) {
-      const name = (row.nama || row.name || '').trim();
+      const name = extractFieldValue(row, [
+        'nama',
+        'name',
+        'nama_lengkap',
+        'nama_tamu',
+        'guest_name',
+        'guest',
+      ]);
       if (!name) {
         skippedCount++;
         continue;
       }
 
-      const rawPhone = row.no_hp || row.phone || row.wa || row.whatsapp;
+      const rawPhone = extractFieldValue(row, [
+        'cleanphone',
+        'clean_phone',
+        'no_hp',
+        'no_hp_wa',
+        'phone',
+        'wa',
+        'whatsapp',
+        'nomor_hp',
+        'nomor',
+        'nohp',
+        'hp',
+        'kontak',
+        'telepon',
+        'telp',
+        'no_telp',
+        'no_telepon',
+        'mobile',
+        'no_wa',
+      ]);
       const cleanPhone = normalizePhoneNumber(rawPhone);
 
-      const rawTone = (row.nada || row.tone || '').toLowerCase().trim();
+      if (rawPhone && !cleanPhone) {
+        invalidPhoneCount++;
+      }
+
+      const rawTone = extractFieldValue(row, ['nada', 'tone']).toLowerCase();
       const tone = ['formal', 'warm', 'casual'].includes(rawTone) ? rawTone : 'warm';
 
-      const salutation = (row.sapaan || row.salutation || 'Bapak / Ibu').trim();
-      const nickname = (row.panggilan || row.nickname || name.split(' ')[0]).trim();
-      const groupLabel = (row.grup || row.group || 'Keluarga & Kerabat').trim();
-      const maxPax = Number(row.maks_tamu || row.max_pax || row.pax) || 2;
+      const salutation =
+        extractFieldValue(row, ['sapaan', 'salutation', 'gelar', 'title']) || 'Bapak / Ibu';
+      const nickname =
+        extractFieldValue(row, ['panggilan', 'nickname', 'nama_panggilan']) || name.split(' ')[0];
+      const groupLabel =
+        extractFieldValue(row, ['grup', 'group', 'kategori', 'category', 'rombongan']) ||
+        'Keluarga & Kerabat';
+      const rawPax = extractFieldValue(row, [
+        'maks_tamu',
+        'max_pax',
+        'pax',
+        'jumlah_tamu',
+        'kuota',
+      ]);
+      const maxPax = Number(rawPax) > 0 ? Number(rawPax) : 2;
 
-      // Check if phone duplicate exists
-      if (cleanPhone && existingPhoneMap.has(cleanPhone)) {
+      // Duplicate detection key
+      const nameKey = `${name.toLowerCase()}::${groupLabel.toLowerCase()}`;
+      const duplicateById =
+        (cleanPhone && existingPhoneMap.get(cleanPhone)) ||
+        existingNameMap.get(nameKey);
+
+      if (duplicateById) {
         if (duplicateMode === 'skip') {
           skippedCount++;
           continue;
         } else {
-          // Update mode
-          const existingId = existingPhoneMap.get(cleanPhone)!;
+          // Update mode: update existing guest record (including phone if available)
+          const updatePayload: Record<string, unknown> = {
+            name,
+            nickname,
+            salutation,
+            group_label: groupLabel,
+            tone,
+            max_pax: maxPax,
+            import_batch_id: batchId,
+            updated_at: new Date().toISOString(),
+          };
+
+          if (cleanPhone) {
+            updatePayload.phone = cleanPhone;
+          }
+
           await admin
             .from('guests')
-            .update({
-              name,
-              nickname,
-              salutation,
-              group_label: groupLabel,
-              tone,
-              max_pax: maxPax,
-              import_batch_id: batchId,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', existingId);
+            .update(updatePayload)
+            .eq('id', duplicateById);
+
+          if (cleanPhone) {
+            existingPhoneMap.set(cleanPhone, duplicateById);
+            withPhoneCount++;
+          } else {
+            withoutPhoneCount++;
+          }
+
           updatedCount++;
           continue;
         }
@@ -134,7 +235,7 @@ export async function POST(request: Request) {
         name,
         nickname,
         salutation,
-        phone: cleanPhone,
+        phone: cleanPhone || null,
         group_label: groupLabel,
         tone,
         max_pax: maxPax,
@@ -143,9 +244,13 @@ export async function POST(request: Request) {
       });
 
       if (cleanPhone) {
+        withPhoneCount++;
         // Track within this batch run to avoid duplicate phones in the same CSV
         existingPhoneMap.set(cleanPhone, 'pending');
+      } else {
+        withoutPhoneCount++;
       }
+      existingNameMap.set(nameKey, 'pending');
     }
 
     // 4. Batch insert new guests
@@ -179,6 +284,9 @@ export async function POST(request: Request) {
       createdCount,
       updatedCount,
       skippedCount,
+      withPhoneCount,
+      withoutPhoneCount,
+      invalidPhoneCount,
       totalProcessed: rawRows.length,
     });
   } catch (err: unknown) {
