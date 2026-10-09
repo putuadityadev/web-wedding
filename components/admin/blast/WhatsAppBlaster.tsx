@@ -171,8 +171,10 @@ export function WhatsAppBlaster({ siteContent }: WhatsAppBlasterProps) {
       const { template } = resolveTemplateForGuest(guest);
 
       const groomName = content.hero?.groomName || 'Dharma';
-      const brideName = content.hero?.brideName || 'Lutfhy';
+      const brideName = content.hero?.brideName || 'Luthfi';
       const mempelai = `${groomName} & ${brideName}`;
+      const tanggal = content.event?.dateFormatted || 'Sabtu, 17 Oktober 2026';
+      const lokasi = content.event?.venueName || 'Kediaman Mempelai Pria (Kayubihi, Bangli)';
 
       return template
         .replace(/{{nama}}/g, guest.name)
@@ -181,7 +183,11 @@ export function WhatsAppBlaster({ siteContent }: WhatsAppBlasterProps) {
         .replace(/{{link}}/g, link)
         .replace(/{{pax}}/g, String(guest.maxPax || 2))
         .replace(/{{jam_hadir}}/g, jamHadir)
-        .replace(/{{mempelai}}/g, mempelai);
+        .replace(/{{mempelai}}/g, mempelai)
+        .replace(/{{tanggal}}/g, tanggal)
+        .replace(/{{lokasi}}/g, lokasi)
+        .replace(/Sabtu,\s*12\s*Desember\s*2026/gi, tanggal)
+        .replace(/12\s*Desember\s*2026/gi, tanggal);
     },
     [resolveTemplateForGuest, content]
   );
@@ -647,7 +653,7 @@ export function WhatsAppBlaster({ siteContent }: WhatsAppBlasterProps) {
           {/* Variable Insertion Pills */}
           <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
             <span className="text-[#0F1B2D]/50 font-sans text-xs mr-1">Sisipkan Variabel:</span>
-            {['sapaan', 'panggilan', 'nama', 'link', 'jam_hadir', 'pax', 'mempelai'].map((v) => (
+            {['sapaan', 'panggilan', 'nama', 'link', 'tanggal', 'lokasi', 'jam_hadir', 'pax', 'mempelai'].map((v) => (
               <button
                 key={v}
                 type="button"

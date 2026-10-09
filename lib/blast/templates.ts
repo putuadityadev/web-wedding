@@ -7,8 +7,8 @@ Puji syukur kami panjatkan kepada Tuhan Yang Maha Esa atas segala rahmat-Nya.
 Bersama pesan ini, perkenankan kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri Upacara & Resepsi Pernikahan kami:
 
 💍 {{mempelai}}
-🗓️ Sabtu, 12 Desember 2026
-📍 Kediaman Mempelai Pria (Kayubihi, Bangli)
+🗓️ {{tanggal}}
+📍 {{lokasi}}
 ⏰ Waktu Kehadiran: {{jam_hadir}}
 
 Informasi lengkap mengenai jadwal prosesi, panduan lokasi, serta konfirmasi kehadiran (RSVP) dapat diakses melalui tautan undangan elektronik personal berikut:
@@ -24,8 +24,8 @@ export const DEFAULT_WARM_TEMPLATE = `Halo {{sapaan}} {{panggilan}},
 Dengan penuh rasa syukur dan bahagia, kami mengundang Anda untuk hadir pada momen pernikahan kami:
 
 💍 {{mempelai}}
-🗓️ Sabtu, 12 Desember 2026
-📍 Kediaman Mempelai Pria (Kayubihi, Bangli)
+🗓️ {{tanggal}}
+📍 {{lokasi}}
 ⏰ Waktu Kehadiran: {{jam_hadir}}
 
 Detail acara, denah lokasi, dan konfirmasi kehadiran (RSVP) dapat diakses melalui tautan personal Anda berikut:
@@ -41,8 +41,8 @@ export const DEFAULT_CASUAL_TEMPLATE = `Halo {{panggilan}}! 👋
 Kabar bahagia nih! Akhirnya kami mau melangkah ke jenjang pernikahan:
 
 💍 {{mempelai}}
-🗓️ Sabtu, 12 Desember 2026
-📍 Kayubihi, Bangli, Bali
+🗓️ {{tanggal}}
+📍 {{lokasi}}
 ⏰ Jam: {{jam_hadir}}
 
 Yuk cek info lengkap lokasi, jadwal, dan konfirmasi kehadiran kamu lewat link undangan personal ini ya:

@@ -38,7 +38,7 @@ export function mapRowToGuestView(
     sapaan: salutation,
     nama: name,
     panggilan: nickname,
-    tanggal: eventContent.dateFormatted || '12 Desember 2026',
+    tanggal: eventContent.dateFormatted || 'Sabtu, 17 Oktober 2026',
     jam_hadir: guestArrivalTimeFormatted,
     lokasi: eventContent.venueName || 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
     link,

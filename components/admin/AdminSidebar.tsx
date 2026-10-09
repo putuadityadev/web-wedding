@@ -155,10 +155,10 @@ export function AdminSidebar({ currentEmail }: AdminSidebarProps) {
               PORTAL ADMIN
             </span>
             <h2 className="font-serif text-xl tracking-tight text-white mt-1">
-              Dharma & Lutfhy
+              Dharma & Luthfi
             </h2>
             <span className="text-[11px] text-white/60 block mt-0.5">
-              12 Desember 2026
+              17 Oktober 2026
             </span>
           </div>
 

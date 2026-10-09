@@ -51,7 +51,7 @@ export function formatWhatsAppMessage(
     .replace(/\{\{link_undangan\}\}|\{link_undangan\}/g, link)
     .replace(/\{\{link\}\}|\{link\}/g, link)
     // Info Acara
-    .replace(/\{\{tanggal\}\}|\{tanggal\}/g, siteContent?.event?.dateFormatted || '12 Oktober 2026')
+    .replace(/\{\{tanggal\}\}|\{tanggal\}/g, siteContent?.event?.dateFormatted || 'Sabtu, 17 Oktober 2026')
     .replace(/\{\{lokasi\}\}|\{lokasi\}/g, siteContent?.event?.venueName || 'Kediaman Mempelai Pria');
 
   return text;
