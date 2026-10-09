@@ -293,7 +293,7 @@ export function CmsContentEditor({ initialContent, initialTab = 'cover' }: CmsCo
                     <input
                       type="text"
                       value={content.cover.brideName}
-                      placeholder="Lutfhy"
+                      placeholder="Luthfi"
                       onChange={(e) =>
                         setContent({
                           ...content,
@@ -351,7 +351,7 @@ export function CmsContentEditor({ initialContent, initialTab = 'cover' }: CmsCo
                     <input
                       type="text"
                       value={content.cover.dateDisplay ?? ''}
-                      placeholder="12 · 12 · 2026"
+                      placeholder="17 · 10 · 2026"
                       onChange={(e) =>
                         setContent({
                           ...content,
@@ -414,7 +414,7 @@ export function CmsContentEditor({ initialContent, initialTab = 'cover' }: CmsCo
                     <input
                       type="text"
                       value={content.hero.brideName}
-                      placeholder="Lutfhy"
+                      placeholder="Luthfi"
                       onChange={(e) =>
                         setContent({
                           ...content,
@@ -433,7 +433,7 @@ export function CmsContentEditor({ initialContent, initialTab = 'cover' }: CmsCo
                   <input
                     type="text"
                     value={content.hero.dateShort}
-                    placeholder="SENIN, 12 OKTOBER 2026"
+                    placeholder="SABTU, 17 OKTOBER 2026"
                     onChange={(e) =>
                       setContent({
                         ...content,
@@ -2558,7 +2558,7 @@ export function CmsContentEditor({ initialContent, initialTab = 'cover' }: CmsCo
                       <input
                         type="text"
                         value={content.footer.brideName ?? ''}
-                        placeholder={content.hero?.brideName || 'Lutfhy'}
+                        placeholder={content.hero?.brideName || 'Luthfi'}
                         onChange={(e) =>
                           setContent({
                             ...content,
@@ -2879,7 +2879,7 @@ export function CmsContentEditor({ initialContent, initialTab = 'cover' }: CmsCo
                     <input
                       type="text"
                       value={content.branding?.ogImageAlt ?? ''}
-                      placeholder="Pernikahan Dharma & Lutfhy"
+                      placeholder="Pernikahan Dharma & Luthfi"
                       onChange={(e) =>
                         setContent({
                           ...content,

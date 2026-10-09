@@ -24,7 +24,7 @@ export function GalleryModal({
   entryOrigin = 'gallery',
   sectionTitle = 'Momen Terindah',
   groomName = 'Dharma',
-  brideName = 'Lutfhy',
+  brideName = 'Luthfi',
 }: GalleryModalProps) {
   const { lenis } = useLenisContext();
   const [filter, setFilter] = useState<'all' | 'photo' | 'video'>('all');

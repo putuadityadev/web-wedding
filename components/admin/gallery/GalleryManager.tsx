@@ -739,7 +739,7 @@ export function GalleryManager({ initialGallery }: GalleryManagerProps) {
                   type="text"
                   value={newVideoTitle}
                   onChange={(e) => setNewVideoTitle(e.target.value)}
-                  placeholder="Cinematic Teaser Dharma & Lutfhy"
+                  placeholder="Cinematic Teaser Dharma & Luthfi"
                   className="w-full px-3 py-2 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
                 />
               </div>

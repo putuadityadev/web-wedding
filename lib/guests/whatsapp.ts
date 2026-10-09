@@ -18,7 +18,7 @@ export function formatWhatsAppMessage(
   origin: string = ''
 ): string {
   const groomName = siteContent?.hero?.groomName || 'Dharma';
-  const brideName = siteContent?.hero?.brideName || 'Lutfhy';
+  const brideName = siteContent?.hero?.brideName || 'Luthfi';
   const mempelai = `${groomName} & ${brideName}`;
 
   const salutation = guest.salutation ? guest.salutation.trim() : '';
@@ -28,6 +28,11 @@ export function formatWhatsAppMessage(
 
   const baseOrigin = origin ? origin.replace(/\/+$/, '') : '';
   const link = baseOrigin ? `${baseOrigin}/u/${guest.token}` : `/u/${guest.token}`;
+
+  const tanggal = siteContent?.event?.dateFormatted || 'Sabtu, 17 Oktober 2026';
+  const lokasi = siteContent?.event?.venueName || 'Kediaman Mempelai Pria (Kayubihi, Bangli)';
+  const jamHadir =
+    siteContent?.event?.timeFormatted || '11.00 – 22.00 WITA';
 
   const defaultTemplate =
     `Halo {nama_tamu}, dengan sukacita dan penuh syukur kami mengundang Anda ke pernikahan {mempelai}.\n\n` +
@@ -51,8 +56,12 @@ export function formatWhatsAppMessage(
     .replace(/\{\{link_undangan\}\}|\{link_undangan\}/g, link)
     .replace(/\{\{link\}\}|\{link\}/g, link)
     // Info Acara
-    .replace(/\{\{tanggal\}\}|\{tanggal\}/g, siteContent?.event?.dateFormatted || 'Sabtu, 17 Oktober 2026')
-    .replace(/\{\{lokasi\}\}|\{lokasi\}/g, siteContent?.event?.venueName || 'Kediaman Mempelai Pria');
+    .replace(/\{\{tanggal\}\}|\{tanggal\}/g, tanggal)
+    .replace(/\{\{lokasi\}\}|\{lokasi\}/g, lokasi)
+    .replace(/\{\{jam_hadir\}\}|\{jam_hadir\}|\{\{jam\}\}|\{jam\}|\{\{waktu\}\}|\{waktu\}/g, jamHadir)
+    // Legacy hardcoded date cleanup fallback
+    .replace(/Sabtu,\s*12\s*Desember\s*2026/gi, tanggal)
+    .replace(/12\s*Desember\s*2026/gi, tanggal);
 
   return text;
 }

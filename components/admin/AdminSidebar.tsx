@@ -115,7 +115,7 @@ export function AdminSidebar({ currentEmail }: AdminSidebarProps) {
       {/* Mobile Top bar with Hamburger */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#0F1B2D] text-white border-b border-white/10 z-30 sticky top-0">
         <div className="flex items-center gap-2.5">
-          <span className="font-serif text-lg tracking-tight">Dharma & Lutfhy</span>
+          <span className="font-serif text-lg tracking-tight">Dharma & Luthfi</span>
           <span className="text-[9px] bg-white/15 px-1.5 py-0.5 rounded font-mono">ADMIN</span>
         </div>
         <button

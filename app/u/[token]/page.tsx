@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const siteContent = await getSiteContent();
     const branding = siteContent.branding;
     const groomName = siteContent.hero?.groomName || 'Dharma';
-    const brideName = siteContent.hero?.brideName || 'Lutfhy';
+    const brideName = siteContent.hero?.brideName || 'Luthfi';
     const guestRow = await getGuestByToken(token);
 
     const guestSalutation = guestRow?.salutation ? `${guestRow.salutation.trim()} ` : '';

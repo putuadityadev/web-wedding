@@ -238,11 +238,11 @@ function InvitationContent({
         <Event
           sectionLabel={content.event.sectionLabel}
           sectionTitle={content.event.sectionTitle}
-          dayFormatted={content.event.dayFormatted || 'SENIN'}
-          dateNumeral={content.event.dateNumeral || '12'}
+          dayFormatted={content.event.dayFormatted || 'SABTU'}
+          dateNumeral={content.event.dateNumeral || '17'}
           monthYearFormatted={content.event.monthYearFormatted || 'OKTOBER 2026'}
-          dateFormatted={content.event.dateFormatted || 'Senin, 12 Oktober 2026'}
-          timeFormatted={content.event.timeFormatted || '11.00 – 14.00 WITA'}
+          dateFormatted={content.event.dateFormatted || 'Sabtu, 17 Oktober 2026'}
+          timeFormatted={content.event.timeFormatted || '11.00 – 22.00 WITA'}
           venueName={content.event.venueName}
           venueAddress={content.event.venueAddress}
           mapsUrl={content.event.mapsUrl}

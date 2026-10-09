@@ -5,7 +5,7 @@ export function getEventTimeZone(): string {
 }
 
 /**
- * Format a date in the event timezone (e.g. "Sabtu, 12 Desember 2026")
+ * Format a date in the event timezone (e.g. "Sabtu, 17 Oktober 2026")
  */
 export function formatEventDate(date: Date | string | number, tz = getEventTimeZone()): string {
   const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
@@ -35,7 +35,7 @@ export function formatEventTime(date: Date | string | number, tz = getEventTimeZ
 }
 
 /**
- * Format time range in event timezone (e.g. "11.00 – 14.00 WITA")
+ * Format time range in event timezone (e.g. "11.00 – 22.00 WITA")
  */
 export function formatEventTimeRange(
   start: Date | string | number,

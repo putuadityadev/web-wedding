@@ -41,11 +41,11 @@ interface TimeRemaining {
 export function Event({
   sectionLabel = 'WAKTU & LOKASI',
   sectionTitle = 'Resepsi Pernikahan',
-  dayFormatted = 'SENIN',
-  dateNumeral = '12',
+  dayFormatted = 'SABTU',
+  dateNumeral = '17',
   monthYearFormatted = 'OKTOBER 2026',
-  dateFormatted = 'Senin, 12 Oktober 2026',
-  timeFormatted = '11.00 – 14.00 WITA',
+  dateFormatted = 'Sabtu, 17 Oktober 2026',
+  timeFormatted = '11.00 – 22.00 WITA',
   venueName = 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
   venueAddress = 'Banjar Kawan, Desa Kayubihi, Kec. Bangli, Kabupaten Bangli, Bali 80614',
   mapsUrl = 'https://www.google.com/maps/search/?api=1&query=-8.3981403,115.3643337',
@@ -163,7 +163,7 @@ export function Event({
 
   const handleDownloadICS = () => {
     downloadCalendarEvent({
-      title: 'Pernikahan Dharma & Lutfhy',
+      title: 'Pernikahan Dharma & Luthfi',
       description: `Resepsi Pernikahan. Waktu: ${timeFormatted}. Tempat: ${venueName}, ${venueAddress}`,
       location: `${venueName}, ${venueAddress}`,
       startDate: startsAt,

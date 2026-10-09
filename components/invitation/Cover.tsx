@@ -584,8 +584,8 @@ export function Cover({
     tl.to({}, { duration: 0.05 }, 3.2);
   }, [isOpened, isOpening, onOpenInvitation, unlockScroll, drawFrame]);
 
-  const coupleNames = `${groomName || 'Dharma'} & ${brideName || 'Lutfhy'}`;
-  const displayDate = (dateFormatted || '12 · 12 · 2026').toUpperCase();
+  const coupleNames = `${groomName || 'Dharma'} & ${brideName || 'Luthfi'}`;
+  const displayDate = (dateFormatted || '17 · 10 · 2026').toUpperCase();
 
   return (
     <div
@@ -741,7 +741,7 @@ export function Cover({
       {/* 4. EDITORIAL UI TYPOGRAPHY & CTA (STAGGERED SMOOTH ENTRANCE)   */}
       {/* ============================================================== */}
       {(() => {
-        const coupleNames = `${groomName || 'Dharma'} & ${brideName || 'Lutfhy'}`;
+        const coupleNames = `${groomName || 'Dharma'} & ${brideName || 'Luthfi'}`;
         const displayHeadline = headline || badge || 'We invite you to celebrate our wedding';
 
         const displayGreeting = salutation

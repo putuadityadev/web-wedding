@@ -45,9 +45,9 @@ export const ASSETS = {
         src: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80',
         alt: 'Luthfi Quasimah Widoyo',
         aspectRatio: '4/5',
-        label: 'POTRET LUTFHY',
+        label: 'POTRET LUTHFI',
       },
-      instagram: 'lutfhyquasimah',
+      instagram: 'luthfiquasimah',
     },
   },
 

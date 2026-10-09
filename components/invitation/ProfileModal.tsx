@@ -354,7 +354,7 @@ export function ProfileModal({
               THE WEDDING CELEBRATION
             </span>
             <p className="text-[11px] font-serif italic text-[var(--ink)]/60">
-              Dharma &amp; Lutfhy
+              Dharma &amp; Luthfi
             </p>
           </div>
         </div>

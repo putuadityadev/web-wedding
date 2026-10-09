@@ -131,7 +131,7 @@ export function Rsvp({ guest, onRsvpSubmitted }: RsvpProps) {
                   type="button"
                   onClick={() =>
                     downloadCalendarEvent({
-                      title: 'Pernikahan Dharma & Lutfhy',
+                      title: 'Pernikahan Dharma & Luthfi',
                       description: 'Konfirmasi Hadir Resepsi Pernikahan',
                       location: `${guest.event.venueName}, ${guest.event.venueAddress}`,
                       startDate: guest.arrivalAt || guest.event.startsAt,

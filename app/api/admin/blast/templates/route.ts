@@ -5,6 +5,15 @@ import { BlastTemplatesConfig, DEFAULT_BLAST_CONFIG } from '@/lib/blast/template
 
 export const dynamic = 'force-dynamic';
 
+function cleanTemplate(str: string | undefined): string {
+  if (!str) return '';
+  return str
+    .replace(/Sabtu,\s*12\s*Desember\s*2026/gi, '{{tanggal}}')
+    .replace(/12\s*Desember\s*2026/gi, '{{tanggal}}')
+    .replace(/Sabtu,\s*12\s*Oktober\s*2026/gi, '{{tanggal}}')
+    .replace(/12\s*Oktober\s*2026/gi, '{{tanggal}}');
+}
+
 export async function GET() {
   try {
     await requireAdmin();
@@ -21,13 +30,15 @@ export async function GET() {
     }
 
     const merged: BlastTemplatesConfig = {
-      defaultTemplate: row.data.defaultTemplate || DEFAULT_BLAST_CONFIG.defaultTemplate,
-      groupTemplates: row.data.groupTemplates || {},
+      defaultTemplate: cleanTemplate(row.data.defaultTemplate) || DEFAULT_BLAST_CONFIG.defaultTemplate,
+      groupTemplates: Object.fromEntries(
+        Object.entries(row.data.groupTemplates || {}).map(([k, v]) => [k, cleanTemplate(v as string)])
+      ),
       groupTones: row.data.groupTones || {},
       toneTemplates: {
-        formal: row.data.toneTemplates?.formal || DEFAULT_BLAST_CONFIG.toneTemplates.formal,
-        warm: row.data.toneTemplates?.warm || DEFAULT_BLAST_CONFIG.toneTemplates.warm,
-        casual: row.data.toneTemplates?.casual || DEFAULT_BLAST_CONFIG.toneTemplates.casual,
+        formal: cleanTemplate(row.data.toneTemplates?.formal) || DEFAULT_BLAST_CONFIG.toneTemplates.formal,
+        warm: cleanTemplate(row.data.toneTemplates?.warm) || DEFAULT_BLAST_CONFIG.toneTemplates.warm,
+        casual: cleanTemplate(row.data.toneTemplates?.casual) || DEFAULT_BLAST_CONFIG.toneTemplates.casual,
       },
     };
 
@@ -50,13 +61,26 @@ export async function PUT(request: Request) {
       );
     }
 
+    const sanitizedData = {
+      ...body,
+      defaultTemplate: cleanTemplate(body.defaultTemplate),
+      groupTemplates: Object.fromEntries(
+        Object.entries(body.groupTemplates || {}).map(([k, v]) => [k, cleanTemplate(v as string)])
+      ),
+      toneTemplates: {
+        formal: cleanTemplate(body.toneTemplates?.formal),
+        warm: cleanTemplate(body.toneTemplates?.warm),
+        casual: cleanTemplate(body.toneTemplates?.casual),
+      },
+    };
+
     const admin = createAdminClient();
     const { error } = await admin
       .from('site_content')
       .upsert(
         {
           section_key: 'blast_templates',
-          data: body,
+          data: sanitizedData,
           updated_at: new Date().toISOString(),
           updated_by: adminUser.email,
         },

@@ -22,8 +22,8 @@ export function getMockGuestView(overrides?: {
   const content = overrides?.siteContent || DEFAULT_SITE_CONTENT;
   const eventContent = content.event;
 
-  const startsAt = eventContent.startsAt || '2026-10-12T11:00:00+08:00';
-  const endsAt = eventContent.endsAt || '2026-10-12T14:00:00+08:00';
+  const startsAt = eventContent.startsAt || '2026-10-17T11:00:00+08:00';
+  const endsAt = eventContent.endsAt || '2026-10-17T22:00:00+08:00';
   const arrivalAt = overrides?.arrivalAt !== undefined ? overrides?.arrivalAt : startsAt;
   const arrivalUntil = endsAt;
 
@@ -32,16 +32,16 @@ export function getMockGuestView(overrides?: {
   const guestArrivalTimeFormatted = eventContent.timeFormatted || timeFormatted;
 
   const groomName = content.hero?.groomName || content.cover?.groomName || 'Dharma';
-  const brideName = content.hero?.brideName || content.cover?.brideName || 'Lutfhy';
+  const brideName = content.hero?.brideName || content.cover?.brideName || 'Luthfi';
 
   const copyCtx = {
     sapaan: salutation,
     nama: name,
     panggilan: nickname,
-    tanggal: eventContent.dateFormatted || '12 Oktober 2026',
+    tanggal: eventContent.dateFormatted || 'Sabtu, 17 Oktober 2026',
     jam_hadir: guestArrivalTimeFormatted,
     lokasi: eventContent.venueName || 'Kediaman Mempelai Pria (Kayubihi, Bangli)',
-    link: 'https://dharmalutfhy.wedding',
+    link: 'https://dharmalutfhi.archantara.id',
     mempelai: `${groomName} & ${brideName}`,
   };
 

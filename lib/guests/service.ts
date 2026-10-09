@@ -21,8 +21,8 @@ export function mapRowToGuestView(
   const nickname: string = row.nickname || name.split(/\s+/)[0] || name;
 
   const eventContent = siteContent.event;
-  const startsAt = eventContent.startsAt || '2026-12-12T11:00:00+08:00';
-  const endsAt = eventContent.endsAt || '2026-12-12T14:00:00+08:00';
+  const startsAt = eventContent.startsAt || '2026-10-17T11:00:00+08:00';
+  const endsAt = eventContent.endsAt || '2026-10-17T22:00:00+08:00';
   const arrivalAt = row.arrival_at || startsAt;
   const arrivalUntil = row.arrival_until || endsAt;
 
@@ -78,11 +78,11 @@ export function mapRowToGuestView(
     rsvp,
     event: {
       groomName: siteContent.hero.groomName || 'Dharma',
-      brideName: siteContent.hero.brideName || 'Lutfhy',
+      brideName: siteContent.hero.brideName || 'Luthfi',
       dateFormatted,
       dayFormatted: eventContent.dayFormatted || 'SABTU',
-      dateNumeral: eventContent.dateNumeral || '12',
-      monthYearFormatted: eventContent.monthYearFormatted || 'DESEMBER 2026',
+      dateNumeral: eventContent.dateNumeral || '17',
+      monthYearFormatted: eventContent.monthYearFormatted || 'OKTOBER 2026',
       timeFormatted: eventContent.timeFormatted || timeFormatted,
       guestArrivalTimeFormatted,
       startsAt,

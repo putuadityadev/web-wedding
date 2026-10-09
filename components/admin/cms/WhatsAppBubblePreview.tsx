@@ -17,17 +17,17 @@ export function WhatsAppBubblePreview({ content }: WhatsAppBubblePreviewProps) {
     siteTitle: 'The Wedding of Dharma & Luthfi',
     siteDescription: 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.',
     ogImage: '/apple-icon.png',
-    ogImageAlt: 'Pernikahan Dharma & Lutfhy',
+    ogImageAlt: 'Pernikahan Dharma & Luthfi',
     whatsappShareText: '',
   };
 
   const groomName = content.hero?.groomName || 'Dharma';
-  const brideName = content.hero?.brideName || 'Lutfhy';
+  const brideName = content.hero?.brideName || 'Luthfi';
 
   const hostDomain =
     typeof window !== 'undefined' && window.location.host
       ? window.location.host
-      : 'dharmalutfhy.archantara.id';
+      : 'dharmaluthfi.archantara.id';
 
   const previewOrigin =
     typeof window !== 'undefined' && window.location.origin

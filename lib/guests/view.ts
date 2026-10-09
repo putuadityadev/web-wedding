@@ -29,11 +29,11 @@ export interface GuestView {
   event: {
     groomName: string;
     brideName: string;
-    dateFormatted: string; // e.g. "Sabtu, 12 Desember 2026"
+    dateFormatted: string; // e.g. "Sabtu, 17 Oktober 2026"
     dayFormatted: string; // e.g. "SABTU"
-    dateNumeral: string; // e.g. "12"
-    monthYearFormatted: string; // e.g. "DESEMBER 2026"
-    timeFormatted: string; // e.g. "11.00 – 14.00 WITA"
+    dateNumeral: string; // e.g. "17"
+    monthYearFormatted: string; // e.g. "OKTOBER 2026"
+    timeFormatted: string; // e.g. "11.00 – 22.00 WITA"
     guestArrivalTimeFormatted: string | null; // e.g. "11.00 WITA" or "11.00 – 12.00 WITA"
     startsAt: string; // ISO
     endsAt: string | null; // ISO

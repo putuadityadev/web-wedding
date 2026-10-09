@@ -32,7 +32,7 @@ export function Hero({
   groomName,
   brideName,
   subtitle,
-  dateShort = 'SENIN, 12 OKTOBER 2026',
+  dateShort = 'SABTU, 17 OKTOBER 2026',
   portraitSrc,
   portraitAlt,
   scrollHint = 'GULIR',
@@ -191,7 +191,7 @@ export function Hero({
     return () => clearInterval(interval);
   }, [isSlideshowMode, slides.length, durationSec]);
 
-  const coupleNames = `${groomName || 'Dharma'} & ${brideName || 'Lutfhy'}`;
+  const coupleNames = `${groomName || 'Dharma'} & ${brideName || 'Luthfi'}`;
 
   return (
     <section
@@ -297,9 +297,9 @@ export function Hero({
           {coupleNames}
         </h1>
 
-        {/* Date: SENIN, 12 OKTOBER 2026 */}
+        {/* Date: SABTU, 17 OKTOBER 2026 */}
         <span className="label-eyebrow tracking-[0.26em] text-white/85 text-[10px] sm:text-[11px] font-mono uppercase mt-2 sm:mt-2.5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
-          {dateShort || 'SENIN, 12 OKTOBER 2026'}
+          {dateShort || 'SABTU, 17 OKTOBER 2026'}
         </span>
       </div>
 

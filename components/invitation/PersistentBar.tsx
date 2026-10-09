@@ -28,8 +28,8 @@ const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 export function PersistentBar({
   audioSrc,
   isUnlocked,
-  dateFormatted = 'SENIN, 12 OKTOBER 2026',
-  coupleNames = 'DHARMA & LUTFHY',
+  dateFormatted = 'SABTU, 17 OKTOBER 2026',
+  coupleNames = 'DHARMA & LUTHFI',
   showGift = true,
 }: PersistentBarProps) {
   const { lenis } = useLenisContext();

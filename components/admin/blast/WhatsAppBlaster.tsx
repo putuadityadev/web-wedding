@@ -74,7 +74,26 @@ export function WhatsAppBlaster({ siteContent }: WhatsAppBlasterProps) {
         const res = await fetch('/api/admin/blast/templates');
         const json = await res.json();
         if (json.ok && json.data) {
-          setBlastConfig(json.data);
+          const cfg = json.data;
+          const sanitize = (text: string) =>
+            (text || '')
+              .replace(/Sabtu,\s*12\s*Desember\s*2026/gi, '{{tanggal}}')
+              .replace(/12\s*Desember\s*2026/gi, '{{tanggal}}')
+              .replace(/Sabtu,\s*12\s*Oktober\s*2026/gi, '{{tanggal}}')
+              .replace(/12\s*Oktober\s*2026/gi, '{{tanggal}}');
+
+          setBlastConfig({
+            defaultTemplate: sanitize(cfg.defaultTemplate || DEFAULT_BLAST_CONFIG.defaultTemplate),
+            groupTemplates: Object.fromEntries(
+              Object.entries(cfg.groupTemplates || {}).map(([k, v]) => [k, sanitize(v as string)])
+            ),
+            groupTones: cfg.groupTones || {},
+            toneTemplates: {
+              formal: sanitize(cfg.toneTemplates?.formal || DEFAULT_BLAST_CONFIG.toneTemplates.formal),
+              warm: sanitize(cfg.toneTemplates?.warm || DEFAULT_BLAST_CONFIG.toneTemplates.warm),
+              casual: sanitize(cfg.toneTemplates?.casual || DEFAULT_BLAST_CONFIG.toneTemplates.casual),
+            },
+          });
         }
       } catch (err) {
         console.warn('Gagal memuat template tersimpan dari server:', err);
@@ -160,13 +179,14 @@ export function WhatsAppBlaster({ siteContent }: WhatsAppBlasterProps) {
     (guest: GuestItem): string => {
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const link = `${origin}/u/${guest.token}`;
+      const defaultTime = content.event?.timeFormatted || '11.00 – 22.00 WITA';
       const jamHadir = guest.arrivalAt
         ? new Date(guest.arrivalAt).toLocaleTimeString('id-ID', {
             hour: '2-digit',
             minute: '2-digit',
             timeZone: 'Asia/Makassar',
           }) + ' WITA'
-        : '11.00 WITA';
+        : defaultTime;
 
       const { template } = resolveTemplateForGuest(guest);
 
@@ -187,7 +207,9 @@ export function WhatsAppBlaster({ siteContent }: WhatsAppBlasterProps) {
         .replace(/{{tanggal}}/g, tanggal)
         .replace(/{{lokasi}}/g, lokasi)
         .replace(/Sabtu,\s*12\s*Desember\s*2026/gi, tanggal)
-        .replace(/12\s*Desember\s*2026/gi, tanggal);
+        .replace(/12\s*Desember\s*2026/gi, tanggal)
+        .replace(/Sabtu,\s*12\s*Oktober\s*2026/gi, tanggal)
+        .replace(/12\s*Oktober\s*2026/gi, tanggal);
     },
     [resolveTemplateForGuest, content]
   );
