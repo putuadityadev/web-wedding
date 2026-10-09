@@ -58,7 +58,7 @@ export function formatWhatsAppMessage(
 }
 
 /**
- * Normalize phone number for wa.me link.
+ * Normalize phone number for wa.me / WhatsApp API link.
  * Ensures Indonesian numbers starting with '0' become '62'.
  */
 export function normalizeWhatsAppPhone(phone: string | null | undefined): string {
@@ -69,3 +69,15 @@ export function normalizeWhatsAppPhone(phone: string | null | undefined): string
   }
   return clean;
 }
+
+/**
+ * Constructs a safe direct WhatsApp link avoiding the `wa.me` 302 redirect bug.
+ * Using `https://api.whatsapp.com/send` avoids wa.me edge redirector from corrupting 
+ * 4-byte UTF-8 emojis into %EF%BF%BD (Unicode Replacement Character ).
+ */
+export function buildWhatsAppUrl(phone: string | null | undefined, text: string): string {
+  const cleanPhone = normalizeWhatsAppPhone(phone);
+  const encodedText = encodeURIComponent(text);
+  return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
+}
+

@@ -11,7 +11,7 @@ import {
   DEFAULT_CASUAL_TEMPLATE,
 } from '@/lib/blast/templates';
 import { SiteContent, DEFAULT_SITE_CONTENT } from '@/lib/content/types';
-import { normalizeWhatsAppPhone } from '@/lib/guests/whatsapp';
+import { buildWhatsAppUrl } from '@/lib/guests/whatsapp';
 
 export interface GuestItem {
   id: string;
@@ -248,12 +248,11 @@ export function WhatsAppBlaster({ siteContent }: WhatsAppBlasterProps) {
       return;
     }
 
-    const cleanPhone = normalizeWhatsAppPhone(guest.phone);
     const message = formatMessageForGuest(guest);
-    const encoded = encodeURIComponent(message);
+    const waUrl = buildWhatsAppUrl(guest.phone, message);
 
-    // Open WhatsApp
-    window.open(`https://wa.me/${cleanPhone}?text=${encoded}`, '_blank');
+    // Open WhatsApp directly via api.whatsapp.com to prevent emoji corruption
+    window.open(waUrl, '_blank');
 
     // Persist status
     try {

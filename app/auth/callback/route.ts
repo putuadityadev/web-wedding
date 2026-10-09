@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-const ALLOWED_ADMIN_EMAILS = [
-  'adityamph1@gmail.com',
-  'arisiki123@gmail.com',
-];
+import { isAllowedAdminEmail } from '@/lib/auth/adminAllowlist';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -22,8 +18,9 @@ export async function GET(request: Request) {
 
     const email = data.user.email.toLowerCase();
 
-    // Verify email against allowlist
-    if (!ALLOWED_ADMIN_EMAILS.includes(email)) {
+    // Verify email against database admin_emails allowlist (with fallback)
+    const isAllowed = await isAllowedAdminEmail(email);
+    if (!isAllowed) {
       console.warn('[Auth Callback] Unauthorized admin email attempt:', email);
       await supabase.auth.signOut();
       return NextResponse.redirect(new URL('/admin/login?error=unauthorized_email', request.url));

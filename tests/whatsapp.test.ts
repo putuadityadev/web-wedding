@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatWhatsAppMessage, normalizeWhatsAppPhone } from '../lib/guests/whatsapp';
+import { formatWhatsAppMessage, normalizeWhatsAppPhone, buildWhatsAppUrl } from '../lib/guests/whatsapp';
 import { DEFAULT_SITE_CONTENT } from '../lib/content/types';
 
 describe('WhatsApp Message Formatter & Phone Normalizer', () => {
@@ -86,5 +86,15 @@ describe('WhatsApp Message Formatter & Phone Normalizer', () => {
 
     const formatted = formatWhatsAppMessage(guest, customContent, 'https://example.com');
     assert.equal(formatted, 'Yth. Bapak Budi, hadir ya ke pernikahan Rama & Sinta: https://example.com/u/tok123');
+  });
+
+  test('builds direct api.whatsapp.com URL preserving 4-byte unicode emojis', () => {
+    const textWithEmojis = '💍 Dharma & Luthfi 🗓️ Sabtu, 17 Oktober 2026 📍 Kayubihi 👉 https://example.com';
+    const url = buildWhatsAppUrl('081234567890', textWithEmojis);
+
+    assert.ok(url.startsWith('https://api.whatsapp.com/send?phone=6281234567890&text='));
+    // Ensure 💍 (%F0%9F%92%8D) and 🗓 (%F0%9F%97%93) are percent-encoded without %EF%BF%BD replacement character
+    assert.ok(url.includes('%F0%9F%92%8D'));
+    assert.ok(!url.includes('%EF%BF%BD'));
   });
 });

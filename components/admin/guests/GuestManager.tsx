@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 import { SiteContent, DEFAULT_SITE_CONTENT } from '@/lib/content/types';
-import { formatWhatsAppMessage, normalizeWhatsAppPhone } from '@/lib/guests/whatsapp';
+import { formatWhatsAppMessage, buildWhatsAppUrl } from '@/lib/guests/whatsapp';
 
 export interface GuestItem {
   id: string;
@@ -121,9 +121,8 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
       return;
     }
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const cleanPhone = normalizeWhatsAppPhone(guest.phone);
     const message = formatWhatsAppMessage(guest, content, origin);
-    const text = encodeURIComponent(message);
+    const waUrl = buildWhatsAppUrl(guest.phone, message);
 
     // Record blast status in backend
     try {
@@ -137,7 +136,8 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
       // Non-blocking
     }
 
-    window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
+    // Open WhatsApp directly via api.whatsapp.com to prevent emoji corruption
+    window.open(waUrl, '_blank');
   };
 
   const handleCreateGuest = async (e: React.FormEvent) => {

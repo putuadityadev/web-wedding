@@ -1,10 +1,12 @@
 import React from 'react';
 import { requireAdmin } from '@/lib/auth/requireAdmin';
+import { getAdminEmails } from '@/lib/auth/adminAllowlist';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminSettingsPage() {
   const admin = await requireAdmin();
+  const adminEmails = await getAdminEmails();
 
   return (
     <div className="space-y-6">
@@ -27,26 +29,23 @@ export default async function AdminSettingsPage() {
             Email Admin Terdaftar (Allowlist)
           </h3>
           <p className="text-xs text-[#0F1B2D]/60 leading-relaxed">
-            Hanya 2 akun Google berikut yang memiliki izin otorisasi SSO untuk masuk ke sistem dashboard ini:
+            Akun Google yang terdaftar di tabel <code className="px-1.5 py-0.5 rounded bg-[#0F1B2D]/5 font-mono text-[11px]">admin_emails</code> Supabase dan memiliki izin otorisasi SSO untuk masuk ({adminEmails.length} akun):
           </p>
 
           <ul className="space-y-2 text-xs font-mono">
-            <li className="p-2.5 rounded bg-[#F9FAFB] border border-[#0F1B2D]/10 flex items-center justify-between">
-              <span>adityamph1@gmail.com</span>
-              {admin.email === 'adityamph1@gmail.com' && (
-                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
-                  Anda
-                </span>
-              )}
-            </li>
-            <li className="p-2.5 rounded bg-[#F9FAFB] border border-[#0F1B2D]/10 flex items-center justify-between">
-              <span>arisiki123@gmail.com</span>
-              {admin.email === 'arisiki123@gmail.com' && (
-                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
-                  Anda
-                </span>
-              )}
-            </li>
+            {adminEmails.map((email) => (
+              <li
+                key={email}
+                className="p-2.5 rounded bg-[#F9FAFB] border border-[#0F1B2D]/10 flex items-center justify-between"
+              >
+                <span>{email}</span>
+                {admin.email === email && (
+                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                    Anda
+                  </span>
+                )}
+              </li>
+            ))}
           </ul>
         </div>
 

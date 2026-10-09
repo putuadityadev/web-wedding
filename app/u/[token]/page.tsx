@@ -25,25 +25,28 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const guestSalutation = guestRow?.salutation ? `${guestRow.salutation.trim()} ` : '';
     const guestName = guestRow?.name ? `${guestSalutation}${guestRow.name.trim()}` : '';
 
-    const defaultTitle = branding?.siteTitle?.trim() || 'The Wedding of Dharma & Luthfi';
-    const baseTitle = defaultTitle;
-    const ogTitle = guestName ? `Undangan Pernikahan — ${guestName}` : baseTitle;
+    // Strictly prioritize Admin CMS Branding siteTitle & siteDescription
+    const rawTitle = branding?.siteTitle?.trim() || 'The Wedding of Dharma & Luthfi';
+    const title = guestName && (rawTitle.includes('{nama_tamu}') || rawTitle.includes('{{nama_tamu}}'))
+      ? rawTitle.replace(/\{\{nama_tamu\}\}|\{nama_tamu\}/g, guestName)
+      : rawTitle;
 
-    const description = guestRow
-      ? `Undangan pernikahan teruntuk ${guestName}. ${branding?.siteDescription || ''}`.trim()
-      : (branding?.siteDescription || `Undangan pernikahan digital ${groomName} & ${brideName}.`);
+    const rawDesc = branding?.siteDescription?.trim() || `Undangan pernikahan digital ${groomName} & ${brideName}.`;
+    const description = guestName && (rawDesc.includes('{nama_tamu}') || rawDesc.includes('{{nama_tamu}}'))
+      ? rawDesc.replace(/\{\{nama_tamu\}\}|\{nama_tamu\}/g, guestName)
+      : rawDesc;
 
     const imageUrl = branding?.ogImage || '/apple-icon.png';
     const pageUrl = `${getBaseUrl()}/u/${token}`;
 
     return {
       metadataBase: getMetadataBase(),
-      title: ogTitle,
+      title,
       description,
       openGraph: {
-        title: ogTitle,
+        title,
         description,
-        siteName: baseTitle,
+        siteName: title,
         url: pageUrl,
         type: 'website',
         images: [
@@ -51,13 +54,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             url: imageUrl,
             width: 1200,
             height: 630,
-            alt: branding?.ogImageAlt || ogTitle,
+            alt: branding?.ogImageAlt || title,
           },
         ],
       },
       twitter: {
         card: 'summary_large_image',
-        title: ogTitle,
+        title,
         description,
         images: [imageUrl],
       },
