@@ -176,3 +176,72 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    await requireAdmin();
+    const admin = createAdminClient();
+    const body = await request.json().catch(() => ({}));
+    const { ids, group } = body as { ids?: string[]; group?: string };
+
+    const hasIds = Array.isArray(ids) && ids.length > 0;
+    const hasGroup = typeof group === 'string' && group.trim().length > 0;
+
+    if (!hasIds && !hasGroup) {
+      return NextResponse.json(
+        { ok: false, error: 'Pilih minimal satu tamu atau grup yang ingin dihapus' },
+        { status: 400 }
+      );
+    }
+
+    let deletedCount = 0;
+
+    if (hasIds) {
+      // First clean up associated RSVPs for strict foreign key integrity
+      await admin.from('rsvps').delete().in('guest_id', ids!);
+
+      const { data, error } = await admin
+        .from('guests')
+        .delete()
+        .in('id', ids!)
+        .select('id');
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      deletedCount = data?.length ?? ids!.length;
+    } else if (hasGroup) {
+      // Find IDs belonging to this group
+      const { data: guestsInGroup } = await admin
+        .from('guests')
+        .select('id')
+        .eq('group_label', group!.trim());
+
+      const groupIds = (guestsInGroup || []).map((g) => g.id);
+      if (groupIds.length > 0) {
+        await admin.from('rsvps').delete().in('guest_id', groupIds);
+      }
+
+      const { data, error } = await admin
+        .from('guests')
+        .delete()
+        .eq('group_label', group!.trim())
+        .select('id');
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      deletedCount = data?.length ?? 0;
+    }
+
+    return NextResponse.json({
+      ok: true,
+      count: deletedCount,
+      message: `Berhasil menghapus ${deletedCount} tamu undangan`,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Gagal menghapus tamu massal';
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+  }
+}
+

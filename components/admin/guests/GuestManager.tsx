@@ -51,6 +51,14 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
   const [submitting, setSubmitting] = useState(false);
   const [toastMsg, setToastMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Bulk selection & deletion state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showGroupSelectModal, setShowGroupSelectModal] = useState(false);
+  const [groupSearchQuery, setGroupSearchQuery] = useState('');
+  const [guestToDelete, setGuestToDelete] = useState<GuestItem | null>(null);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Extract unique salutations from guests
   const salutations = React.useMemo(() => {
     const set = new Set<string>();
@@ -60,6 +68,43 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
     });
     return Array.from(set).sort();
   }, [guests]);
+
+  // Group statistics for selection & bulk actions
+  const groupStats = React.useMemo(() => {
+    const map = new Map<string, { total: number; selected: number }>();
+    groups.forEach((grp) => {
+      if (grp) map.set(grp, { total: 0, selected: 0 });
+    });
+    guests.forEach((g) => {
+      const grp = g.groupLabel?.trim() || 'Tanpa Grup';
+      const entry = map.get(grp) || { total: 0, selected: 0 };
+      entry.total += 1;
+      if (selectedIds.includes(g.id)) {
+        entry.selected += 1;
+      }
+      map.set(grp, entry);
+    });
+    return Array.from(map.entries())
+      .map(([name, stat]) => ({
+        name,
+        total: stat.total,
+        selected: stat.selected,
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [guests, groups, selectedIds]);
+
+  const selectedGroupSummary = React.useMemo(() => {
+    if (selectedIds.length === 0) return '';
+    const selectedGuests = guests.filter((g) => selectedIds.includes(g.id));
+    const counts: Record<string, number> = {};
+    selectedGuests.forEach((g) => {
+      const grp = g.groupLabel?.trim() || 'Tanpa Grup';
+      counts[grp] = (counts[grp] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([grp, count]) => `${grp} (${count})`)
+      .join(', ');
+  }, [guests, selectedIds]);
 
   // Add form state
   const [form, setForm] = useState({
@@ -240,23 +285,120 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
     }
   };
 
-  const handleDeleteGuest = async (id: string, name: string) => {
-    if (!confirm(`Hapus tamu "${name}" secara permanen? Data RSVP tamu ini juga akan dihapus.`)) {
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleSelectAllVisible = () => {
+    const visibleIds = filteredGuests.map((g) => g.id);
+    if (visibleIds.length === 0) return;
+    const allVisibleSelected = visibleIds.every((id) => selectedIds.includes(id));
+    if (allVisibleSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...visibleIds])));
+    }
+  };
+
+  const handleToggleGroupSelection = (groupName: string) => {
+    const groupGuestIds = guests
+      .filter((g) => (g.groupLabel?.trim() || 'Tanpa Grup') === groupName.trim())
+      .map((g) => g.id);
+    if (groupGuestIds.length === 0) return;
+
+    const allSelected = groupGuestIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !groupGuestIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...groupGuestIds])));
+    }
+  };
+
+  const handleSelectAllGroups = (select: boolean) => {
+    if (select) {
+      setSelectedIds(guests.map((g) => g.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleDeleteEntireGroup = (groupName: string) => {
+    const groupGuestIds = guests
+      .filter((g) => (g.groupLabel?.trim() || 'Tanpa Grup') === groupName.trim())
+      .map((g) => g.id);
+    if (groupGuestIds.length === 0) {
+      showToast(`Tidak ada tamu dalam grup "${groupName}"`, 'error');
       return;
     }
+    setSelectedIds(groupGuestIds);
+    setShowGroupSelectModal(false);
+    setShowBulkDeleteModal(true);
+  };
 
+  const handleCopySelectedLinks = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const selectedGuests = guests.filter((g) => selectedIds.includes(g.id));
+    if (selectedGuests.length === 0) return;
+    const text = selectedGuests
+      .map((g) => `${g.name} (${g.groupLabel || 'Tamu'}): ${origin}/u/${g.token}`)
+      .join('\n');
+    navigator.clipboard.writeText(text);
+    showToast(`${selectedGuests.length} tautan undangan berhasil disalin!`);
+  };
+
+  const handleDeleteGuest = (guest: GuestItem) => {
+    setGuestToDelete(guest);
+  };
+
+  const handleConfirmSingleDelete = async () => {
+    if (!guestToDelete) return;
+    setIsDeleting(true);
     try {
-      const res = await fetch(`/api/admin/guests/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/guests/${guestToDelete.id}`, { method: 'DELETE' });
       const json = await res.json();
       if (!json.ok) {
         throw new Error(json.error || 'Gagal menghapus tamu');
       }
 
-      showToast(`Tamu "${name}" telah dihapus.`);
-      setGuests((prev) => prev.filter((g) => g.id !== id));
+      showToast(`Tamu "${guestToDelete.name}" berhasil dihapus.`);
+      setGuests((prev) => prev.filter((g) => g.id !== guestToDelete.id));
+      setSelectedIds((prev) => prev.filter((id) => id !== guestToDelete.id));
+      setGuestToDelete(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal menghapus tamu';
       showToast(msg, 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setIsDeleting(true);
+    try {
+      const countToDelete = selectedIds.length;
+      const res = await fetch('/api/admin/guests', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        throw new Error(json.error || 'Gagal menghapus tamu massal');
+      }
+
+      showToast(`Berhasil menghapus ${countToDelete} tamu undangan.`);
+      const deletedSet = new Set(selectedIds);
+      setGuests((prev) => prev.filter((g) => !deletedSet.has(g.id)));
+      setSelectedIds([]);
+      setShowBulkDeleteModal(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menghapus tamu massal';
+      showToast(msg, 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -414,7 +556,23 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowGroupSelectModal(true)}
+            className={`px-3.5 py-2.5 rounded text-xs font-medium tracking-wide shadow-2xs inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+              selectedIds.length > 0
+                ? 'bg-amber-100/90 border border-amber-300 text-amber-950 font-semibold'
+                : 'bg-white border border-[#0F1B2D]/20 text-[#0F1B2D] hover:bg-stone-50'
+            }`}
+          >
+            <span>🏷️ Pilih per Grup</span>
+            {selectedIds.length > 0 && (
+              <span className="bg-[#0F1B2D] text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+                {selectedIds.length}
+              </span>
+            )}
+          </button>
           <Link
             href="/admin/blast"
             className="px-3.5 py-2.5 rounded bg-[#25D366] text-white hover:bg-[#20ba5a] text-xs font-medium tracking-wide shadow-xs inline-flex items-center gap-1.5"
@@ -436,6 +594,38 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
           </button>
         </div>
       </div>
+
+      {/* Active Group Filter Action Helper */}
+      {filterGroup !== 'ALL' && (
+        <div className="bg-amber-50/80 border border-amber-200/80 rounded-[var(--radius-sm)] p-3.5 text-xs text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[11px] bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded font-medium">
+              Grup: {filterGroup}
+            </span>
+            <span>
+              Menampilkan <strong>{filteredGuests.length}</strong> tamu dalam grup ini.
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => handleToggleGroupSelection(filterGroup)}
+              className="px-2.5 py-1.5 rounded bg-amber-200 hover:bg-amber-300 text-amber-950 font-medium text-[11px] transition-colors cursor-pointer"
+            >
+              {filteredGuests.length > 0 && filteredGuests.every((g) => selectedIds.includes(g.id))
+                ? '✕ Batalkan Pilihan Grup Ini'
+                : `☑ Pilih Semua di Grup Ini (${filteredGuests.length})`}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDeleteEntireGroup(filterGroup)}
+              className="px-2.5 py-1.5 rounded bg-rose-100 hover:bg-rose-200 text-rose-800 font-medium text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1"
+            >
+              <span>🗑️ Hapus Semua di Grup Ini</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Guest Table */}
       <div className="bg-white border border-[#0F1B2D]/10 rounded-[var(--radius-sm)] shadow-xs overflow-hidden">
@@ -489,6 +679,22 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#0F1B2D]/10 bg-[#F9FAFB] text-[#0F1B2D]/60 font-mono text-[10px] uppercase">
+                  <th className="py-3 px-3 font-normal text-center w-10">
+                    <input
+                      type="checkbox"
+                      aria-label="Pilih semua tamu yang tampil"
+                      checked={filteredGuests.length > 0 && filteredGuests.every((g) => selectedIds.includes(g.id))}
+                      ref={(el) => {
+                        if (el) {
+                          const hasSome = filteredGuests.some((g) => selectedIds.includes(g.id));
+                          const hasAll = filteredGuests.length > 0 && filteredGuests.every((g) => selectedIds.includes(g.id));
+                          el.indeterminate = hasSome && !hasAll;
+                        }
+                      }}
+                      onChange={handleToggleSelectAllVisible}
+                      className="w-4 h-4 rounded border-[#0F1B2D]/30 text-[#0F1B2D] focus:ring-0 cursor-pointer accent-[#0F1B2D]"
+                    />
+                  </th>
                   <th className="py-3 px-3 font-normal text-center w-12">No.</th>
                   <th className="py-3 px-4 font-normal">Nama & Sapaan</th>
                   <th className="py-3 px-4 font-normal">No. WhatsApp</th>
@@ -500,8 +706,28 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#0F1B2D]/5">
-                {filteredGuests.map((guest, idx) => (
-                  <tr key={guest.id} className="hover:bg-[#F9FAFB]/80 transition-colors">
+                {filteredGuests.map((guest, idx) => {
+                  const isRowSelected = selectedIds.includes(guest.id);
+                  return (
+                  <tr
+                    key={guest.id}
+                    className={`transition-colors ${
+                      isRowSelected
+                        ? 'bg-amber-50/50 hover:bg-amber-100/50'
+                        : 'hover:bg-[#F9FAFB]/80'
+                    }`}
+                  >
+                    {/* Selection Checkbox */}
+                    <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Pilih ${guest.name}`}
+                        checked={isRowSelected}
+                        onChange={() => handleToggleSelect(guest.id)}
+                        className="w-4 h-4 rounded border-[#0F1B2D]/30 text-[#0F1B2D] focus:ring-0 cursor-pointer accent-[#0F1B2D]"
+                      />
+                    </td>
+
                     {/* Numbering */}
                     <td className="py-3 px-3 text-center font-mono text-[11px] text-[#0F1B2D]/40 select-none">
                       {idx + 1}
@@ -694,22 +920,34 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
 
                         <button
                           type="button"
-                          onClick={() => handleDeleteGuest(guest.id, guest.name)}
+                          onClick={() => handleDeleteGuest(guest)}
                           title="Hapus Tamu"
-                          className="p-1 rounded text-red-500 hover:bg-red-50 transition-colors"
+                          className="p-1.5 rounded border border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 transition-colors cursor-pointer"
                         >
-                          ✕
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                          </svg>
                         </button>
                       </div>
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
             <div className="px-4 py-3 bg-[#F9FAFB] border-t border-[#0F1B2D]/10 text-[11px] text-[#0F1B2D]/60 font-mono flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <span>
-                Menampilkan <strong>{filteredGuests.length}</strong> dari <strong>{guests.length}</strong> total tamu undangan
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span>
+                  Menampilkan <strong>{filteredGuests.length}</strong> dari <strong>{guests.length}</strong> total tamu undangan
+                </span>
+                {selectedIds.length > 0 && (
+                  <span className="text-[#0F1B2D] font-semibold bg-amber-100/90 px-2 py-0.5 rounded border border-amber-300">
+                    ✓ {selectedIds.length} tamu terpilih
+                  </span>
+                )}
+              </div>
               {filteredGuests.length < guests.length && (
                 <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 self-start sm:self-auto text-[10.5px]">
                   🔍 Filter aktif ({guests.length - filteredGuests.length} tamu tersembunyi)
@@ -1008,6 +1246,357 @@ export function GuestManager({ siteContent }: GuestManagerProps) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 max-w-2xl w-[calc(100%-2rem)] bg-[#0F1B2D] text-white rounded-xl shadow-2xl border border-white/10 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-3 backdrop-blur-md">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <span className="bg-amber-400 text-stone-900 font-bold px-2 py-0.5 rounded text-[11px] font-mono">
+              {selectedIds.length}
+            </span>
+            <div className="text-xs">
+              <span className="font-medium">tamu dipilih</span>
+              {selectedGroupSummary && (
+                <span className="text-stone-300 text-[11px] block sm:inline sm:ml-2 opacity-80 truncate max-w-xs">
+                  ({selectedGroupSummary})
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="px-3 py-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 text-xs transition-colors cursor-pointer"
+            >
+              Batalkan
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopySelectedLinks}
+              title="Salin semua link tamu yang dipilih"
+              className="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-1"
+            >
+              <span>📋 Salin Link</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowBulkDeleteModal(true)}
+              className="px-3.5 py-1.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+              <span>Hapus Terpilih ({selectedIds.length})</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Select by Group Modal */}
+      {showGroupSelectModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-[var(--radius-sm)] shadow-2xl border border-[#0F1B2D]/10 max-w-lg w-full p-6 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-[#0F1B2D]/10">
+              <div>
+                <h3 className="font-serif text-lg font-medium text-[#0F1B2D]">
+                  Pilih Tamu Berdasarkan Grup
+                </h3>
+                <p className="text-xs text-[#0F1B2D]/60 mt-0.5">
+                  Centang grup untuk memilih semua anggota grup tersebut secara cepat.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowGroupSelectModal(false)}
+                className="text-[#0F1B2D]/40 hover:text-[#0F1B2D] p-1 text-base cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="pt-3 pb-2">
+              <input
+                type="text"
+                placeholder="Cari grup..."
+                value={groupSearchQuery}
+                onChange={(e) => setGroupSearchQuery(e.target.value)}
+                className="w-full px-3 py-1.5 rounded text-xs border border-[#0F1B2D]/20 focus:outline-none focus:border-[#0F1B2D]"
+              />
+            </div>
+
+            <div className="max-h-72 overflow-y-auto divide-y divide-[#0F1B2D]/5 my-2 border border-stone-200/80 rounded">
+              {groupStats.filter((grp) => grp.name.toLowerCase().includes(groupSearchQuery.toLowerCase())).length === 0 ? (
+                <div className="py-8 text-center text-xs text-[#0F1B2D]/50">
+                  Tidak ada grup yang cocok dengan pencarian.
+                </div>
+              ) : (
+                groupStats
+                  .filter((grp) => grp.name.toLowerCase().includes(groupSearchQuery.toLowerCase()))
+                  .map((grp) => {
+                    const isAllGroupSelected = grp.total > 0 && grp.selected === grp.total;
+                    const isSomeGroupSelected = grp.selected > 0 && grp.selected < grp.total;
+                    return (
+                      <div
+                        key={grp.name}
+                        className={`p-3 flex items-center justify-between gap-3 transition-colors ${
+                          isAllGroupSelected
+                            ? 'bg-amber-50/50'
+                            : 'hover:bg-stone-50'
+                        }`}
+                      >
+                        <label className="flex items-center gap-2.5 flex-1 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={isAllGroupSelected}
+                            ref={(el) => {
+                              if (el) el.indeterminate = isSomeGroupSelected;
+                            }}
+                            onChange={() => handleToggleGroupSelection(grp.name)}
+                            className="w-4 h-4 rounded border-[#0F1B2D]/30 text-[#0F1B2D] focus:ring-0 cursor-pointer accent-[#0F1B2D]"
+                          />
+                          <div>
+                            <div className="font-medium text-xs text-[#0F1B2D]">{grp.name}</div>
+                            <div className="text-[10px] text-[#0F1B2D]/50 font-mono mt-0.5">
+                              {grp.total} total tamu • {grp.selected} terpilih
+                            </div>
+                          </div>
+                        </label>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleGroupSelection(grp.name)}
+                            className="px-2 py-1 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[10.5px] font-medium text-[#0F1B2D] cursor-pointer"
+                          >
+                            {isAllGroupSelected ? 'Batal' : 'Pilih Semua'}
+                          </button>
+                          {grp.total > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteEntireGroup(grp.name)}
+                              title={`Hapus semua ${grp.total} tamu di grup ${grp.name}`}
+                              className="px-2 py-1 rounded border border-rose-200 bg-rose-50 hover:bg-rose-100 text-[10.5px] font-medium text-rose-700 cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <span>🗑️ Hapus Grup</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-3 border-t border-[#0F1B2D]/10 text-xs">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSelectAllGroups(true)}
+                  className="text-[11px] text-[#0F1B2D] hover:underline font-medium cursor-pointer"
+                >
+                  Pilih Semua Grup
+                </button>
+                <span className="text-[#0F1B2D]/30">•</span>
+                <button
+                  type="button"
+                  onClick={() => handleSelectAllGroups(false)}
+                  className="text-[11px] text-[#0F1B2D]/60 hover:text-[#0F1B2D] cursor-pointer"
+                >
+                  Bersihkan Pilihan
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowGroupSelectModal(false)}
+                className="px-4 py-2 rounded bg-[#0F1B2D] text-white hover:bg-[#1E293B] font-medium text-xs cursor-pointer self-end sm:self-auto"
+              >
+                Selesai ({selectedIds.length} Tamu Terpilih)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Single Delete Modal */}
+      {guestToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-[var(--radius-sm)] shadow-2xl border border-[#0F1B2D]/10 max-w-md w-full p-6 animate-in fade-in zoom-in-95">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+              </div>
+              <div className="space-y-1 flex-1">
+                <h3 className="font-serif text-lg font-medium text-[#0F1B2D]">
+                  Hapus Tamu Undangan?
+                </h3>
+                <p className="text-xs text-[#0F1B2D]/70 leading-relaxed">
+                  Apakah Anda yakin ingin menghapus data tamu ini secara permanen?
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 p-3.5 bg-stone-50 rounded border border-stone-200/80 text-xs space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-[#0F1B2D]/60">Nama Tamu:</span>
+                <span className="font-medium text-[#0F1B2D]">{guestToDelete.name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#0F1B2D]/60">Grup:</span>
+                <span className="font-mono bg-stone-200/60 px-1.5 py-0.5 rounded text-[11px] text-[#0F1B2D]">
+                  {guestToDelete.groupLabel || 'Tanpa Grup'}
+                </span>
+              </div>
+              {guestToDelete.phone && (
+                <div className="flex justify-between items-center">
+                  <span className="text-[#0F1B2D]/60">No. WhatsApp:</span>
+                  <span className="font-mono text-[#0F1B2D]">{guestToDelete.phone}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-[#0F1B2D]/60">Status RSVP:</span>
+                <span className="font-medium">
+                  {guestToDelete.status === 'attending'
+                    ? 'Hadir'
+                    : guestToDelete.status === 'not_attending'
+                    ? 'Berhalangan'
+                    : 'Pending'}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-3.5 p-3 bg-rose-50 border border-rose-200 rounded text-[11px] text-rose-800 flex items-start gap-2">
+              <span className="text-rose-600 font-bold shrink-0">⚠️</span>
+              <span>
+                Tindakan ini tidak dapat dibatalkan. Tautan undangan personal dan data konfirmasi kehadiran akan dihapus dari sistem.
+              </span>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setGuestToDelete(null)}
+                className="px-4 py-2 rounded border border-[#0F1B2D]/15 text-[#0F1B2D] hover:bg-stone-50 font-medium text-xs cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmSingleDelete}
+                className="px-4 py-2 rounded bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Menghapus...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Ya, Hapus Tamu</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Bulk Delete Modal */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-[var(--radius-sm)] shadow-2xl border border-[#0F1B2D]/10 max-w-lg w-full p-6 animate-in fade-in zoom-in-95">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+              </div>
+              <div className="space-y-1 flex-1">
+                <h3 className="font-serif text-lg font-medium text-[#0F1B2D]">
+                  Hapus {selectedIds.length} Tamu Sekaligus?
+                </h3>
+                <p className="text-xs text-[#0F1B2D]/70 leading-relaxed">
+                  Anda akan menghapus data dari <strong>{selectedIds.length} tamu undangan</strong> yang dipilih secara massal.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 p-3.5 bg-stone-50 rounded border border-stone-200/80 text-xs space-y-2.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#0F1B2D]/60 font-medium">Grup Terdampak:</span>
+                <span className="font-mono text-[11px] text-[#0F1B2D] truncate max-w-xs">{selectedGroupSummary || '-'}</span>
+              </div>
+
+              <div>
+                <span className="text-[11px] text-[#0F1B2D]/60 block mb-1.5 font-medium">
+                  Pratinjau Tamu ({selectedIds.length} orang):
+                </span>
+                <div className="max-h-36 overflow-y-auto space-y-1 bg-white p-2.5 rounded border border-stone-200/60 divide-y divide-stone-100">
+                  {guests
+                    .filter((g) => selectedIds.includes(g.id))
+                    .map((g) => (
+                      <div key={g.id} className="pt-1 first:pt-0 flex items-center justify-between text-[11px]">
+                        <span className="font-medium text-[#0F1B2D] truncate max-w-[240px]">{g.name}</span>
+                        <span className="font-mono text-[10px] text-stone-500 bg-stone-100 px-1.5 py-0.2 rounded shrink-0">
+                          {g.groupLabel || 'Tanpa Grup'}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3.5 p-3 bg-rose-50 border border-rose-200 rounded text-[11px] text-rose-800 flex items-start gap-2">
+              <span className="text-rose-600 font-bold shrink-0">⚠️</span>
+              <span>
+                <strong>PERINGATAN:</strong> Tindakan ini TIDAK DAPAT DIBATALKAN. Semua tautan undangan dan konfirmasi RSVP tamu-tamu tersebut akan dihapus permanen.
+              </span>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setShowBulkDeleteModal(false)}
+                className="px-4 py-2 rounded border border-[#0F1B2D]/15 text-[#0F1B2D] hover:bg-stone-50 font-medium text-xs cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmBulkDelete}
+                className="px-4 py-2 rounded bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Menghapus {selectedIds.length} Tamu...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Ya, Hapus {selectedIds.length} Tamu Permanen</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

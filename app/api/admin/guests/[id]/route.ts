@@ -83,6 +83,9 @@ export async function DELETE(_request: Request, context: RouteContext) {
     const admin = createAdminClient();
     const { id } = await context.params;
 
+    // Ensure associated RSVP is deleted first (safe with or without FK cascade)
+    await admin.from('rsvps').delete().eq('guest_id', id);
+
     const { error } = await admin.from('guests').delete().eq('id', id);
 
     if (error) {
