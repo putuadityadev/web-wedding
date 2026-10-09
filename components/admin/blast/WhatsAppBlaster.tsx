@@ -10,6 +10,8 @@ import {
   DEFAULT_WARM_TEMPLATE,
   DEFAULT_CASUAL_TEMPLATE,
 } from '@/lib/blast/templates';
+import { SiteContent, DEFAULT_SITE_CONTENT } from '@/lib/content/types';
+import { normalizeWhatsAppPhone } from '@/lib/guests/whatsapp';
 
 export interface GuestItem {
   id: string;
@@ -30,7 +32,12 @@ export interface GuestItem {
   createdAt: string;
 }
 
-export function WhatsAppBlaster() {
+interface WhatsAppBlasterProps {
+  siteContent?: SiteContent;
+}
+
+export function WhatsAppBlaster({ siteContent }: WhatsAppBlasterProps) {
+  const content = siteContent || DEFAULT_SITE_CONTENT;
   const searchParams = useSearchParams();
   const batchIdParam = searchParams.get('batchId') || '';
 
@@ -163,6 +170,10 @@ export function WhatsAppBlaster() {
 
       const { template } = resolveTemplateForGuest(guest);
 
+      const groomName = content.hero?.groomName || 'Dharma';
+      const brideName = content.hero?.brideName || 'Lutfhy';
+      const mempelai = `${groomName} & ${brideName}`;
+
       return template
         .replace(/{{nama}}/g, guest.name)
         .replace(/{{panggilan}}/g, guest.nickname || guest.name.split(' ')[0])
@@ -170,9 +181,9 @@ export function WhatsAppBlaster() {
         .replace(/{{link}}/g, link)
         .replace(/{{pax}}/g, String(guest.maxPax || 2))
         .replace(/{{jam_hadir}}/g, jamHadir)
-        .replace(/{{mempelai}}/g, 'Dharma & Lutfhy');
+        .replace(/{{mempelai}}/g, mempelai);
     },
-    [resolveTemplateForGuest]
+    [resolveTemplateForGuest, content]
   );
 
 
@@ -237,7 +248,7 @@ export function WhatsAppBlaster() {
       return;
     }
 
-    const cleanPhone = guest.phone.replace(/[^0-9]/g, '');
+    const cleanPhone = normalizeWhatsAppPhone(guest.phone);
     const message = formatMessageForGuest(guest);
     const encoded = encodeURIComponent(message);
 

@@ -4,6 +4,7 @@ import { Invitation } from '@/components/invitation/Invitation';
 import { getSiteContent } from '@/lib/content/service';
 import { getGuestByToken, mapRowToGuestView } from '@/lib/guests/service';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getMetadataBase, getBaseUrl } from '@/lib/url';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,42 +18,70 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const { token } = await params;
     const siteContent = await getSiteContent();
     const branding = siteContent.branding;
+    const groomName = siteContent.hero?.groomName || 'Dharma';
+    const brideName = siteContent.hero?.brideName || 'Lutfhy';
     const guestRow = await getGuestByToken(token);
 
-    const title = branding?.siteTitle || 'Dharma & Lutfhy — Pernikahan Suci';
+    const guestSalutation = guestRow?.salutation ? `${guestRow.salutation.trim()} ` : '';
+    const guestName = guestRow?.name ? `${guestSalutation}${guestRow.name.trim()}` : '';
+
+    const defaultTitle = branding?.siteTitle?.trim() || 'The Wedding of Dharma & Luthfi';
+    const baseTitle = defaultTitle;
+    const ogTitle = guestName ? `Undangan Pernikahan — ${guestName}` : baseTitle;
+
     const description = guestRow
-      ? `Undangan pernikahan teruntuk ${guestRow.salutation ? guestRow.salutation + ' ' : ''}${guestRow.name}. ${branding?.siteDescription || ''}`.trim()
-      : (branding?.siteDescription || 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.');
+      ? `Undangan pernikahan teruntuk ${guestName}. ${branding?.siteDescription || ''}`.trim()
+      : (branding?.siteDescription || `Undangan pernikahan digital ${groomName} & ${brideName}.`);
 
     const imageUrl = branding?.ogImage || '/apple-icon.png';
+    const pageUrl = `${getBaseUrl()}/u/${token}`;
 
     return {
-      title,
+      metadataBase: getMetadataBase(),
+      title: ogTitle,
       description,
       openGraph: {
-        title,
+        title: ogTitle,
         description,
+        siteName: baseTitle,
+        url: pageUrl,
         type: 'website',
         images: [
           {
             url: imageUrl,
             width: 1200,
             height: 630,
-            alt: branding?.ogImageAlt || title,
+            alt: branding?.ogImageAlt || ogTitle,
           },
         ],
       },
       twitter: {
         card: 'summary_large_image',
-        title,
+        title: ogTitle,
         description,
         images: [imageUrl],
       },
     };
   } catch {
+    const siteContent = await getSiteContent().catch(() => null);
+    const branding = siteContent?.branding;
+    const groomName = siteContent?.hero?.groomName || 'Dharma';
+    const brideName = siteContent?.hero?.brideName || 'Lutfhy';
+    const fallbackTitle = branding?.siteTitle || 'The Wedding of Dharma & Luthfi';
+    const fallbackDesc = branding?.siteDescription || `Undangan pernikahan digital ${groomName} & ${brideName}.`;
+    const fallbackImage = branding?.ogImage || '/apple-icon.png';
+
     return {
-      title: 'Dharma & Lutfhy — Pernikahan Suci',
-      description: 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.',
+      metadataBase: getMetadataBase(),
+      title: fallbackTitle,
+      description: fallbackDesc,
+      openGraph: {
+        title: fallbackTitle,
+        description: fallbackDesc,
+        siteName: fallbackTitle,
+        type: 'website',
+        images: [{ url: fallbackImage, width: 1200, height: 630, alt: fallbackTitle }],
+      },
     };
   }
 }

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { SiteContent } from '@/lib/content/types';
+import { formatWhatsAppMessage } from '@/lib/guests/whatsapp';
 
 interface WhatsAppBubblePreviewProps {
   content: SiteContent;
@@ -13,7 +14,7 @@ export function WhatsAppBubblePreview({ content }: WhatsAppBubblePreviewProps) {
   const [imgError, setImgError] = useState(false);
 
   const branding = content.branding || {
-    siteTitle: 'Dharma & Lutfhy — Pernikahan Suci',
+    siteTitle: 'The Wedding of Dharma & Luthfi',
     siteDescription: 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.',
     ogImage: '/apple-icon.png',
     ogImageAlt: 'Pernikahan Dharma & Lutfhy',
@@ -28,21 +29,22 @@ export function WhatsAppBubblePreview({ content }: WhatsAppBubblePreviewProps) {
       ? window.location.host
       : 'dharmalutfhy.archantara.id';
 
-  const previewLink = `https://${hostDomain}/u/HxvyTHaQDeSr`;
+  const previewOrigin =
+    typeof window !== 'undefined' && window.location.origin
+      ? window.location.origin
+      : `https://${hostDomain}`;
 
-  // Format message preview using custom template or default
-  const defaultText =
-    `Halo Bro Aditya, dengan sukacita dan penuh syukur kami mengundang Anda ke pernikahan ${groomName} & ${brideName}.\n\n` +
-    `Detail acara, denah lokasi, dan konfirmasi kehadiran dapat diakses melalui tautan personal Anda:\n` +
-    `${previewLink}\n\n` +
-    `Salam hangat,\n${groomName} & ${brideName}`;
-
-  const messageText = branding.whatsappShareText?.trim()
-    ? branding.whatsappShareText
-        .replace(/{nama_tamu}/g, 'Bro Aditya')
-        .replace(/{mempelai}/g, `${groomName} & ${brideName}`)
-        .replace(/{link_undangan}/g, previewLink)
-    : defaultText;
+  // Format message preview using shared whatsapp helper
+  const messageText = formatWhatsAppMessage(
+    {
+      name: 'Bro Aditya',
+      nickname: 'Aditya',
+      salutation: '',
+      token: 'HxvyTHaQDeSr',
+    },
+    content,
+    previewOrigin
+  );
 
   const isDark = waMode === 'dark';
 
@@ -213,7 +215,7 @@ export function WhatsAppBubblePreview({ content }: WhatsAppBubblePreviewProps) {
                       isDark ? 'text-white' : 'text-[#111B21]'
                     }`}
                   >
-                    {branding.siteTitle || 'Dharma & Lutfhy — Pernikahan Suci'}
+                    {branding.siteTitle || 'The Wedding of Dharma & Luthfi'}
                   </h4>
                   <p
                     className={`text-[11px] sm:text-xs line-clamp-2 leading-relaxed mt-0.5 ${

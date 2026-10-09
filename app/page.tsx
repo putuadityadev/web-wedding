@@ -3,6 +3,7 @@ import { getMockGuestView } from '@/lib/guests/mock';
 import { Invitation } from '@/components/invitation/Invitation';
 import { Tone } from '@/lib/guests/view';
 import { getSiteContent } from '@/lib/content/service';
+import { getMetadataBase, getBaseUrl } from '@/lib/url';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,18 +19,21 @@ export async function generateMetadata(): Promise<Metadata> {
   const content = await getSiteContent();
   const branding = content.branding;
 
-  const title = branding?.siteTitle || 'Dharma & Lutfhy — Pernikahan Suci';
+  const title = branding?.siteTitle || 'The Wedding of Dharma & Luthfi';
   const description =
     branding?.siteDescription ||
     'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.';
   const imageUrl = branding?.ogImage || '/apple-icon.png';
 
   return {
+    metadataBase: getMetadataBase(),
     title,
     description,
     openGraph: {
       title,
       description,
+      siteName: title,
+      url: getBaseUrl(),
       type: 'website',
       images: [
         {

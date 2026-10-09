@@ -14,8 +14,10 @@
 export interface OptimizeOptions {
   /** Resolusi maksimal sisi terpanjang (default: 2560px untuk tampilan Retina/4K tajam) */
   maxDimension?: number;
-  /** Kualitas kompresi WebP (0.1 - 1.0, default: 0.85) */
+  /** Kualitas kompresi (0.1 - 1.0, default: 0.85) */
   quality?: number;
+  /** Format target (default: 'webp'. Gunakan 'jpeg' khusus thumbnail OpenGraph / WhatsApp preview) */
+  format?: 'webp' | 'jpeg';
 }
 
 export interface OptimizeResult {
@@ -45,7 +47,7 @@ export async function optimizeImageForUpload(
   file: File,
   options: OptimizeOptions = {}
 ): Promise<OptimizeResult> {
-  const { maxDimension = 2560, quality = 0.85 } = options;
+  const { maxDimension = 2560, quality = 0.85, format = 'webp' } = options;
   const originalSize = file.size;
 
   // Jangan sentuh file non-gambar (video, audio, dsb.)
@@ -105,34 +107,44 @@ export async function optimizeImageForUpload(
       }
     }
 
+    const isJpeg = format === 'jpeg';
     const canvas = document.createElement('canvas');
     canvas.width = targetWidth;
     canvas.height = targetHeight;
-    const ctx = canvas.getContext('2d', { alpha: true });
+    const ctx = canvas.getContext('2d', { alpha: !isJpeg });
 
     if (!ctx) {
       return { file, optimized: false, originalSize, newSize: originalSize };
+    }
+
+    // Untuk JPEG, isi background putih agar tidak menghasilkan warna hitam pada transparansi
+    if (isJpeg) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
     }
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-    // Konversi ke Blob WebP (didukung oleh semua browser modern)
+    // Konversi ke format target (JPEG untuk WA crawler, WebP untuk performa website)
+    const mimeType = isJpeg ? 'image/jpeg' : 'image/webp';
+    const ext = isJpeg ? 'jpg' : 'webp';
+
     const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((b) => resolve(b), 'image/webp', quality);
+      canvas.toBlob((b) => resolve(b), mimeType, quality);
     });
 
     if (!blob) {
       return { file, optimized: false, originalSize, newSize: originalSize };
     }
 
-    // Tentukan nama file baru dengan ekstensi .webp
+    // Tentukan nama file baru dengan ekstensi sesuai format
     const baseName = file.name.replace(/\.[^/.]+$/, '').trim() || 'image';
-    const optimizedFileName = `${baseName}.webp`;
+    const optimizedFileName = `${baseName}.${ext}`;
 
     const optimizedFile = new File([blob], optimizedFileName, {
-      type: 'image/webp',
+      type: mimeType,
       lastModified: Date.now(),
     });
 

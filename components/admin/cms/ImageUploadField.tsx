@@ -90,11 +90,13 @@ export function ImageUploadField({
         /\.(jpe?g|png|webp|avif|heic|heif|bmp|tiff)$/i.test(rawFile.name);
 
       if (isImg && !rawFile.type.startsWith('video/') && !rawFile.type.startsWith('audio/')) {
+        const isOgFolder = folder === 'og';
         setStage('optimizing');
         try {
           optInfo = await optimizeImageForUpload(rawFile, {
-            maxDimension: 2560,
+            maxDimension: isOgFolder ? 1200 : 2560,
             quality: 0.85,
+            format: isOgFolder ? 'jpeg' : 'webp',
           });
           if (optInfo && optInfo.file) {
             fileToUpload = optInfo.file;

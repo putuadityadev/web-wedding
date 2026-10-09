@@ -372,7 +372,7 @@ insert into site_content (section_key, data) values
 }'::jsonb),
 
 ('branding', '{
-  "siteTitle": "Dharma & Lutfhy — Pernikahan Suci",
+  "siteTitle": "The Wedding of Dharma & Luthfi",
   "siteDescription": "Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.",
   "ogImage": "/apple-icon.png",
   "ogImageAlt": "Pernikahan Dharma & Lutfhy",

@@ -84,6 +84,9 @@ export async function PUT(request: Request) {
       revalidatePath('/u/[token]', 'page');
       revalidatePath('/preview', 'page');
       revalidatePath('/admin/content', 'page');
+      revalidatePath('/admin/branding', 'page');
+      revalidatePath('/admin/guests', 'page');
+      revalidatePath('/admin/blast', 'page');
     } catch (revalErr) {
       console.warn('[CMS] Revalidation warning:', revalErr);
     }

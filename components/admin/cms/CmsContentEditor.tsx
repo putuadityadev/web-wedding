@@ -2785,7 +2785,7 @@ export function CmsContentEditor({ initialContent, initialTab = 'cover' }: CmsCo
                   <input
                     type="text"
                     value={content.branding?.siteTitle ?? ''}
-                    placeholder="Dharma & Lutfhy — Pernikahan Suci"
+                    placeholder="The Wedding of Dharma & Luthfi"
                     onChange={(e) =>
                       setContent({
                         ...content,
@@ -2927,6 +2927,8 @@ export function CmsContentEditor({ initialContent, initialTab = 'cover' }: CmsCo
                       { key: '{nama_tamu}', desc: 'Nama Tamu' },
                       { key: '{mempelai}', desc: 'Nama Mempelai' },
                       { key: '{link_undangan}', desc: 'Link Undangan Unik' },
+                      { key: '{tanggal}', desc: 'Tanggal Acara' },
+                      { key: '{lokasi}', desc: 'Lokasi Acara' },
                     ].map((pill) => (
                       <button
                         key={pill.key}

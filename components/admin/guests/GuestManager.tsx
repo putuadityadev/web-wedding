@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
+import { SiteContent, DEFAULT_SITE_CONTENT } from '@/lib/content/types';
+import { formatWhatsAppMessage, normalizeWhatsAppPhone } from '@/lib/guests/whatsapp';
+
 export interface GuestItem {
   id: string;
   name: string;
@@ -22,7 +25,12 @@ export interface GuestItem {
   createdAt: string;
 }
 
-export function GuestManager() {
+interface GuestManagerProps {
+  siteContent?: SiteContent;
+}
+
+export function GuestManager({ siteContent }: GuestManagerProps) {
+  const content = siteContent || DEFAULT_SITE_CONTENT;
   const [guests, setGuests] = useState<GuestItem[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,16 +108,21 @@ export function GuestManager() {
     showToast('Tautan undangan berhasil disalin!');
   };
 
+  const handleCopyWhatsAppMessage = (guest: GuestItem) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const message = formatWhatsAppMessage(guest, content, origin);
+    navigator.clipboard.writeText(message);
+    showToast(`Pesan undangan WhatsApp untuk "${guest.name}" berhasil disalin!`);
+  };
+
   const handleOpenWhatsApp = async (guest: GuestItem) => {
     if (!guest.phone) {
       showToast('Tamu ini belum memiliki nomor WhatsApp!', 'error');
       return;
     }
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const link = `${origin}/u/${guest.token}`;
-    const cleanPhone = guest.phone.replace(/[^0-9]/g, '');
-    const greeting = `${guest.salutation ? guest.salutation + ' ' : ''}${guest.nickname || guest.name}`;
-    const message = `Halo ${greeting}, dengan sukacita dan penuh syukur kami mengundang Anda ke pernikahan Dharma & Lutfhy.\n\nDetail acara, denah lokasi, dan konfirmasi kehadiran dapat diakses melalui tautan personal Anda:\n${link}\n\nSalam hangat,\nDharma & Lutfhy`;
+    const cleanPhone = normalizeWhatsAppPhone(guest.phone);
+    const message = formatWhatsAppMessage(guest, content, origin);
     const text = encodeURIComponent(message);
 
     // Record blast status in backend
@@ -629,6 +642,15 @@ export function GuestManager() {
                           className="px-2.5 py-1 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[#0F1B2D] text-[11px] font-mono transition-colors"
                         >
                           Salin Link
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleCopyWhatsAppMessage(guest)}
+                          title="Salin Draf Pesan Undangan WhatsApp Lengkap"
+                          className="px-2.5 py-1 rounded border border-[#0F1B2D]/15 hover:bg-[#0F1B2D]/5 text-[#0F1B2D] text-[11px] font-mono transition-colors"
+                        >
+                          Salin Pesan
                         </button>
 
                         <a

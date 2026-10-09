@@ -1,11 +1,13 @@
 import React from 'react';
 import { requireAdmin } from '@/lib/auth/requireAdmin';
+import { getSiteContent } from '@/lib/content/service';
 import { GuestManager } from '@/components/admin/guests/GuestManager';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminGuestsPage() {
   await requireAdmin();
+  const siteContent = await getSiteContent();
 
   return (
     <div className="space-y-6">
@@ -21,7 +23,7 @@ export default async function AdminGuestsPage() {
         </p>
       </div>
 
-      <GuestManager />
+      <GuestManager siteContent={siteContent} />
     </div>
   );
 }

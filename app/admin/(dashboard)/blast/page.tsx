@@ -1,11 +1,13 @@
 import React, { Suspense } from 'react';
 import { requireAdmin } from '@/lib/auth/requireAdmin';
+import { getSiteContent } from '@/lib/content/service';
 import { WhatsAppBlaster } from '@/components/admin/blast/WhatsAppBlaster';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminBlastPage() {
   await requireAdmin();
+  const siteContent = await getSiteContent();
 
   return (
     <Suspense
@@ -15,7 +17,7 @@ export default async function AdminBlastPage() {
         </div>
       }
     >
-      <WhatsAppBlaster />
+      <WhatsAppBlaster siteContent={siteContent} />
     </Suspense>
   );
 }

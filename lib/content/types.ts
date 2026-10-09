@@ -452,10 +452,10 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     title: 'Adagio in Blue — Instrumental',
   },
   branding: {
-    siteTitle: 'Dharma & Lutfhy — Pernikahan Suci',
+    siteTitle: 'The Wedding of Dharma & Luthfi',
     siteDescription: 'Undangan pernikahan digital I Wayan Dharma Wirahadi & Luthfi Quasimah Widoyo.',
     ogImage: '/apple-icon.png',
     ogImageAlt: 'Pernikahan Dharma & Lutfhy',
-    whatsappShareText: 'Halo {nama_tamu}, dengan sukacita dan penuh syukur kami mengundang Anda ke pernikahan Dharma & Lutfhy.\n\nDetail acara, denah lokasi, dan konfirmasi kehadiran dapat diakses melalui tautan personal Anda:\n{link_undangan}\n\nSalam hangat,\nDharma & Lutfhy',
+    whatsappShareText: 'Halo {nama_tamu}, dengan sukacita dan penuh syukur kami mengundang Anda ke pernikahan {mempelai}.\n\nDetail acara, denah lokasi, dan konfirmasi kehadiran dapat diakses melalui tautan personal Anda:\n{link_undangan}\n\nSalam hangat,\n{mempelai}',
   },
 };
